@@ -1,0 +1,80 @@
+[
+    {
+        "taskId": "T01",
+        "titleKey": "P02_T01_TITLE",
+        "instructionKey": "P02_T01_INST",
+        "assertionType": "ImportedCsvAtCell",
+        "sheetName": "Instructors",
+        "cell": "A1",
+        "sourceFileName": "Instructor.csv",
+        "firstRowAsHeaders": true
+    },
+
+    {
+        "taskId": "T02",
+        "titleKey": "P02_T02_TITLE",
+        "instructionKey": "P02_T02_INST",
+        "assertionType": "ColumnWidthEquals",
+        "sheetName": "Bank Deposits",
+        "range": "B:G",
+        "expectedWidth": 12
+    },
+    {
+        "taskId": "T03",
+        "titleKey": "P02_T03_TITLE",
+        "instructionKey": "P02_T03_INST",
+        "assertionType": "ColumnSparklinesByRange",
+        "sheetName": "Enrollment",
+        "locationRange": "E2:E6",
+        "dataRange": "B2:D6"
+    },
+
+    {
+        "taskId": "T04",
+        "titleKey": "P02_T04_TITLE",
+        "instructionKey": "P02_T04_INST",
+        "assertionType": "FreezePanesEquals",
+        "sheetName": "Enrollment",
+        "freezeRows": 2,
+        "freezeColumns": 0
+    },
+    {
+        "taskId": "T05",
+        "titleKey": "P02_T05_TITLE",
+        "instructionKey": "P02_T05_INST",
+        "assertionType": "NamedRangesSumFormula",
+        "sheetName": "Figure",
+        "cell": "L10",
+        "rangeNames": [
+            "Total1",
+            "Total2",
+            "Total3"
+        ]
+    },
+    {
+        "taskId": "T06",
+        "titleKey": "P02_T06_TITLE",
+        "instructionKey": "P02_T06_INST",
+        "assertionType": "ChartAltTextEquals",
+        "sheetName": "Figure",
+        "expectedText": "Yearly Revenue"
+    },
+    {
+        "taskId": "T07",
+        "titleKey": "P02_T07_TITLE",
+        "instructionKey": "P02_T07_INST",
+        "assertionType": "RangeIconSetEquals",
+        "sheetName": "Car Inventory",
+        "range": "G10:G40",
+        "expectedText": "3 Traffic Lights (Unrimmed)"
+    },
+    {
+        "taskId": "T08",
+        "titleKey": "P02_T08_TITLE",
+        "instructionKey": "P02_T08_INST",
+        "assertionType": "TableStyleEquals",
+        "sheetName": "Enrollment",
+        "expectedText": "White, Table Style Medium 1"
+    }
+
+]

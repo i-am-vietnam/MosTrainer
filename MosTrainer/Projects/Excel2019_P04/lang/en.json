@@ -1,0 +1,27 @@
+{
+
+  "P04_T01_TITLE": "Task 1",
+  "P04_T01_INST": "On the Demographics worksheet, for the Toys Category chart, swap the data over the axis.",
+  
+  "P04_T02_TITLE": "Task 2",
+  "P04_T02_INST": "Copy the formatting of the title and subtitle of the “Used Car Sales” worksheet and apply it to the title and subtitle of the New Car Sales worksheet.",
+  
+  "P04_T03_TITLE": "Task 3",
+  "P04_T03_INST": "On the Informatics Exam chart sheet, remove the lagend and display only the values as data labels above each column.",
+  
+  "P04_T04_TITLE": "Task 4",
+  "P04_T04_INST": "On the New Car Sales worksheet, convert the table to a cell range. Keep the formatting.",
+  
+  "P04_T05_TITLE": "Task 5",
+  "P04_T05_INST": "On the Report worksheet, create a Clustered Column chart that shows the Quantity for all months, with the month as the horizontal axis labels. Place the chart below the table. The exact size and position of the chart do not matter.",
+  
+  "P04_T06_TITLE": "Task 6",
+  "P04_T06_INST": "On the Demographics worksheet, in the TTC column, use a function to display the first 2 characters of the Category from column B.",
+  
+  "P04_T07_TITLE": "Task 7",
+  "P04_T07_INST": "In cell B10 on the Report worksheet, insert a function that joins the customer Lastname to the customer Firstname separated by a comma and space. (Example: Akkers, Leah).",
+  
+  "P04_T08_TITLE": "Task 8",
+  "P04_T08_INST": "Insert page numbering in the center of the footer on the Demographics worksheet using the format Page 1 of ?"
+
+}

@@ -1,0 +1,26 @@
+{
+  "P02_T01_TITLE": "Task 1",
+  "P02_T01_INST": "On the “Instructor” worksheet, beginning at cell A1, import the data from the Instructors text file in the Documents folder. Use the first row of the data source as headers.",
+
+  "P02_T02_TITLE": "Task 2",
+  "P02_T02_INST": "On the “Bank Deposit” worksheet, adjust the width of column B:G exactly 12.",
+
+  "P02_T03_TITLE": "Task 3",
+  "P02_T03_INST": "On the “Enrollment worksheet, in cells E2:E6, insert Column sparklines to compare the last, current, and the next term values for each test site.",
+
+  "P02_T04_TITLE": "Task 4",
+  "P02_T04_INST": "On the “Enrollment” worksheet, freeze rows 1 and 2 so that the title header and left column are always visible when scrolling.",
+
+  "P02_T05_TITLE": "Task 5",
+  "P02_T05_INST": "On the “Figure” worksheet, in cell L10, enter a formula that sums the values in the ranges “Total1”,”Total2”, and “Total3”. Use range names in the formula instead of cell references or values.",
+
+  "P02_T06_TITLE": "Task 6",
+  "P02_T06_INST": "On the “Figure” worksheet, add the alt text description “Yearly Revenue” to the chart.",
+
+  "P02_T07_TITLE": "Task 7",
+  "P02_T07_INST": "On the “Car Inventory” worksheet, in the “Price” table column, use conditional formatting to apply the 3 Traffic Lights (Unrimmed) format to the values.",
+
+  "P02_T08_TITLE": "Task 8",
+  "P02_T08_INST": "On the “Enrollment” worksheet, apply the White, Table Style Medium 1 style to the table."
+
+}

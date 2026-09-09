@@ -1,0 +1,25 @@
+﻿{
+  "P04_T01_TITLE": "Task 1",
+  "P04_T01_INST": "Trên trang tính Demographics với biểu đồ Toys Category, hoán đổi dữ liệu qua trục.",
+  
+  "P04_T02_TITLE": "Task 2",
+  "P04_T02_INST": "Sao chép định dạng tiêu đề và tiêu đề phụ của trang tính Used Car Sales và áp dụng nó vào tiêu đề và tiêu đề phụ của trang tính New Car Sales.",
+  
+  "P04_T03_TITLE": "Task 3",
+  "P04_T03_INST": "Trên trang tính biểu đồ Informatics Exam, xóa chú giải và hiển thị chỉ giá trị như nhãn dữ iệu phía trên mỗi cột.",
+  
+  "P04_T04_TITLE": "Task 4",
+  "P04_T04_INST": "Trên trang tính New Car Sales, chuyển bảng thành vùng tính. Giữ lại định dạng.",
+  
+  "P04_T05_TITLE": "Task 5",
+  "P04_T05_INST": "Trên trang tính Report tạo biểu đồ Clustered Column để hiển thị Quantity cho tất cả các tháng, với tháng như nhãn dữ liệu trục ngang. Đặt biểu đồ phía dưới bảng. Vị trí và kích thước của biểu đồ thì không quan trọng.",
+  
+  "P04_T06_TITLE": "Task 6",
+  "P04_T06_INST": "Trên trang tính Demographics, trong cột TCC, sử dụng hàm để hiển thị 2 ký tự đầu của Category từ cột B.",
+  
+  "P04_T07_TITLE": "Task 7",
+  "P04_T07_INST": "Trong ô B10 của trang tính Report, chèn hàm để nối Lastname vào Firstname phân cách bởi dấu phẩy và khoảng trắng. (Ví dụ: Akkers, Leah).",
+  
+  "P04_T08_TITLE": "Task 8",
+  "P04_T08_INST": "Chèn số trang ở phần giữa của tiêu đề chân trang trên trang tính Demographics sử dụng định dạng Page 1 of ?"
+}

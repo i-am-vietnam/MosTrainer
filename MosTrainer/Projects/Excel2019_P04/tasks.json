@@ -1,0 +1,78 @@
+[
+    {
+        "taskId": "T01",
+        "titleKey": "P04_T01_TITLE",
+        "instructionKey": "P04_T01_INST",
+        "assertionType": "ChartSwitchedRowColumn",
+        "sheetName": "Demographics",
+        "chartTitle": "Toys Category",
+        "range": "A2:C7"
+    },
+    {
+        "taskId": "T02",
+        "titleKey": "P04_T02_TITLE",
+        "instructionKey": "P04_T02_INST",
+        "assertionType": "TitleSubtitleFormattingCopied",
+        "sourceSheetName": "Used Car Sales",
+        "sourceRange": "A1:A2",
+        "sheetName": "New Car Sales",
+        "range": "A1:A2"
+    },
+    {
+        "taskId": "T03",
+        "titleKey": "P04_T03_TITLE",
+        "instructionKey": "P04_T03_INST",
+        "assertionType": "ChartSheetLegendRemovedValueLabelsAbove",
+        "sheetName": "Informatics Exam"
+    },
+    {
+        "taskId": "T04",
+        "titleKey": "P04_T04_TITLE",
+        "instructionKey": "P04_T04_INST",
+        "assertionType": "WorksheetTableConvertedToRange",
+        "sheetName": "New Car Sales",
+        "tableName": "Table63",
+        "range": "A4:J30"
+    },
+    {
+        "taskId": "T05",
+        "titleKey": "P04_T05_TITLE",
+        "instructionKey": "P04_T05_INST",
+        "assertionType": "ReportClusteredColumnChartCreated",
+        "sheetName": "Report",
+        "sourceHeaders": [
+            "Month",
+            "Quantity"
+        ]
+    },
+    {
+        "taskId": "T06",
+        "titleKey": "P04_T06_TITLE",
+        "instructionKey": "P04_T06_INST",
+        "assertionType": "LeftFormulaByHeaders",
+        "sheetName": "Demographics",
+        "targetHeader": "TCC",
+        "sourceHeader": "Category",
+        "characterCount": 2
+    },
+    {
+        "taskId": "T07",
+        "titleKey": "P04_T07_TITLE",
+        "instructionKey": "P04_T07_INST",
+        "assertionType": "LastFirstNameFormulaAtCell",
+        "sheetName": "Report",
+        "cell": "B10",
+        "sourceHeaders": [
+            "LastName",
+            "Firstname"
+        ],
+        "expectedText": ", "
+    },
+    {
+        "taskId": "T08",
+        "titleKey": "P04_T08_TITLE",
+        "instructionKey": "P04_T08_INST",
+        "assertionType": "CenterFooterPageOfPagesEquals",
+        "sheetName": "Demographics"
+    }
+]

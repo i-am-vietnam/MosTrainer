@@ -1,0 +1,25 @@
+﻿{
+  "P03_T01_TITLE": "Task 1",
+  "P03_T01_INST": "Điều hướng đến vùng có tên Convertible và xóa nội dung của các ô đã chọn.",
+
+  "P03_T02_TITLE": "Task 2",
+  "P03_T02_INST": "Trên trang tính Suppliers, trong các ô F2:G11, định dạng các ô để con số có 2 chữ số thập phân.",
+
+  "P03_T03_TITLE": "Task 3",
+  "P03_T03_INST": "Trên trang tính Informatics Exam, xóa dòng trong bảng mà chứa dữ liệu “IELTS”. Không thay đổi bất kỳ nội dung bên ngoài bảng.",
+
+  "P03_T04_TITLE": "Task 4",
+  "P03_T04_INST": "Trên trang tính Gmextrix Account, trong cột Monthly Average, sử dụng hàm để tính số lượng trung bình cho mỗi kỳ thi từ tháng 1 đến tháng 4.",
+
+  "P03_T05_TITLE": "Task 5",
+  "P03_T05_INST": "Trên trang tính Gmetrix Account, sửa đổi biểu đồ để hiển thị “Account” như là tiêu đề trục dọc chính.",
+
+  "P03_T06_TITLE": "Task 6",
+  "P03_T06_INST": "Trên trang tính Used Car Sales, chỉ định căn lề trái cho văn bản trong ô A2.",
+
+  "P03_T07_TITLE": "Task 7",
+  "P03_T07_INST": "Trên trang tính Used Car Sales, mở rộng công thức trong ô I6 đến cuối cột trong bảng.",
+
+  "P03_T08_TITLE": "Task 8",
+  "P03_T08_INST": "Trên trang tính Suppliers, sử dụng hàm để hiển thị con số cao nhất từ cột Stock Value."
+}

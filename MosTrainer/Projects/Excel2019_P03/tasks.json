@@ -1,0 +1,78 @@
+[
+    {
+        "taskId": "T01",
+        "titleKey": "P03_T01_TITLE",
+        "instructionKey": "P03_T01_INST",
+        "assertionType": "NamedRangeContentsCleared",
+        "namedRange": "Convertible",
+        "sheetName": "Used Car Sales",
+        "range": "A18:J19"
+    },
+    {
+        "taskId": "T02",
+        "titleKey": "P03_T02_TITLE",
+        "instructionKey": "P03_T02_INST",
+        "assertionType": "RangeNumberFormatDecimalPlacesEquals",
+        "sheetName": "Suppliers",
+        "range": "F2:G11",
+        "decimalPlaces": 2
+    },
+    {
+        "taskId": "T03",
+        "titleKey": "P03_T03_TITLE",
+        "instructionKey": "P03_T03_INST",
+        "assertionType": "TableRowContainingTextDeleted",
+        "sheetName": "Informatics Exam",
+        "expectedText": "IELTS",
+        "expectedRowCount": 3
+    },
+    {
+        "taskId": "T04",
+        "titleKey": "P03_T04_TITLE",
+        "instructionKey": "P03_T04_INST",
+        "assertionType": "AverageFormulaByHeaders",
+        "sheetName": "GMetrix Account",
+        "targetHeader": "Monthly Average",
+        "sourceHeaders": [
+            "January",
+            "February",
+            "March",
+            "April"
+        ]
+    },
+    {
+        "taskId": "T05",
+        "titleKey": "P03_T05_TITLE",
+        "instructionKey": "P03_T05_INST",
+        "assertionType": "ChartPrimaryVerticalAxisTitleEquals",
+        "sheetName": "GMetrix Account",
+        "expectedText": "Account"
+    },
+    {
+        "taskId": "T06",
+        "titleKey": "P03_T06_TITLE",
+        "instructionKey": "P03_T06_INST",
+        "assertionType": "HorizontalAlignmentEquals",
+        "sheetName": "Used Car Sales",
+        "cell": "A2",
+        "expectedText": "Left"
+    },
+    {
+        "taskId": "T07",
+        "titleKey": "P03_T07_TITLE",
+        "instructionKey": "P03_T07_INST",
+        "assertionType": "TableColumnFormulaFilledDown",
+        "sheetName": "Used Car Sales",
+        "cell": "I6"
+    },
+    {
+        "taskId": "T08",
+        "titleKey": "P03_T08_TITLE",
+        "instructionKey": "P03_T08_INST",
+        "assertionType": "MaxFormulaFromHeader",
+        "sheetName": "Suppliers",
+        "cell": "L2",
+        "sourceHeader": "STOCK VALUE"
+    }
+
+]

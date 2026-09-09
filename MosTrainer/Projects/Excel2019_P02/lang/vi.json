@@ -1,0 +1,25 @@
+﻿{
+  "P02_T01_TITLE": "Nhiệm vụ 1",
+  "P02_T01_INST": "Trên trang tính “Instructor” worsheet, bắt đầu ở ô A1, nhập dữ liệu từ tập tin văn bản Instructors trong thư mục Documents. Sử dụng dòng đầu tiên của dữ liệu nguồn làm tiêu đề.",
+
+  "P02_T02_TITLE": "Nhiệm vụ 2",
+  "P02_T02_INST": "Trên trang tính “Bank Deposits”, điều chỉnh độ rộng các cột B:G chính xác 12.",
+
+  "P02_T03_TITLE": "Nhiệm vụ 3",
+  "P02_T03_INST": "Trên trang tính “Enrollment” trong ô E3:E6, chèn Column Sparklines để so sánh giá trị của học kỳ cũ, hiện tại và tiếp theo cho mỗi địa điểm kiểm tra.",
+
+  "P02_T04_TITLE": "Nhiệm vụ 4",
+  "P02_T04_INST": "Trong trang tính “Enrollment”, cố định dòng 1 và 2 để tiêu đề và cột bên trái luôn được hiện thị khi thao tác cuộn.",
+
+  "P02_T05_TITLE": "Nhiệm vụ 5",
+  "P02_T05_INST": "Trên trang tính “Figure”, trong ô L10 nhập một công thức để tính tổng các giá trị trong các vùng “Total1”, “Total2” và “Total3”. Sử dụng tên vùng trong công thức thay vì tham chiếu ô hoặc giá trị.",
+
+  "P02_T06_TITLE": "Nhiệm vụ 6",
+  "P02_T06_INST": "Trên trang tính “Figure”, thêm văn bản thay thế phần mô tả “Yearly Revenue” vào biểu đồ.",
+
+  "P02_T07_TITLE": "Nhiệm vụ 7",
+  "P02_T07_INST": "Trên trang tính “Car Inventory” trong cột “Price” sử dụng định dạng có điều kiện để áp dụng định dạng 3 Traffic Lights (Unrimmed) vào các giá trị.",
+
+  "P02_T08_TITLE": "Nhiệm vụ 8",
+  "P02_T08_INST": "Trên trang tính “Enrollment”, áp dụng kiểu dáng White, Table Styles Medium 1 vào bảng."
+}

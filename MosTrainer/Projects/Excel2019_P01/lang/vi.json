@@ -1,0 +1,28 @@
+﻿{
+  "P01_T01_TITLE": "Nhiệm vụ 1",
+  "P01_T01_INST": "Thiết lập trang tính “Exam Bookings: để chỉ những ô A7:I46 là vùng in.",
+
+  "P01_T02_TITLE": "Nhiệm vụ 2",
+  "P01_T02_INST": "Trên trang tính “Weekly Summary”, lọc bảng dữ liệu để chỉ hiển thị những kỳ thi (exams) với “Certiport ID” là “9003992”",
+
+  "P01_T03_TITLE": "Nhiệm vụ 3",
+  "P01_T03_INST": "Trên trang tính “Suppliers”, trong cột “Discount”, sử dụng hàm để hiển thị “Yes” nếu “Quantity in Stock” mà lớn hơn 6000. Ngược lại hiển thị “No”.",
+
+  "P01_T04_TITLE": "Nhiệm vụ 4",
+  "P01_T04_INST": "Trên trang tính “Suppliers”, thao tác với sắp xếp nhiều cấp độ. Sắp xếp bảng theo “Toy Category” (A đến Z) và sau đó theo “Supplier Name” (A đến Z).",
+
+  "P01_T05_TITLE": "Nhiệm vụ 5",
+  "P01_T05_INST": "Trên trang tính “Customers”, trong cột “Email Address”, sử dụng hàm để xây dựng địa chỉ email cho mỗi người sử dụng tên và “@tinhocsaoviet.com”.",
+
+  "P01_T06_TITLE": "Nhiệm vụ 6",
+  "P01_T06_INST": "Trên trang tính “Exam Bookings” cấu hình tùy chọn kiểu dáng bảng để tự động tô bóng cho mỗi dòng khác nhau trong bảng.",
+
+  "P01_T07_TITLE": "Nhiệm vụ 7",
+  "P01_T07_INST": "Trên trang tính “Exam Bookings”, di chuyển biểu đồ thành một trang tính biểu đồ với tên là “Fee Chart”.",
+
+  "P01_T08_TITLE": "Nhiệm vụ 8",
+  "P01_T08_INST": "Xóa tất cả quy luật định dạng có điều kiện từ trang tính “Supplier”."
+
+
+
+}

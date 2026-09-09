@@ -1,0 +1,27 @@
+{
+
+  "P03_T01_TITLE": "Task 1",
+  "P03_T01_INST": "Nevigate to the range named Convertible and delete the contents of the selected cells.",
+
+  "P03_T02_TITLE": "Task 2",
+  "P03_T02_INST": "On the Suppliers worksheet, in cells F2:G11, format the cells to display the numbers to two decimal places.",
+
+  "P03_T03_TITLE": "Task 3",
+  "P03_T03_INST": "On the Informatics Exam worksheet, remove the table row that contains “IELTS” data. Do not change any content outside the table.",
+
+  "P03_T04_TITLE": "Task 4",
+  "P03_T04_INST": "On the Gmetrix Account worksheet, in the “Monthly Averange” column, use a function to calculate the average monthly quantity for each exam from January through April.",
+
+  "P03_T05_TITLE": "Task 5",
+  "P03_T05_INST": "On the Gmetrix Account worksheet, modify the chart to disply Account as the Primary Vertical Axis Title.",
+
+  "P03_T06_TITLE": "Task 6",
+  "P03_T06_INST": "On the Used Car Sales worksheet, assign left alignment to the text in cell A2.",
+
+  "P03_T07_TITLE": "Task 7",
+  "P03_T07_INST": "On the Used Car Sales worksheet, extend the formula in cell I6 to the end of the table column.",
+
+  "P03_T08_TITLE": "Task 8",
+  "P03_T08_INST": "On the Suppliers worksheet, use a function to display the highest number from the “Stock Value” column."
+
+}

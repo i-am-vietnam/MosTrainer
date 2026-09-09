@@ -1,0 +1,7 @@
+<Solution>
+  <Project Path="../MosTrainer.Core/MosTrainer.Core.csproj" Id="c47f9fb2-b4a9-44cf-9c55-ee2829a207ce" />
+  <Project Path="../MosTrainer.Data/MosTrainer.Data.csproj" Id="72cc8607-030b-4d3a-b974-dc4deac09232" />
+  <Project Path="../MosTrainer.Excel/MosTrainer.Excel.csproj" Id="d5817fe2-9e8c-4b86-bd76-a3229edafea8" />
+  <Project Path="../MosTrainer.Projects/MosTrainer.Projects.csproj" Id="97906e61-8bcb-430e-9720-da035868ffac" />
+  <Project Path="MosTrainer.WinForms.csproj" Id="3938335e-f01a-44a5-981f-3b74c56584fd" />
+</Solution>

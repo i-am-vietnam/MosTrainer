@@ -1,0 +1,79 @@
+[
+    {
+        "taskId": "T01",
+        "titleKey": "P01_T01_TITLE",
+        "instructionKey": "P01_T01_INST",
+        "assertionType": "PrintAreaEquals",
+        "sheetName": "Exam Bookings",
+        "range": "A7:I46"
+    },
+    {
+        "taskId": "T02",
+        "titleKey": "P01_T02_TITLE",
+        "instructionKey": "P01_T02_INST",
+        "assertionType": "AutoFilterByHeaderEquals",
+        "sheetName": "Weekly Summary",
+        "columnHeader": "Certiport ID",
+        "expectedText": "90039921"
+    },
+    {
+        "taskId": "T03",
+        "titleKey": "P01_T03_TITLE",
+        "instructionKey": "P01_T03_INST",
+        "assertionType": "IfFormulaByHeaders",
+        "sheetName": "Suppliers",
+        "targetHeader": "Discount",
+        "criteriaHeader": "Quantity in Stock",
+        "operator": ">",
+        "threshold": 6000,
+        "trueText": "Yes",
+        "falseText": "No"
+    },
+    {
+        "taskId": "T04",
+        "titleKey": "P01_T04_TITLE",
+        "instructionKey": "P01_T04_INST",
+        "assertionType": "MultiLevelSortByHeaders",
+        "sheetName": "Suppliers",
+        "sortHeaders": [
+            "Toy Category",
+            "Supplier Name"
+        ],
+        "sortOrders": [
+            "Ascending",
+            "Ascending"
+        ]
+    },
+    {
+        "taskId": "T05",
+        "titleKey": "P01_T05_TITLE",
+        "instructionKey": "P01_T05_INST",
+        "assertionType": "EmailFormulaFromHeader",
+        "sheetName": "Customers",
+        "targetHeader": "Email Address",
+        "sourceHeader": "First Name",
+        "domain": "@tinhocsaoviet.com"
+    },
+    {
+        "taskId": "T06",
+        "titleKey": "P01_T06_TITLE",
+        "instructionKey": "P01_T06_INST",
+        "assertionType": "TableBandedRows",
+        "sheetName": "Exam Bookings"
+    },
+    {
+        "taskId": "T07",
+        "titleKey": "P01_T07_TITLE",
+        "instructionKey": "P01_T07_INST",
+        "assertionType": "ChartSheetExists",
+        "sheetName": "Fee Chart",
+        "sourceSheetName": "Exam Bookings"
+    },
+    {
+        "taskId": "T08",
+        "titleKey": "P01_T08_TITLE",
+        "instructionKey": "P01_T08_INST",
+        "assertionType": "NoConditionalFormatting",
+        "sheetName": "Suppliers"
+    }
+]

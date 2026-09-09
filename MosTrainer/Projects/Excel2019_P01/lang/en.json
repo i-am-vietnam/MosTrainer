@@ -1,0 +1,25 @@
+{
+  "P01_T01_TITLE": "Task 1",
+  "P01_T01_INST": "Configure the “Exam booking” worksheet so that only cells A7:I46 will be printed.",
+
+  "P01_T02_TITLE": "Task 2",
+  "P01_T02_INST": "On the “Weekly Summary” worksheet, filter the table data to display only the exams with a “Certiport ID” of “90039921”.",
+
+  "P01_T03_TITLE": "Task 3",
+  "P01_T03_INST": "On the “Suppliers” worksheet, in the “Discount” colum, use a function to display “Yes” if the “Quantity in Stock” is greater than 6000. Otherwise, display “No”",
+
+  "P01_T04_TITLE": "Task 4",
+  "P01_T04_INST": "On the “Suppliers” worksheet, perform a multi-level sort. Sort the table by “Toy Category” (A to Z) and then by “Supplier Name” (A to Z).",
+
+  "P01_T05_TITLE": "Task 5",
+  "P01_T05_INST": "On the “Customers” worksheet, in the “Email Address” column, use a function to construct email addresses for each person using the first name and “@tinhocsaoviet.com”",
+
+  "P01_T06_TITLE": "Task 6",
+  "P01_T06_INST": "On the “Exam Bookings” worksheet, configure the table style option to automatically shade every other table row.",
+
+  "P01_T07_TITLE": "Task 7",
+  "P01_T07_INST": "On the “Exam Bookings” worksheet, move the chart to a new chart sheet named “Fee Chart”.",
+
+  "P01_T08_TITLE": "Task 8",
+  "P01_T08_INST": "Remove all conditional formatting rules from the “Suppliers” worksheet."
+}
