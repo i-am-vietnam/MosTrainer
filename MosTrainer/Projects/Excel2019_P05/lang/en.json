@@ -1,0 +1,18 @@
+{
+  "P05_T01_TITLE": "Task 1",
+  "P05_T01_INST": "Add a link into the QR code image in the worksheet \"Figure\" to \"https://www.youtube.com/@tinhoc\".",
+  "P05_T02_TITLE": "Task 2",
+  "P05_T02_INST": "On the \"Informatics\" worksheet, name the table \"Informatics\".",
+  "P05_T03_TITLE": "Task 3",
+  "P05_T03_INST": "On the \"Figure\" worksheet, for the \"Revenue over the year\" chart, display a data table without legend keys.",
+  "P05_T04_TITLE": "Task 4",
+  "P05_T04_INST": "On the \"Sales by Exam\" worksheet, remove the table functionality from the table. Retain the font and cell formatting.",
+  "P05_T05_TITLE": "Task 5",
+  "P05_T05_INST": "On the \"Informatics\" worksheet, in the \"Total\" column, enter a formula that multiplies the value in the \"Quantity\" column by \"Fee\" named range. Use the range name in the formula instead of a cell reference or value.",
+  "P05_T06_TITLE": "Task 6",
+  "P05_T06_INST": "On the \"Informatics\" worksheet, configure the table style options to automatically shade every other table row.",
+  "P05_T07_TITLE": "Task 7",
+  "P05_T07_INST": "On the \"Figure\" worksheet, merge across cells K3:L3. Do the same for the ranges K11:L11, K19:L19.",
+  "P05_T08_TITLE": "Task 8",
+  "P05_T08_INST": "On the \"Figure\" worksheet, apply the Heading 4 to K3, K11, K19 and Explanatory Text to K4:L4, K12:L12, K20:L20."
+}

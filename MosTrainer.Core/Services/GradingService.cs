@@ -1,11 +1,57 @@
 ﻿using MosTrainer.Core.Interfaces;
 using MosTrainer.Core.Models;
 using System;
+using MosTrainer.Core.Diagnostics;
+using System.Collections.Generic;
 
 namespace MosTrainer.Core.Services
 {
     public class GradingService
     {
+        private static readonly HashSet<string> SupportedAssertionTypes =
+            new HashSet<string>(StringComparer.Ordinal)
+            {
+                "WorksheetExists", "CellValueEquals", "CellTextEquals", "CellFormulaEquals",
+                "CellFormulaEqualsNormalized", "NumberFormatEquals", "FillColorEquals",
+                "FontBoldEquals", "HorizontalAlignmentEquals", "TableExists", "ChartExists",
+                "NamedRangeExists", "PrintAreaEquals", "AutoFilterByHeaderEquals",
+                "IfFormulaByHeaders", "MultiLevelSortByHeaders", "EmailFormulaFromHeader",
+                "TableBandedRows", "ChartSheetExists", "NoConditionalFormatting",
+                "ImportedCsvAtCell", "ImportCsvAtCell", "ImportTextFileAtCell",
+                "ColumnWidthEquals", "ColumnWidthExactly", "ColumnSparklinesByRange",
+                "ColumnSparklines", "SparklineColumnByRange", "FreezePanesEquals",
+                "FreezeRowsAndColumns", "FreezeTopRows", "FreezeRows", "NamedRangesSumFormula",
+                "SumNamedRangesFormula", "NamedRangeSumFormula", "ChartAltTextEquals",
+                "ChartAltTextDescriptionEquals", "RangeIconSetEquals", "RangeTrafficLightsUnrimmed",
+                "RangeIconSet", "TableColumnIconSetEquals", "TableColumnIconSet",
+                "PriceColumnTrafficLights", "TrafficLightsUnrimmed", "TableStyleEquals",
+                "TableStyle", "TableStyleMedium1", "NamedRangeContentsCleared",
+                "NamedRangeContentDeleted", "NamedRangeCleared", "NamedRangeDeletedContents",
+                "RangeNumberFormatDecimalPlacesEquals", "RangeDecimalPlacesEquals",
+                "NumberDecimalPlacesEquals", "DecimalPlacesEquals", "TableRowContainingTextDeleted",
+                "DeleteTableRowContainingText", "TableRowDeletedByText", "RemoveTableRowContainingText",
+                "AverageFormulaByHeaders", "AverageFormulaFromHeaders", "MonthlyAverageFormula",
+                "AverageMonthlyQuantity", "ChartPrimaryVerticalAxisTitleEquals",
+                "PrimaryVerticalAxisTitleEquals", "ChartVerticalAxisTitleEquals", "ValueAxisTitleEquals",
+                "TableColumnFormulaFilledDown", "FormulaFilledDownToEndOfTableColumn",
+                "FillFormulaDownTableColumn", "ExtendFormulaToEndOfTableColumn", "MaxFormulaFromHeader",
+                "MaxFunctionFromHeader", "HighestNumberFromColumn", "MaxStockValue",
+                "ChartSwitchedRowColumn", "ChartSwitchRowColumn", "SwitchRowColumnChart",
+                "ChartRowsColumnsSwapped", "SwapChartDataOverAxis", "RangeFormattingMatches",
+                "FormattingCopiedFromRange", "TitleSubtitleFormattingCopied",
+                "CopyTitleSubtitleFormatting", "FormatPainterTitleSubtitle",
+                "ChartSheetLegendRemovedValueLabelsAbove", "ChartSheetNoLegendValueLabelsAbove",
+                "ChartDataLabelsValuesAboveNoLegend", "ChartLegendRemovedValueLabelsOnly",
+                "NoLegendValueLabelsAbove", "WorksheetTableConvertedToRange", "TableConvertedToRange",
+                "ConvertTableToRangeKeepFormatting", "TableConvertedToRangeKeepFormatting",
+                "ConvertToRangeKeepFormatting", "ReportClusteredColumnChartCreated",
+                "ClusteredColumnChartByHeaders", "ClusteredColumnChartMonthQuantity",
+                "ReportQuantityMonthlyClusteredColumnChart", "CreateMonthlyQuantityClusteredColumnChart",
+                "LeftFormulaByHeaders", "LeftFunctionByHeaders", "FirstCharactersFromHeader",
+                "First2CharactersFromCategory", "TtcFromCategoryLeft", "LastFirstNameFormulaAtCell",
+                "CenterFooterPageOfPagesEquals"
+            };
+
         private readonly IExcelController _excel;
 
         public GradingService(IExcelController excel)
@@ -15,18 +61,40 @@ namespace MosTrainer.Core.Services
 
         public (bool pass, string message) CheckTask(TaskDefinition task)
         {
-            if (task == null)
-                return (false, "Task is null.");
+            try
+            {
+                if (task == null)
+                    return (false, "Task is null.");
 
-            if (!_excel.IsOpened)
-                return (false, "Excel is not opened.");
+                if (!_excel.IsOpened)
+                    return (false, "Excel is not opened.");
 
-            string projectId = (task.ProjectId ?? "").Trim();
+                string projectId = (task.ProjectId ?? "").Trim();
 
-            if (projectId.StartsWith("Excel2019_", StringComparison.OrdinalIgnoreCase))
-                return CheckExcel2019Task(task);
+                if (projectId.StartsWith("Excel2019_", StringComparison.OrdinalIgnoreCase))
+                    return CheckExcel2019Task(task);
 
-            return (false, "Unsupported project: " + projectId);
+                return (false, "Unsupported project: " + projectId);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(
+                    "GradingService.CheckTask",
+                    "Unhandled grading exception.",
+                    ex,
+                    task == null ? "" : task.ProjectId,
+                    task == null ? "" : task.TaskId);
+
+                return (false, "FAIL");
+            }
+        }
+
+        public static bool IsAssertionTypeSupported(string assertionType)
+        {
+            if (string.IsNullOrWhiteSpace(assertionType))
+                return false;
+
+            return SupportedAssertionTypes.Contains(assertionType.Trim());
         }
 
         private (bool pass, string message) CheckExcel2019Task(TaskDefinition task)
@@ -69,6 +137,9 @@ namespace MosTrainer.Core.Services
         private (bool pass, string message) CheckByAssertion(TaskDefinition task)
         {
             string type = (task.AssertionType ?? "").Trim();
+
+            if (!IsAssertionTypeSupported(type))
+                return (false, "Unsupported assertion type: " + task.AssertionType);
 
             switch (type)
             {

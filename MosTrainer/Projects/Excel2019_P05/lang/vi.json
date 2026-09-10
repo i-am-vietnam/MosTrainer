@@ -1,0 +1,18 @@
+﻿{
+  "P05_T01_TITLE": "Task 1",
+  "P05_T01_INST": "Thêm một liên kết vào hình ảnh mã QR trong trang tính \"Figure\" trỏ tới địa chỉ \"https://www.youtube.com/@tinhoc\".",
+  "P05_T02_TITLE": "Task 2",
+  "P05_T02_INST": "Trên trang tính \"Informatics\", đặt tên cho bảng là \"Informatics\".",
+  "P05_T03_TITLE": "Task 3",
+  "P05_T03_INST": "Trên trang tính \"Figure\", đối với biểu đồ \"Revenue over the year\", hãy hiển thị một bảng dữ liệu không có các khóa chú giải.",
+  "P05_T04_TITLE": "Task 4",
+  "P05_T04_INST": "Trên trang tính \"Sales by Exam\", loại bỏ chức năng bảng khỏi bảng dữ liệu. Giữ nguyên định dạng phông chữ và định dạng ô.",
+  "P05_T05_TITLE": "Task 5",
+  "P05_T05_INST": "Trên trang tính \"Informatics\", tại cột \"Total\", hãy nhập một công thức nhân giá trị trong cột \"Quantity\" với vùng được đặt tên là \"Fee\". Sử dụng tên vùng trong công thức thay vì dùng tham chiếu ô hoặc giá trị.",
+  "P05_T06_TITLE": "Task 6",
+  "P05_T06_INST": "Trên trang tính \"Informatics\", định cấu hình các tùy chọn kiểu bảng để tự động tô bóng xen kẽ các hàng trong bảng.",
+  "P05_T07_TITLE": "Task 7",
+  "P05_T07_INST": "Trên trang tính \"Figure\", gộp theo hàng ngang các ô K3:L3. Thực hiện tương tự cho các vùng K11:L11, K19:L19.",
+  "P05_T08_TITLE": "Task 8",
+  "P05_T08_INST": "Trên trang tính \"Figure\", áp dụng kiểu Heading 4 cho các ô K3, K11, K19 và kiểu Explanatory Text cho các ô K4:L4, K12:L12, K20:L20."
+}

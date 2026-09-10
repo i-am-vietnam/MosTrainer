@@ -46,6 +46,7 @@
   <ItemGroup>
     <Compile Include="Class1.cs" />
     <Compile Include="ProjectLoader.cs" />
+    <Compile Include="ProjectValidator.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>

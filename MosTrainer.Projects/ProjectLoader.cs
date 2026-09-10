@@ -1,5 +1,5 @@
 ﻿using MosTrainer.Core.Models;
-using Newtonsoft.Json;
+using MosTrainer.Core.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -9,55 +9,65 @@ namespace MosTrainer.Projects
 {
     public class ProjectLoader
     {
+        private readonly ProjectValidator _validator = new ProjectValidator();
+
         public List<ProjectPackage> LoadAll(string rootProjectsFolder, string languageCode)
         {
             if (string.IsNullOrWhiteSpace(rootProjectsFolder) || !Directory.Exists(rootProjectsFolder))
+            {
+                AppLogger.Warning("ProjectLoader.LoadAll", "Projects folder does not exist: " + rootProjectsFolder);
                 return new List<ProjectPackage>();
+            }
 
             string langCode = string.IsNullOrWhiteSpace(languageCode)
                 ? "en"
                 : languageCode.Trim().ToLowerInvariant();
 
             var packages = new List<ProjectPackage>();
+            string[] projectDirectories;
 
-            foreach (string dir in Directory.GetDirectories(rootProjectsFolder))
+            try
             {
-                string metaPath = Path.Combine(dir, "meta.json");
-                string tasksPath = Path.Combine(dir, "tasks.json");
+                projectDirectories = Directory.GetDirectories(rootProjectsFolder);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ProjectLoader.LoadAll", "Projects folder could not be enumerated.", ex);
+                return packages;
+            }
 
-                if (!File.Exists(metaPath) || !File.Exists(tasksPath))
-                    continue;
-
+            foreach (string dir in projectDirectories)
+            {
                 try
                 {
-                    ProjectMeta meta = JsonConvert.DeserializeObject<ProjectMeta>(File.ReadAllText(metaPath))
-                                       ?? new ProjectMeta();
-
-                    if (string.IsNullOrWhiteSpace(meta.ProjectId))
-                        meta.ProjectId = new DirectoryInfo(dir).Name;
-
-                    List<TaskDefinition> tasks = JsonConvert.DeserializeObject<List<TaskDefinition>>(File.ReadAllText(tasksPath))
-                                                 ?? new List<TaskDefinition>();
-
-                    foreach (TaskDefinition task in tasks)
+                    ValidationResult validation = _validator.Validate(dir, langCode);
+                    if (validation.HasErrors)
                     {
-                        if (task != null)
-                            task.ProjectId = meta.ProjectId;
+                        AppLogger.Error(
+                            "ProjectLoader.LoadAll",
+                            "Project rejected by structural validation. Errors=" + validation.ErrorCount +
+                            ", Warnings=" + validation.WarningCount + ".",
+                            validation.Meta == null ? new DirectoryInfo(dir).Name : validation.Meta.ProjectId);
+                        continue;
                     }
 
-                    Dictionary<string, string> lang = LoadLanguage(dir, langCode);
+                    Dictionary<string, string> lang = SelectLanguage(validation, langCode);
 
                     packages.Add(new ProjectPackage
                     {
-                        Meta = meta,
-                        Tasks = tasks,
+                        Meta = validation.Meta,
+                        Tasks = validation.Tasks,
                         Lang = lang,
                         ProjectFolderPath = dir
                     });
                 }
-                catch
+                catch (Exception ex)
                 {
-                    // Nếu một project lỗi JSON hoặc thiếu file, bỏ qua project đó để app không crash.
+                    AppLogger.Error(
+                        "ProjectLoader.LoadAll",
+                        "Unexpected error while loading project.",
+                        ex,
+                        new DirectoryInfo(dir).Name);
                     continue;
                 }
             }
@@ -79,31 +89,19 @@ namespace MosTrainer.Projects
             return key;
         }
 
-        private Dictionary<string, string> LoadLanguage(string projectFolder, string languageCode)
+        private Dictionary<string, string> SelectLanguage(ValidationResult validation, string languageCode)
         {
-            string langFolder = Path.Combine(projectFolder, "lang");
-            string langPath = Path.Combine(langFolder, languageCode + ".json");
-            string enPath = Path.Combine(langFolder, "en.json");
-
-            string pathToRead = null;
-
-            if (File.Exists(langPath))
-                pathToRead = langPath;
-            else if (File.Exists(enPath))
-                pathToRead = enPath;
-
-            if (string.IsNullOrWhiteSpace(pathToRead))
+            if (validation == null || validation.Languages == null)
                 return new Dictionary<string, string>();
 
-            try
-            {
-                return JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(pathToRead))
-                       ?? new Dictionary<string, string>();
-            }
-            catch
-            {
-                return new Dictionary<string, string>();
-            }
+            Dictionary<string, string> language;
+            if (validation.Languages.TryGetValue(languageCode, out language))
+                return language;
+
+            if (validation.Languages.TryGetValue("en", out language))
+                return language;
+
+            return validation.Languages.Values.FirstOrDefault() ?? new Dictionary<string, string>();
         }
     }
 }

@@ -45,10 +45,13 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs" />
+    <Compile Include="Diagnostics\AppLogger.cs" />
     <Compile Include="Interfaces\IExcelController.cs" />
     <Compile Include="Models\ProjectMeta.cs" />
     <Compile Include="Models\ProjectPackage.cs" />
     <Compile Include="Models\TaskDefinition.cs" />
+    <Compile Include="Models\ValidationIssue.cs" />
+    <Compile Include="Models\ValidationResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\GradingService.cs" />
   </ItemGroup>

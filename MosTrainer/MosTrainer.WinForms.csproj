@@ -115,6 +115,21 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <None Include="packages.config" />
+    <None Include="Projects\Excel2019_P05\lang\en.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Projects\Excel2019_P05\lang\vi.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Projects\Excel2019_P05\meta.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Projects\Excel2019_P05\starter.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Projects\Excel2019_P05\tasks.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Projects\Excel2019_P01\lang\en.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
@@ -215,6 +230,7 @@
   <ItemGroup>
     <Folder Include="Projects\Excel2019_P01\assets\" />
     <Folder Include="Projects\Excel2019_P03\assets\" />
+    <Folder Include="Projects\Excel2019_P05\assets\" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="Microsoft.Office.Core">

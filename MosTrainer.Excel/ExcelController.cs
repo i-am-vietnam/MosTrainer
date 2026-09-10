@@ -1,5 +1,6 @@
 ﻿using Microsoft.Office.Interop.Excel;
 using MosTrainer.Core.Interfaces;
+using MosTrainer.Core.Diagnostics;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -10,6 +11,8 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Xl = Microsoft.Office.Interop.Excel;
 using System.IO.Compression;
+using System.Linq;
+using System.Xml.Linq;
 
 namespace MosTrainer.Excel
 {
@@ -95,8 +98,10 @@ namespace MosTrainer.Excel
                 app = null;
                 wb = null;
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Error("ExcelController.OpenWorkbook", "Workbook could not be opened: " + filePath, ex);
+
                 if (wb != null)
                 {
                     try { wb.Close(false); } catch { }
@@ -3946,6 +3951,7 @@ namespace MosTrainer.Excel
 
             if (string.IsNullOrWhiteSpace(sheetName)) return false;
             if (string.IsNullOrWhiteSpace(rangeAddress)) return false;
+            if (string.IsNullOrWhiteSpace(expectedIconSetName)) return false;
 
             Xl.Workbook wb = null;
             string tempPath = "";
@@ -3969,10 +3975,17 @@ namespace MosTrainer.Excel
                 return XlsxHasIconSetConditionalFormattingOnRangeP2T7Xml(
                     tempPath,
                     sheetName,
-                    rangeAddress);
+                    rangeAddress,
+                    expectedIconSetName);
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Error(
+                    "RangeIconSetEquals",
+                    "P02_T07 icon-set grading failed.",
+                    ex,
+                    "Excel2019_P02",
+                    "P02_T07");
                 return false;
             }
             finally
@@ -3982,7 +3995,14 @@ namespace MosTrainer.Excel
                     if (!string.IsNullOrWhiteSpace(tempPath) && File.Exists(tempPath))
                         File.Delete(tempPath);
                 }
-                catch { }
+                catch (Exception ex)
+                {
+                    AppLogger.Warning(
+                        "RangeIconSetEquals",
+                        "Temporary grading copy could not be deleted: " + ex.Message,
+                        "Excel2019_P02",
+                        "P02_T07");
+                }
 
                 // Không ReleaseCom(wb) vì đây là workbook chính trong _session.
             }
@@ -3994,11 +4014,16 @@ namespace MosTrainer.Excel
         {
             return RangeIconSetEquals(sheetName, "G10:G40", expectedIconSetName);
         }
-        private bool XlsxHasIconSetConditionalFormattingOnRangeP2T7Xml(string xlsxPath,string sheetName,string expectedRange)
+        private bool XlsxHasIconSetConditionalFormattingOnRangeP2T7Xml(
+            string xlsxPath,
+            string sheetName,
+            string expectedRange,
+            string expectedIconSetName)
         {
             if (string.IsNullOrWhiteSpace(xlsxPath) || !File.Exists(xlsxPath)) return false;
             if (string.IsNullOrWhiteSpace(sheetName)) return false;
             if (string.IsNullOrWhiteSpace(expectedRange)) return false;
+            if (string.IsNullOrWhiteSpace(expectedIconSetName)) return false;
 
             try
             {
@@ -4017,11 +4042,20 @@ namespace MosTrainer.Excel
                     if (string.IsNullOrWhiteSpace(sheetXml))
                         return false;
 
-                    return WorksheetXmlHasIconSetOnRangeP2T7Xml(sheetXml, expectedRange);
+                    return WorksheetXmlHasIconSetOnRangeP2T7Xml(
+                        sheetXml,
+                        expectedRange,
+                        expectedIconSetName);
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Error(
+                    "RangeIconSetEquals.Xml",
+                    "P02_T07 workbook XML could not be inspected.",
+                    ex,
+                    "Excel2019_P02",
+                    "P02_T07");
                 return false;
             }
         }
@@ -4045,46 +4079,34 @@ namespace MosTrainer.Excel
                 if (string.IsNullOrWhiteSpace(workbookXml) || string.IsNullOrWhiteSpace(relsXml))
                     return "";
 
-                string escapedSheetName = Regex.Escape(sheetName.Trim());
+                XDocument workbookDocument = XDocument.Parse(workbookXml);
+                XElement sheetElement = workbookDocument
+                    .Descendants()
+                    .FirstOrDefault(element =>
+                        string.Equals(element.Name.LocalName, "sheet", StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(
+                            NormalizeSheetNameP2T7Xml(GetAttributeValueP2T7Xml(element, "name")),
+                            NormalizeSheetNameP2T7Xml(sheetName),
+                            StringComparison.Ordinal));
 
-                Match sheetMatch = Regex.Match(
-                    workbookXml,
-                    @"<sheet\b[^>]*\bname\s*=\s*""" + escapedSheetName + @"""[^>]*\br:id\s*=\s*""(?<rid>[^""]+)""[^>]*/?>",
-                    RegexOptions.IgnoreCase | RegexOptions.Singleline);
-
-                if (!sheetMatch.Success)
-                {
-                    // fallback: tìm sheet theo normalize tên, tránh lỗi khoảng trắng hoặc khác hoa thường
-                    foreach (Match m in Regex.Matches(
-                        workbookXml,
-                        @"<sheet\b[^>]*\bname\s*=\s*""(?<name>[^""]+)""[^>]*\br:id\s*=\s*""(?<rid>[^""]+)""[^>]*/?>",
-                        RegexOptions.IgnoreCase | RegexOptions.Singleline))
-                    {
-                        string actualName = m.Groups["name"].Value;
-                        if (NormalizeSheetNameP2T7Xml(actualName) == NormalizeSheetNameP2T7Xml(sheetName))
-                        {
-                            sheetMatch = m;
-                            break;
-                        }
-                    }
-                }
-
-                if (!sheetMatch.Success)
+                if (sheetElement == null)
                     return "";
 
-                string rid = sheetMatch.Groups["rid"].Value;
+                string rid = GetAttributeValueP2T7Xml(sheetElement, "id");
                 if (string.IsNullOrWhiteSpace(rid))
                     return "";
 
-                Match relMatch = Regex.Match(
-                    relsXml,
-                    @"<Relationship\b[^>]*\bId\s*=\s*""" + Regex.Escape(rid) + @"""[^>]*\bTarget\s*=\s*""(?<target>[^""]+)""[^>]*/?>",
-                    RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                XDocument relationshipsDocument = XDocument.Parse(relsXml);
+                XElement relationshipElement = relationshipsDocument
+                    .Descendants()
+                    .FirstOrDefault(element =>
+                        string.Equals(element.Name.LocalName, "Relationship", StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(GetAttributeValueP2T7Xml(element, "Id"), rid, StringComparison.Ordinal));
 
-                if (!relMatch.Success)
+                if (relationshipElement == null)
                     return "";
 
-                string target = relMatch.Groups["target"].Value;
+                string target = GetAttributeValueP2T7Xml(relationshipElement, "Target");
                 if (string.IsNullOrWhiteSpace(target))
                     return "";
 
@@ -4099,51 +4121,117 @@ namespace MosTrainer.Excel
 
                 return target;
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Error(
+                    "RangeIconSetEquals.FindWorksheet",
+                    "P02_T07 worksheet XML relationship could not be resolved.",
+                    ex,
+                    "Excel2019_P02",
+                    "P02_T07");
                 return "";
             }
         }
 
-        private bool WorksheetXmlHasIconSetOnRangeP2T7Xml(string sheetXml, string expectedRange)
+        private string GetAttributeValueP2T7Xml(XElement element, string localName)
+        {
+            if (element == null || string.IsNullOrWhiteSpace(localName))
+                return "";
+
+            XAttribute attribute = element.Attributes().FirstOrDefault(item =>
+                string.Equals(item.Name.LocalName, localName, StringComparison.OrdinalIgnoreCase));
+
+            return attribute == null ? "" : attribute.Value;
+        }
+
+        private bool WorksheetXmlHasIconSetOnRangeP2T7Xml(
+            string sheetXml,
+            string expectedRange,
+            string expectedIconSetName)
         {
             if (string.IsNullOrWhiteSpace(sheetXml)) return false;
             if (string.IsNullOrWhiteSpace(expectedRange)) return false;
 
+            string expectedOoxmlIconSet;
+            if (!TryMapExpectedIconSetP2T7(expectedIconSetName, out expectedOoxmlIconSet))
+            {
+                AppLogger.Warning(
+                    "RangeIconSetEquals",
+                    "Unsupported expected icon-set name: " + expectedIconSetName,
+                    "Excel2019_P02",
+                    "P02_T07");
+                return false;
+            }
+
             try
             {
-                foreach (Match cfMatch in Regex.Matches(
-                    sheetXml,
-                    @"<conditionalFormatting\b[^>]*\bsqref\s*=\s*""(?<sqref>[^""]+)""[^>]*>(?<body>.*?)</conditionalFormatting>",
-                    RegexOptions.IgnoreCase | RegexOptions.Singleline))
+                XDocument worksheetDocument = XDocument.Parse(sheetXml);
+
+                foreach (XElement conditionalFormatting in worksheetDocument.Descendants()
+                    .Where(element => string.Equals(
+                        element.Name.LocalName,
+                        "conditionalFormatting",
+                        StringComparison.OrdinalIgnoreCase)))
                 {
-                    string sqref = cfMatch.Groups["sqref"].Value;
-                    string body = cfMatch.Groups["body"].Value;
+                    string sqref = GetAttributeValueP2T7Xml(conditionalFormatting, "sqref");
+                    if (string.IsNullOrWhiteSpace(sqref))
+                    {
+                        XElement sqrefElement = conditionalFormatting.Descendants()
+                            .FirstOrDefault(element => string.Equals(
+                                element.Name.LocalName, "sqref", StringComparison.OrdinalIgnoreCase));
+                        sqref = sqrefElement == null ? "" : sqrefElement.Value;
+                    }
 
-                    if (string.IsNullOrWhiteSpace(sqref) || string.IsNullOrWhiteSpace(body))
+                    if (!SqrefExactlyMatchesRangeP2T7Xml(sqref, expectedRange))
                         continue;
 
-                    bool rangeOk = SqrefContainsOrIntersectsRangeP2T7Xml(sqref, expectedRange);
-                    if (!rangeOk)
-                        continue;
+                    foreach (XElement rule in conditionalFormatting.Descendants()
+                        .Where(element => string.Equals(
+                            element.Name.LocalName, "cfRule", StringComparison.OrdinalIgnoreCase)))
+                    {
+                        if (!string.Equals(
+                            GetAttributeValueP2T7Xml(rule, "type"),
+                            "iconSet",
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            continue;
+                        }
 
-                    bool hasIconSetRule =
-                        Regex.IsMatch(body, @"<cfRule\b[^>]*\btype\s*=\s*""iconSet""", RegexOptions.IgnoreCase | RegexOptions.Singleline) ||
-                        Regex.IsMatch(body, @"<iconSet\b", RegexOptions.IgnoreCase | RegexOptions.Singleline);
+                        XElement iconSet = rule.Descendants().FirstOrDefault(element =>
+                            string.Equals(element.Name.LocalName, "iconSet", StringComparison.OrdinalIgnoreCase));
 
-                    if (hasIconSetRule)
-                        return true;
+                        if (iconSet == null)
+                            continue;
+
+                        string actualIconSet = GetAttributeValueP2T7Xml(iconSet, "iconSet");
+                        if (string.IsNullOrWhiteSpace(actualIconSet))
+                            actualIconSet = "3TrafficLights1";
+
+                        if (string.Equals(
+                            actualIconSet,
+                            expectedOoxmlIconSet,
+                            StringComparison.OrdinalIgnoreCase))
+                        {
+                            return true;
+                        }
+                    }
                 }
 
                 return false;
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Error(
+                    "RangeIconSetEquals.WorksheetXml",
+                    "P02_T07 worksheet conditional-formatting XML could not be parsed.",
+                    ex,
+                    "Excel2019_P02",
+                    "P02_T07");
                 return false;
             }
         }
 
-        private bool SqrefContainsOrIntersectsRangeP2T7Xml(string sqref, string expectedRange)
+        private bool SqrefExactlyMatchesRangeP2T7Xml(string sqref, string expectedRange)
         {
             if (string.IsNullOrWhiteSpace(sqref)) return false;
             if (string.IsNullOrWhiteSpace(expectedRange)) return false;
@@ -4154,41 +4242,62 @@ namespace MosTrainer.Excel
                 if (!TryParseA1RangeP2T7Xml(expectedRange, out eRow1, out eCol1, out eRow2, out eCol2))
                     return false;
 
-                string[] parts = sqref.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                string[] parts = sqref.Split(
+                    new char[] { ' ', '\t', '\r', '\n' },
+                    StringSplitOptions.RemoveEmptyEntries);
 
-                for (int i = 0; i < parts.Length; i++)
-                {
-                    int r1, c1, r2, c2;
-                    if (!TryParseA1RangeP2T7Xml(parts[i], out r1, out c1, out r2, out c2))
-                        continue;
+                if (parts.Length != 1)
+                    return false;
 
-                    bool intersects =
-                        r1 <= eRow2 &&
-                        r2 >= eRow1 &&
-                        c1 <= eCol2 &&
-                        c2 >= eCol1;
+                int r1, c1, r2, c2;
+                if (!TryParseA1RangeP2T7Xml(parts[0], out r1, out c1, out r2, out c2))
+                    return false;
 
-                    bool containsExpected =
-                        r1 <= eRow1 &&
-                        r2 >= eRow2 &&
-                        c1 <= eCol1 &&
-                        c2 >= eCol2;
-
-                    bool exact =
-                        r1 == eRow1 &&
-                        r2 == eRow2 &&
-                        c1 == eCol1 &&
-                        c2 == eCol2;
-
-                    if (exact || containsExpected || intersects)
-                        return true;
-                }
-
+                return r1 == eRow1 &&
+                       r2 == eRow2 &&
+                       c1 == eCol1 &&
+                       c2 == eCol2;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(
+                    "RangeIconSetEquals.Range",
+                    "P02_T07 conditional-formatting range could not be compared.",
+                    ex,
+                    "Excel2019_P02",
+                    "P02_T07");
                 return false;
             }
-            catch
-            {
+        }
+
+        private bool TryMapExpectedIconSetP2T7(string expectedIconSetName, out string ooxmlIconSetName)
+        {
+            ooxmlIconSetName = "";
+            if (string.IsNullOrWhiteSpace(expectedIconSetName))
                 return false;
+
+            string normalized = Regex.Replace(
+                expectedIconSetName,
+                @"[^A-Z0-9]+",
+                "",
+                RegexOptions.IgnoreCase).ToUpperInvariant();
+
+            switch (normalized)
+            {
+                case "3TRAFFICLIGHTSUNRIMMED":
+                case "3TRAFFICLIGHTS1":
+                case "XL3TRAFFICLIGHTS1":
+                    ooxmlIconSetName = "3TrafficLights1";
+                    return true;
+
+                case "3TRAFFICLIGHTSRIMMED":
+                case "3TRAFFICLIGHTS2":
+                case "XL3TRAFFICLIGHTS2":
+                    ooxmlIconSetName = "3TrafficLights2";
+                    return true;
+
+                default:
+                    return false;
             }
         }
 
@@ -4251,8 +4360,14 @@ namespace MosTrainer.Excel
 
                 return row1 > 0 && col1 > 0 && row2 > 0 && col2 > 0;
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Error(
+                    "RangeIconSetEquals.ParseRange",
+                    "P02_T07 A1 range could not be parsed.",
+                    ex,
+                    "Excel2019_P02",
+                    "P02_T07");
                 return false;
             }
         }
@@ -4289,8 +4404,14 @@ namespace MosTrainer.Excel
                     return reader.ReadToEnd();
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                AppLogger.Error(
+                    "RangeIconSetEquals.ReadXml",
+                    "P02_T07 XML part could not be read.",
+                    ex,
+                    "Excel2019_P02",
+                    "P02_T07");
                 return "";
             }
         }
