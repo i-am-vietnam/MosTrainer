@@ -1,26 +1,80 @@
 [
-  { "taskId": "T01"
-  
-
- },
-
-  { "taskId": "T02"
- 
-},
-
-
   {
-  "taskId": "T03"
- 
-},
-
+    "taskId": "T01",
+    "titleKey": "P05_T01_TITLE",
+    "instructionKey": "P05_T01_INST",
+    "assertionType": "ShapeHyperlinkEquals",
+    "sheetName": "Figure",
+    "shapeName": "Picture 4",
+    "cell": "K25",
+    "expectedText": "https://www.youtube.com/@tinhoc"
+  },
   {
-  "taskId": "T04"
- 
-},
+    "taskId": "T02",
+    "titleKey": "P05_T02_TITLE",
+    "instructionKey": "P05_T02_INST",
+    "assertionType": "TableExists",
+    "sheetName": "Informatics",
+    "tableName": "Informatics"
+  },
   {
-  "taskId": "T05"
- 
-}
-
+    "taskId": "T03",
+    "titleKey": "P05_T03_TITLE",
+    "instructionKey": "P05_T03_INST",
+    "assertionType": "ChartDataTableWithoutLegendKeys",
+    "sheetName": "Figure",
+    "chartTitle": "Revenue over the year",
+    "chartName": "Chart 1"
+  },
+  {
+    "taskId": "T04",
+    "titleKey": "P05_T04_TITLE",
+    "instructionKey": "P05_T04_INST",
+    "assertionType": "SalesByExamTableConvertedToRange",
+    "sheetName": "Sales by Exam",
+    "tableName": "Table510",
+    "range": "A1:M6",
+    "expectedRowCount": 4,
+    "sourceHeaders": [
+      "Exam", "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ]
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P05_T05_TITLE",
+    "instructionKey": "P05_T05_INST",
+    "assertionType": "TableColumnFormulaUsesNamedRange",
+    "sheetName": "Informatics",
+    "tableName": "Informatics",
+    "targetHeader": "Total",
+    "sourceHeader": "Quantity",
+    "namedRange": "Fee"
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P05_T06_TITLE",
+    "instructionKey": "P05_T06_INST",
+    "assertionType": "TableBandedRows",
+    "sheetName": "Informatics"
+  },
+  {
+    "taskId": "T07",
+    "titleKey": "P05_T07_TITLE",
+    "instructionKey": "P05_T07_INST",
+    "assertionType": "RangesMergedExactly",
+    "sheetName": "Figure",
+    "targetRanges": ["K3:L3", "K11:L11", "K19:L19"]
+  },
+  {
+    "taskId": "T08",
+    "titleKey": "P05_T08_TITLE",
+    "instructionKey": "P05_T08_INST",
+    "assertionType": "CellStylesApplied",
+    "sheetName": "Figure",
+    "targetRanges": ["K3", "K11", "K19"],
+    "expectedFormat": "Heading 4",
+    "secondaryRanges": ["K4:L4", "K12:L12", "K20:L20"],
+    "secondaryExpectedFormat": "Explanatory Text"
+  }
 ]

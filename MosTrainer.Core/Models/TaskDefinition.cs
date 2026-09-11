@@ -30,6 +30,8 @@ namespace MosTrainer.Core.Models
 
         public string TableName { get; set; } = "";
         public string ChartTitle { get; set; } = "";
+        public string ChartName { get; set; } = "";
+        public string ShapeName { get; set; } = "";
         public string NamedRange { get; set; } = "";
         public string ColumnHeader { get; set; } = "";
         public string TargetHeader { get; set; } = "";
@@ -49,6 +51,9 @@ namespace MosTrainer.Core.Models
         public string DataRange { get; set; } = "";
         public string LocationRange { get; set; } = "";
         public List<string> RangeNames { get; set; } = new List<string>();
+        public List<string> TargetRanges { get; set; } = new List<string>();
+        public List<string> SecondaryRanges { get; set; } = new List<string>();
+        public string SecondaryExpectedFormat { get; set; } = "";
         public int FreezeRows { get; set; }
         public int FreezeColumns { get; set; }
         public int DecimalPlaces { get; set; }

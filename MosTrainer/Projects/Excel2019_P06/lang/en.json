@@ -1,0 +1,18 @@
+{
+  "P06_T01_TITLE": "Task 1",
+  "P06_T01_INST": "On the \"Computing Fundamentals\" worksheet, apply the Colorful Palette 2 color to the chart.",
+  "P06_T02_TITLE": "Task 2",
+  "P06_T02_INST": "On the \"Key Applications\" worksheet, in cell F32, use a function to determine how many students do not have an \"PowerPoint\" result.",
+  "P06_T03_TITLE": "Task 3",
+  "P06_T03_INST": "On the \"Key Applications\" worksheet, using the Format Painter feature to copy formatting from cell A32 to the cells A35:A37.",
+  "P06_T04_TITLE": "Task 4",
+  "P06_T04_INST": "Add the word \"Version 20230328\" to the Title property of the document.",
+  "P06_T05_TITLE": "Task 5",
+  "P06_T05_INST": "On the \"Living Online\" worksheet, format the data range A1:G30 as a table that has headers. Apply the Orange, Table Style Medium 7 (Table Style Medium 7) format.",
+  "P06_T06_TITLE": "Task 6",
+  "P06_T06_INST": "On the \"Computing Fundamentals\" worksheet, modify the column width of the columns B through J to 15.22.",
+  "P06_T07_TITLE": "Task 7",
+  "P06_T07_INST": "On the \"Computing Fundamentals\" worksheet, configure C1:H1 so that entries wider than the column wrap to multiple lines.",
+  "P06_T08_TITLE": "Task 8",
+  "P06_T08_INST": "Move the chart on the \"Living Online\" worksheet as chart sheet named \"Living Online Chart\"."
+}

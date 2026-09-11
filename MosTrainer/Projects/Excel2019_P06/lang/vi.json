@@ -1,0 +1,18 @@
+﻿{
+  "P06_T01_TITLE": "Nhiệm vụ 1",
+  "P06_T01_INST": "Trên trang tính \"Computing Fundamentals\", áp dụng màu Colorful Palette 2 cho biểu đồ.",
+  "P06_T02_TITLE": "Nhiệm vụ 2",
+  "P06_T02_INST": "Trên trang tính \"Key Applications\", tại ô F32, sử dụng hàm để xác định có bao nhiêu sinh viên chưa có kết quả \"PowerPoint\".",
+  "P06_T03_TITLE": "Nhiệm vụ 3",
+  "P06_T03_INST": "Trên trang tính \"Key Applications\", sử dụng tính năng Format Painter để sao chép định dạng từ ô A32 sang các ô A35:A37.",
+  "P06_T04_TITLE": "Nhiệm vụ 4",
+  "P06_T04_INST": "Thêm từ \"Version 20230328\" vào thuộc tính Title của tài liệu.",
+  "P06_T05_TITLE": "Nhiệm vụ 5",
+  "P06_T05_INST": "Trên trang tính \"Living Online\", định dạng vùng dữ liệu A1:G30 thành bảng có tiêu đề. Áp dụng định dạng Orange, Table Style Medium 7 (Table Style Medium 7).",
+  "P06_T06_TITLE": "Nhiệm vụ 6",
+  "P06_T06_INST": "Trên trang tính \"Computing Fundamentals\", thay đổi độ rộng các cột từ B đến J thành 15.22.",
+  "P06_T07_TITLE": "Nhiệm vụ 7",
+  "P06_T07_INST": "Trên trang tính \"Computing Fundamentals\", thiết lập C1:H1 để các nội dung rộng hơn cột tự động xuống nhiều dòng.",
+  "P06_T08_TITLE": "Nhiệm vụ 8",
+  "P06_T08_INST": "Di chuyển biểu đồ trên trang tính \"Living Online\" thành một trang tính biểu đồ có tên \"Living Online Chart\"."
+}

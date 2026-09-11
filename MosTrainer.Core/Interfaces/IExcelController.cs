@@ -99,6 +99,18 @@ namespace MosTrainer.Core.Interfaces
         bool LastFirstNameFormulaAtCell(string sheetName, string targetCellAddress, string lastNameHeader, string firstNameHeader, string separator);
         // Excel 2019 - Project 4 Task 8
         bool CenterFooterPageOfPagesEquals(string sheetName);
+        // Excel 2019 - Project 5 Task 1
+        bool ShapeHyperlinkEquals(string sheetName, string shapeName, string topLeftCellAddress, string expectedUrl);
+        // Excel 2019 - Project 5 Task 3
+        bool ChartDataTableWithoutLegendKeys(string sheetName, string chartTitle, string chartName);
+        // Excel 2019 - Project 5 Task 4
+        bool SalesByExamTableConvertedToRange(string sheetName, string rangeAddress, string tableName, IList<string> expectedHeaders, int expectedDataRowCount);
+        // Excel 2019 - Project 5 Task 5
+        bool TableColumnFormulaUsesNamedRange(string sheetName, string tableName, string targetHeader, string sourceHeader, string namedRangeName);
+        // Excel 2019 - Project 5 Task 7
+        bool RangesMergedExactly(string sheetName, IList<string> rangeAddresses);
+        // Excel 2019 - Project 5 Task 8
+        bool CellStylesApplied(string sheetName, IList<string> primaryRanges, string primaryStyleName, IList<string> secondaryRanges, string secondaryStyleName);
         string GetCellDisplayText(string address);
     }
 }

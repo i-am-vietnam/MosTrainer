@@ -49,7 +49,9 @@ namespace MosTrainer.Core.Services
                 "ReportQuantityMonthlyClusteredColumnChart", "CreateMonthlyQuantityClusteredColumnChart",
                 "LeftFormulaByHeaders", "LeftFunctionByHeaders", "FirstCharactersFromHeader",
                 "First2CharactersFromCategory", "TtcFromCategoryLeft", "LastFirstNameFormulaAtCell",
-                "CenterFooterPageOfPagesEquals"
+                "CenterFooterPageOfPagesEquals", "ShapeHyperlinkEquals",
+                "ChartDataTableWithoutLegendKeys", "SalesByExamTableConvertedToRange",
+                "TableColumnFormulaUsesNamedRange", "RangesMergedExactly", "CellStylesApplied"
             };
 
         private readonly IExcelController _excel;
@@ -109,6 +111,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P03(task);
                 case "Excel2019_P04":
                     return CheckExcel2019P04(task);
+                case "Excel2019_P05":
+                    return CheckExcel2019P05(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -131,6 +135,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P04(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P05(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -420,6 +428,54 @@ namespace MosTrainer.Core.Services
                 //Project 4 task 8
                 case "CenterFooterPageOfPagesEquals":
                     return Result(_excel.CenterFooterPageOfPagesEquals(task.SheetName));
+
+                // Project 5 task 1
+                case "ShapeHyperlinkEquals":
+                    return Result(_excel.ShapeHyperlinkEquals(
+                        task.SheetName,
+                        task.ShapeName,
+                        task.Cell,
+                        task.ExpectedText));
+
+                // Project 5 task 3
+                case "ChartDataTableWithoutLegendKeys":
+                    return Result(_excel.ChartDataTableWithoutLegendKeys(
+                        task.SheetName,
+                        task.ChartTitle,
+                        task.ChartName));
+
+                // Project 5 task 4
+                case "SalesByExamTableConvertedToRange":
+                    return Result(_excel.SalesByExamTableConvertedToRange(
+                        task.SheetName,
+                        task.Range,
+                        task.TableName,
+                        task.SourceHeaders,
+                        task.ExpectedRowCount));
+
+                // Project 5 task 5
+                case "TableColumnFormulaUsesNamedRange":
+                    return Result(_excel.TableColumnFormulaUsesNamedRange(
+                        task.SheetName,
+                        task.TableName,
+                        task.TargetHeader,
+                        task.SourceHeader,
+                        task.NamedRange));
+
+                // Project 5 task 7
+                case "RangesMergedExactly":
+                    return Result(_excel.RangesMergedExactly(
+                        task.SheetName,
+                        task.TargetRanges));
+
+                // Project 5 task 8
+                case "CellStylesApplied":
+                    return Result(_excel.CellStylesApplied(
+                        task.SheetName,
+                        task.TargetRanges,
+                        task.ExpectedFormat,
+                        task.SecondaryRanges,
+                        task.SecondaryExpectedFormat));
 
 
                 default:
