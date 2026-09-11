@@ -1,0 +1,18 @@
+﻿{
+  "P08_T01_TITLE": "Nhiệm vụ 1",
+  "P08_T01_INST": "Trên trang tính \"Forecast\", trong cột \"Quarter 2\", nhập một công thức nhân giá trị trong cột \"Quarter 1\" với vùng được đặt tên \"Q2_Increase\". Sử dụng tên vùng trong công thức thay vì tham chiếu ô hoặc giá trị.",
+  "P08_T02_TITLE": "Nhiệm vụ 2",
+  "P08_T02_INST": "Trên trang tính \"Supplier\", xóa hàng trong bảng chứa dữ liệu \"Wooden Toys\". Không thay đổi bất kỳ nội dung nào bên ngoài bảng.",
+  "P08_T03_TITLE": "Nhiệm vụ 3",
+  "P08_T03_INST": "Trên trang tính \"First half of the year\", thay đổi căn chỉnh ngang của các tên \"Test site\" thành Left (Indent). Đặt mức thụt lề là 1.",
+  "P08_T04_TITLE": "Nhiệm vụ 4",
+  "P08_T04_INST": "Trên trang tính \"First half of the year\", trong các ô J4:J11, chèn biểu đồ thu nhỏ Win/Loss để so sánh các giá trị từ January đến June.",
+  "P08_T05_TITLE": "Nhiệm vụ 5",
+  "P08_T05_INST": "Trên trang tính \"First half of the year\", thêm Total Row vào bảng. Cấu hình Total Row để hiển thị số chính sách mới cho từng tháng và cho tổng 6 tháng.",
+  "P08_T06_TITLE": "Nhiệm vụ 6",
+  "P08_T06_INST": "Trên trang tính \"First half of the year\", trong cột \"Inactive\", sử dụng một hàm để đếm số tháng không có chính sách mới, theo từng Test site.",
+  "P08_T07_TITLE": "Nhiệm vụ 7",
+  "P08_T07_INST": "Trên trang tính \"Top Toys Category\", thực hiện sắp xếp nhiều mức. Sắp xếp dữ liệu trong bảng theo \"Toys\" (A đến Z), sau đó theo \"Total Sales\" (Lớn nhất đến Nhỏ nhất).",
+  "P08_T08_TITLE": "Nhiệm vụ 8",
+  "P08_T08_INST": "Trên trang tính \"Last half of the year\", thay đổi các thành phần hiển thị trên biểu đồ bằng cách thay đổi bố cục biểu đồ thành Layout 3."
+}

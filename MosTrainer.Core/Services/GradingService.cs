@@ -54,7 +54,11 @@ namespace MosTrainer.Core.Services
                 "TableColumnFormulaMultipliesColumns", "RangesMergedExactly", "CellStylesApplied",
                 "ChartColorPaletteEquals", "RangeFormattingMatchesSourceCell",
                 "WorkbookBuiltinPropertyEquals", "TableOnRangeWithStyle",
-                "RangeWrapTextEquals", "ChartMovedToChartSheet"
+                "RangeWrapTextEquals", "ChartMovedToChartSheet",
+                "WorksheetShowFormulasEquals", "InvoiceCellsDeletedShiftUp",
+                "ChartStyleAndPaletteEquals", "WorkbookPersonalInformationRemoved",
+                "ClusteredColumnChartFromRanges", "IfFormulaByHeadersStrict",
+                "NamedRangeRefersToRange"
             };
 
         private readonly IExcelController _excel;
@@ -118,6 +122,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P05(task);
                 case "Excel2019_P06":
                     return CheckExcel2019P06(task);
+                case "Excel2019_P07":
+                    return CheckExcel2019P07(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -148,6 +154,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P06(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P07(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -532,6 +542,43 @@ namespace MosTrainer.Core.Services
                         task.ChartTitle,
                         ToInt(task.ExpectedFormat),
                         task.TargetRanges));
+
+                // Project 7 task 1
+                case "WorksheetShowFormulasEquals":
+                    return Result(_excel.WorksheetShowFormulasEquals(task.SheetName, ToBool(task.ExpectedValue)));
+
+                // Project 7 task 2
+                case "InvoiceCellsDeletedShiftUp":
+                    return Result(_excel.InvoiceCellsDeletedShiftUp(task.SheetName, task.Range));
+
+                // Project 7 task 3
+                case "ChartStyleAndPaletteEquals":
+                    return Result(_excel.ChartStyleAndPaletteEquals(
+                        task.SheetName, task.ChartName, task.ChartTitle,
+                        ToInt(task.ExpectedFormat), ToInt(task.ExpectedValue),
+                        task.ExpectedChartType, task.TargetRanges));
+
+                // Project 7 task 4
+                case "WorkbookPersonalInformationRemoved":
+                    return Result(_excel.WorkbookPersonalInformationRemoved());
+
+                // Project 7 task 5
+                case "ClusteredColumnChartFromRanges":
+                    return Result(_excel.ClusteredColumnChartFromRanges(
+                        task.SheetName, task.TableName, task.Range,
+                        task.ExpectedChartType, task.TargetRanges));
+
+                // Project 7 task 7
+                case "IfFormulaByHeadersStrict":
+                    return Result(_excel.IfFormulaByHeadersStrict(
+                        task.SheetName, task.TableName, task.TargetHeader,
+                        task.CriteriaHeader, task.Operator, task.Threshold,
+                        task.TrueText, task.FalseText));
+
+                // Project 7 task 8
+                case "NamedRangeRefersToRange":
+                    return Result(_excel.NamedRangeRefersToRange(
+                        task.NamedRange, task.SheetName, task.Range));
 
 
                 default:

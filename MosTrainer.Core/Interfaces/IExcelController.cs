@@ -123,6 +123,20 @@ namespace MosTrainer.Core.Interfaces
         bool RangeWrapTextEquals(string sheetName, string rangeAddress, bool expectedWrapText);
         // Excel 2019 - Project 6 Task 8
         bool ChartMovedToChartSheet(string sourceSheetName, string chartSheetName, string chartTitle, int expectedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 7 Task 1
+        bool WorksheetShowFormulasEquals(string sheetName, bool expectedShowFormulas);
+        // Excel 2019 - Project 7 Task 2
+        bool InvoiceCellsDeletedShiftUp(string sheetName, string deletedRangeAddress);
+        // Excel 2019 - Project 7 Task 3
+        bool ChartStyleAndPaletteEquals(string sheetName, string chartName, string chartTitle, int expectedChartStyle, int expectedChartColor, int expectedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 7 Task 4
+        bool WorkbookPersonalInformationRemoved();
+        // Excel 2019 - Project 7 Task 5
+        bool ClusteredColumnChartFromRanges(string sheetName, string tableName, string tableRangeAddress, int expectedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 7 Task 7
+        bool IfFormulaByHeadersStrict(string sheetName, string tableName, string targetHeader, string criteriaHeader, string compareOperator, double threshold, string trueText, string falseText);
+        // Excel 2019 - Project 7 Task 8
+        bool NamedRangeRefersToRange(string name, string sheetName, string rangeAddress);
         string GetCellDisplayText(string address);
     }
 }

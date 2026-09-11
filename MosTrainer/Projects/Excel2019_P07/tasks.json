@@ -1,27 +1,81 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P07_T01_TITLE",
+    "instructionKey": "P07_T01_INST",
+    "assertionType": "WorksheetShowFormulasEquals",
+    "sheetName": "Sales by Exam",
+    "expectedValue": "true"
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P07_T02_TITLE",
+    "instructionKey": "P07_T02_INST",
+    "assertionType": "InvoiceCellsDeletedShiftUp",
+    "sheetName": "Invoice",
+    "range": "E7:F7"
   },
   {
-  "taskId": "T06",
+    "taskId": "T03",
+    "titleKey": "P07_T03_TITLE",
+    "instructionKey": "P07_T03_INST",
+    "assertionType": "ChartStyleAndPaletteEquals",
+    "sheetName": "Subcribe Results",
+    "chartName": "Chart 4",
+    "chartTitle": "Registered",
+    "expectedFormat": "207",
+    "expectedValue": "19",
+    "expectedChartType": -4102,
+    "targetRanges": ["B3", "A4:A7", "B4:B7"]
   },
-
   {
-  "taskId": "T07",
+    "taskId": "T04",
+    "titleKey": "P07_T04_TITLE",
+    "instructionKey": "P07_T04_INST",
+    "assertionType": "WorkbookPersonalInformationRemoved"
   },
   {
-  "taskId": "T08",
+    "taskId": "T05",
+    "titleKey": "P07_T05_TITLE",
+    "instructionKey": "P07_T05_INST",
+    "assertionType": "ClusteredColumnChartFromRanges",
+    "sheetName": "Next Period",
+    "tableName": "Table6",
+    "range": "A3:F21",
+    "expectedChartType": 51,
+    "targetRanges": ["E3", "B4:B21", "E4:E21"]
   },
+  {
+    "taskId": "T06",
+    "titleKey": "P07_T06_TITLE",
+    "instructionKey": "P07_T06_INST",
+    "assertionType": "TableOnRangeWithStyle",
+    "sheetName": "Lecturers",
+    "range": "A3:B7",
+    "expectedFormat": "TableStyleLight14",
+    "sourceHeaders": ["First Name", "Last Name"]
+  },
+  {
+    "taskId": "T07",
+    "titleKey": "P07_T07_TITLE",
+    "instructionKey": "P07_T07_INST",
+    "assertionType": "IfFormulaByHeadersStrict",
+    "sheetName": "Exam History",
+    "tableName": "Table4",
+    "targetHeader": "Total Notice",
+    "criteriaHeader": "Total Level %",
+    "operator": "<",
+    "threshold": 0.15,
+    "trueText": "Low",
+    "falseText": ""
+  },
+  {
+    "taskId": "T08",
+    "titleKey": "P07_T08_TITLE",
+    "instructionKey": "P07_T08_INST",
+    "assertionType": "NamedRangeRefersToRange",
+    "sheetName": "Subcribe Results",
+    "range": "A3:B7",
+    "namedRange": "Registration"
+  }
 ]

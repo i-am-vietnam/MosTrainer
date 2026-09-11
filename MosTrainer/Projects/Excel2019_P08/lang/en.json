@@ -1,0 +1,18 @@
+{
+  "P08_T01_TITLE": "Task 1",
+  "P08_T01_INST": "On the \"Forecast\" worksheet, in the \"Quarter 2\" column, enter a formula that multiplies the value in the \"Quarter 1\" column by the \"Q2_Increase\" named range. Use the range name in the formula instead of a cell reference or value.",
+  "P08_T02_TITLE": "Task 2",
+  "P08_T02_INST": "On the \"Suppliers\" worksheet, remove the table row that contains \"Wooden Toys\" data. Do not change any content outside the table.",
+  "P08_T03_TITLE": "Task 3",
+  "P08_T03_INST": "On the \"First half of the year\" worksheet, change the horizontal alignment of the \"Test site\" names to Left (Indent). Set the indent to 1.",
+  "P08_T04_TITLE": "Task 4",
+  "P08_T04_INST": "On the \"First half of the year\" worksheet, in cells J4:J11, insert Win/Loss sparklines to compare the January to June values.",
+  "P08_T05_TITLE": "Task 5",
+  "P08_T05_INST": "On the \"First half of the year\" worksheet, add a Total Row to the table. Configure the Total Row to display the number of new policies for each month and for 6-month total.",
+  "P08_T06_TITLE": "Task 6",
+  "P08_T06_INST": "On the \"First half of the year\" worksheet, in the \"Inactive\" column, use a function to count the number of months with no new policies, by Test site.",
+  "P08_T07_TITLE": "Task 7",
+  "P08_T07_INST": "On the \"Top Toys Category\" worksheet, perform a multi-level sort. Sort the table data by \"Toys\" (A to Z) and then by \"Total Sales\" (Largest to Smallest)",
+  "P08_T08_TITLE": "Task 8",
+  "P08_T08_INST": "On the \"Last half of the year\" worksheet, change the elements displayed on the chart by changing the chart layout to Layout 3"
+}

@@ -226,6 +226,21 @@
     <None Include="Projects\Excel2019_P07\tasks.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
+    <None Include="Projects\Excel2019_P08\lang\en.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Projects\Excel2019_P08\lang\vi.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Projects\Excel2019_P08\meta.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Projects\Excel2019_P08\starter.xlsx">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Include="Projects\Excel2019_P08\tasks.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
@@ -263,6 +278,7 @@
     <Folder Include="Projects\Excel2019_P05\assets\" />
     <Folder Include="Projects\Excel2019_P06\assets\" />
     <Folder Include="Projects\Excel2019_P07\assets\" />
+    <Folder Include="Projects\Excel2019_P08\assets\" />
   </ItemGroup>
   <ItemGroup>
     <COMReference Include="Microsoft.Office.Core">

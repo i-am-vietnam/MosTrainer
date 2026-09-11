@@ -10891,6 +10891,632 @@ namespace MosTrainer.Excel
             builder.Append(Convert.ToString(value, CultureInfo.InvariantCulture)).Append('\u001f');
         }
 
+        // Project 7 Task 1
+        public bool WorksheetShowFormulasEquals(string sheetName, bool expectedShowFormulas)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName)) return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Worksheet targetSheet = null;
+            object originalSheet = null;
+            Xl.Window window = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                originalSheet = workbook.ActiveSheet;
+                targetSheet = GetWorksheet(sheetName);
+                if (targetSheet == null) return false;
+                targetSheet.Activate();
+                window = workbook.Application.ActiveWindow;
+                return window != null && Convert.ToBoolean(window.DisplayFormulas) == expectedShowFormulas;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("WorksheetShowFormulasEquals", "P07 T01 grading failed.", ex, "Excel2019_P07", "T01");
+                return false;
+            }
+            finally
+            {
+                try
+                {
+                    Xl.Worksheet originalWorksheet = originalSheet as Xl.Worksheet;
+                    if (originalWorksheet != null) originalWorksheet.Activate();
+                }
+                catch { }
+                ReleaseCom(window);
+                ReleaseCom(targetSheet);
+                ReleaseCom(originalSheet);
+            }
+        }
+
+        // Project 7 Task 2
+        public bool InvoiceCellsDeletedShiftUp(string sheetName, string deletedRangeAddress)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) ||
+                !string.Equals(NormalizeRangeAddress(deletedRangeAddress), "E7:F7", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            Xl.Worksheet ws = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+
+                if (!CellValueEqualsP07(ws, "D7", "Reference number") ||
+                    !CellValueEqualsP07(ws, "C13", "W19") ||
+                    !CellValueEqualsP07(ws, "D13", "MOS: Microsoft Word (Office 2019)") ||
+                    !CellValueEqualsP07(ws, "C14", "LO5") ||
+                    !CellValueEqualsP07(ws, "D14", "IC3: Living Online (GS5)") ||
+                    !CellValueEqualsP07(ws, "C15", "W16") ||
+                    !CellValueEqualsP07(ws, "D15", "MOS: Microsoft Word (Office 2016)"))
+                    return false;
+
+                if (!CellValueEqualsP07(ws, "E12", "Quantity") || !CellValueEqualsP07(ws, "F12", "Unit price") ||
+                    !CellValueEqualsP07(ws, "E13", 10d) || !CellValueEqualsP07(ws, "F13", 29.5d) ||
+                    !CellValueEqualsP07(ws, "E14", 100d) || !CellValueEqualsP07(ws, "F14", 31d) ||
+                    !CellValueEqualsP07(ws, "E15", 30d) || !CellValueEqualsP07(ws, "F15", 29.5d) ||
+                    !CellValueEqualsP07(ws, "F23", "Subtotal") || !CellValueEqualsP07(ws, "F24", "Tax") ||
+                    !CellValueEqualsP07(ws, "F25", "Total"))
+                    return false;
+
+                for (int row = 16; row <= 22; row++)
+                {
+                    if (!CellValueEqualsP07(ws, "E" + row, "") || !CellValueEqualsP07(ws, "F" + row, ""))
+                        return false;
+                }
+
+                for (int row = 13; row <= 22; row++)
+                {
+                    string expected = "=IF(F" + row + "=\"\",\"\",(F" + row + "*E" + row + "))";
+                    if (!CellFormulaEqualsP07(ws, "G" + row, expected)) return false;
+                }
+
+                if (!CellFormulaEqualsP07(ws, "G23", "=SUM(G13:G22)") ||
+                    !CellFormulaEqualsP07(ws, "G24", "=G23*8%") ||
+                    !CellFormulaEqualsP07(ws, "G25", "=SUM(G23:G24)"))
+                    return false;
+
+                return InvoiceFormattingMatchesP07(ws);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("InvoiceCellsDeletedShiftUp", "P07 T02 grading failed.", ex, "Excel2019_P07", "T02");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(ws);
+            }
+        }
+
+        // Project 7 Task 3
+        public bool ChartStyleAndPaletteEquals(
+            string sheetName,
+            string chartName,
+            string chartTitle,
+            int expectedChartStyle,
+            int expectedChartColor,
+            int expectedChartType,
+            IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(chartName)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ChartObjects charts = null;
+            Xl.ChartObject chartObject = null;
+            Xl.Chart chart = null;
+            Xl.ChartTitle title = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                charts = ws.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (charts == null) return false;
+                int count = Convert.ToInt32(charts.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(title);
+                    ReleaseCom(chart);
+                    ReleaseCom(chartObject);
+                    title = null;
+                    chart = null;
+                    chartObject = charts.Item(i) as Xl.ChartObject;
+                    if (chartObject == null || !string.Equals(chartObject.Name, chartName, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    chart = chartObject.Chart;
+                    if (chart == null || !Convert.ToBoolean(chart.HasTitle)) return false;
+                    title = chart.ChartTitle;
+                    if (title == null || !string.Equals(NormalizeText(Convert.ToString(title.Text)), NormalizeText(chartTitle), StringComparison.OrdinalIgnoreCase))
+                        return false;
+                    if (Convert.ToInt32(chart.ChartStyle) != expectedChartStyle ||
+                        Convert.ToInt32(chart.ChartColor) != expectedChartColor ||
+                        Convert.ToInt32(chart.ChartType) != expectedChartType)
+                        return false;
+                    return ChartReferencesExpectedRangesP06(chart, sheetName, sourceRanges);
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ChartStyleAndPaletteEquals", "P07 T03 grading failed.", ex, "Excel2019_P07", "T03");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(title);
+                ReleaseCom(chart);
+                ReleaseCom(chartObject);
+                ReleaseCom(charts);
+                ReleaseCom(ws);
+            }
+        }
+
+        // Project 7 Task 4
+        public bool WorkbookPersonalInformationRemoved()
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            string tempPath = Path.Combine(Path.GetTempPath(), "MosTrainer-P07-T04-" + Guid.NewGuid().ToString("N") + ".xlsx");
+            try
+            {
+                Xl.Workbook workbook = (Xl.Workbook)_session.Workbook;
+                if (!Convert.ToBoolean(workbook.RemovePersonalInformation)) return false;
+                if (!WorkbookRetainsP07CoreContent(workbook)) return false;
+                workbook.SaveCopyAs(tempPath);
+                using (ZipArchive archive = ZipFile.OpenRead(tempPath))
+                {
+                    XDocument core = ReadZipDocumentP07(archive.GetEntry("docProps/core.xml"));
+                    XDocument workbookXml = ReadZipDocumentP07(archive.GetEntry("xl/workbook.xml"));
+                    if (core == null || workbookXml == null) return false;
+                    string creator = GetElementValueP07(core, "creator");
+                    string lastModifiedBy = GetElementValueP07(core, "lastModifiedBy");
+                    XElement workbookPr = workbookXml.Descendants().FirstOrDefault(element => element.Name.LocalName == "workbookPr");
+                    XAttribute filterPrivacy = workbookPr == null ? null :
+                        workbookPr.Attributes().FirstOrDefault(attribute => attribute.Name.LocalName == "filterPrivacy");
+                    bool privacyFlag = filterPrivacy != null &&
+                        (filterPrivacy.Value == "1" || string.Equals(filterPrivacy.Value, "true", StringComparison.OrdinalIgnoreCase));
+                    return privacyFlag && string.IsNullOrWhiteSpace(creator) && string.IsNullOrWhiteSpace(lastModifiedBy);
+                }
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("WorkbookPersonalInformationRemoved", "P07 T04 grading failed.", ex, "Excel2019_P07", "T04");
+                return false;
+            }
+            finally
+            {
+                DeleteTemporaryFileP07(tempPath);
+            }
+        }
+
+        // Project 7 Task 5
+        public bool ClusteredColumnChartFromRanges(
+            string sheetName,
+            string tableName,
+            string tableRangeAddress,
+            int expectedChartType,
+            IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(tableRangeAddress)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range tableRange = null;
+            Xl.ChartObjects charts = null;
+            Xl.ChartObject chartObject = null;
+            Xl.Chart chart = null;
+            Xl.SeriesCollection seriesCollection = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                int tableCount = Convert.ToInt32(tables.Count);
+                for (int i = 1; i <= tableCount; i++)
+                {
+                    ReleaseCom(tableRange);
+                    ReleaseCom(table);
+                    tableRange = null;
+                    table = tables.Item[i];
+                    if (table == null || (!string.IsNullOrWhiteSpace(tableName) &&
+                        !string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase)))
+                        continue;
+                    tableRange = table.Range;
+                    string actualAddress = tableRange == null ? "" : Convert.ToString(tableRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (string.Equals(NormalizeRangeAddress(actualAddress), NormalizeRangeAddress(tableRangeAddress), StringComparison.OrdinalIgnoreCase))
+                        break;
+                }
+                if (table == null || tableRange == null) return false;
+
+                double rightEdge = Convert.ToDouble(tableRange.Left) + Convert.ToDouble(tableRange.Width);
+                charts = ws.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (charts == null) return false;
+                int chartCount = Convert.ToInt32(charts.Count);
+                for (int i = 1; i <= chartCount; i++)
+                {
+                    ReleaseCom(seriesCollection);
+                    ReleaseCom(chart);
+                    ReleaseCom(chartObject);
+                    seriesCollection = null;
+                    chart = null;
+                    chartObject = charts.Item(i) as Xl.ChartObject;
+                    if (chartObject == null || Convert.ToDouble(chartObject.Left) + 2d < rightEdge) continue;
+                    chart = chartObject.Chart;
+                    if (chart == null || Convert.ToInt32(chart.ChartType) != expectedChartType) continue;
+                    seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                    if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != 1) continue;
+                    if (ChartReferencesExpectedRangesP06(chart, sheetName, sourceRanges)) return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ClusteredColumnChartFromRanges", "P07 T05 grading failed.", ex, "Excel2019_P07", "T05");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(seriesCollection);
+                ReleaseCom(chart);
+                ReleaseCom(chartObject);
+                ReleaseCom(charts);
+                ReleaseCom(tableRange);
+                ReleaseCom(table);
+                ReleaseCom(tables);
+                ReleaseCom(ws);
+            }
+        }
+
+        // Project 7 Task 7
+        public bool IfFormulaByHeadersStrict(
+            string sheetName,
+            string tableName,
+            string targetHeader,
+            string criteriaHeader,
+            string compareOperator,
+            double threshold,
+            string trueText,
+            string falseText)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(tableName) ||
+                string.IsNullOrWhiteSpace(targetHeader) || string.IsNullOrWhiteSpace(criteriaHeader) || compareOperator != "<")
+                return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range data = null;
+            Xl.Range targetData = null;
+            Xl.Range criteriaData = null;
+            Xl.Range targetCell = null;
+            Xl.Range criteriaCell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                int count = Convert.ToInt32(tables.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(table);
+                    table = tables.Item[i];
+                    if (table != null && string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase)) break;
+                    table = null;
+                }
+                if (table == null) return false;
+                int targetIndex = FindTableColumnIndexP05T5(table, targetHeader);
+                int criteriaIndex = FindTableColumnIndexP05T5(table, criteriaHeader);
+                if (targetIndex <= 0 || criteriaIndex <= 0) return false;
+                data = table.DataBodyRange;
+                if (data == null) return false;
+                targetData = data.Columns[targetIndex] as Xl.Range;
+                criteriaData = data.Columns[criteriaIndex] as Xl.Range;
+                if (targetData == null || criteriaData == null ||
+                    Convert.ToInt32(targetData.Rows.Count) != Convert.ToInt32(criteriaData.Rows.Count))
+                    return false;
+
+                int rowCount = Convert.ToInt32(targetData.Rows.Count);
+                for (int row = 1; row <= rowCount; row++)
+                {
+                    ReleaseCom(targetCell);
+                    ReleaseCom(criteriaCell);
+                    targetCell = targetData.Cells[row, 1] as Xl.Range;
+                    criteriaCell = criteriaData.Cells[row, 1] as Xl.Range;
+                    if (targetCell == null || criteriaCell == null || !Convert.ToBoolean(targetCell.HasFormula)) return false;
+                    double criteriaValue;
+                    if (!TryToDouble(criteriaCell.Value2, out criteriaValue)) return false;
+                    string expectedResult = criteriaValue < threshold ? trueText : falseText;
+                    if (!string.Equals(Convert.ToString(targetCell.Value2), expectedResult, StringComparison.Ordinal)) return false;
+                    string criteriaAddress = Convert.ToString(criteriaCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!FormulaMatchesStrictIfP07(Convert.ToString(targetCell.Formula), criteriaAddress, criteriaHeader, threshold, trueText, falseText))
+                        return false;
+                }
+                return rowCount > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("IfFormulaByHeadersStrict", "P07 T07 grading failed.", ex, "Excel2019_P07", "T07");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(criteriaCell);
+                ReleaseCom(targetCell);
+                ReleaseCom(criteriaData);
+                ReleaseCom(targetData);
+                ReleaseCom(data);
+                ReleaseCom(table);
+                ReleaseCom(tables);
+                ReleaseCom(ws);
+            }
+        }
+
+        // Project 7 Task 8
+        public bool NamedRangeRefersToRange(string name, string sheetName, string rangeAddress)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(name) || string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(rangeAddress))
+                return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Names names = null;
+            Xl.Name definedName = null;
+            Xl.Range refersToRange = null;
+            Xl.Worksheet worksheet = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                names = workbook.Names;
+                int count = Convert.ToInt32(names.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(worksheet);
+                    ReleaseCom(refersToRange);
+                    ReleaseCom(definedName);
+                    worksheet = null;
+                    refersToRange = null;
+                    definedName = names.Item(i, Type.Missing, Type.Missing);
+                    if (definedName == null || !string.Equals(Convert.ToString(definedName.Name), name, StringComparison.OrdinalIgnoreCase))
+                        continue;
+                    try { refersToRange = definedName.RefersToRange; } catch { refersToRange = null; }
+                    if (refersToRange == null) return false;
+                    worksheet = refersToRange.Worksheet;
+                    string actualAddress = Convert.ToString(refersToRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    return worksheet != null &&
+                        string.Equals(worksheet.Name, sheetName, StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(NormalizeRangeAddress(actualAddress), NormalizeRangeAddress(rangeAddress), StringComparison.OrdinalIgnoreCase);
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("NamedRangeRefersToRange", "P07 T08 grading failed.", ex, "Excel2019_P07", "T08");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(worksheet);
+                ReleaseCom(refersToRange);
+                ReleaseCom(definedName);
+                ReleaseCom(names);
+            }
+        }
+
+        private XDocument ReadZipDocumentP07(ZipArchiveEntry entry)
+        {
+            if (entry == null) return null;
+            using (Stream stream = entry.Open()) return XDocument.Load(stream);
+        }
+
+        private string GetElementValueP07(XDocument document, string localName)
+        {
+            XElement element = document.Descendants().FirstOrDefault(item => item.Name.LocalName == localName);
+            return element == null ? "" : Convert.ToString(element.Value);
+        }
+
+        private void DeleteTemporaryFileP07(string path)
+        {
+            try { if (!string.IsNullOrWhiteSpace(path) && File.Exists(path)) File.Delete(path); }
+            catch { }
+        }
+
+        private bool CellValueEqualsP07(Xl.Worksheet ws, string address, object expected)
+        {
+            Xl.Range cell = null;
+            try
+            {
+                cell = ws.Range[address];
+                if (cell == null) return false;
+                string expectedText = Convert.ToString(expected);
+                if (string.IsNullOrEmpty(expectedText)) return string.IsNullOrWhiteSpace(Convert.ToString(cell.Value2));
+                return ObjectEqualsLoose(cell.Value2, expected);
+            }
+            finally { ReleaseCom(cell); }
+        }
+
+        private bool WorkbookRetainsP07CoreContent(Xl.Workbook workbook)
+        {
+            if (workbook == null) return false;
+            return WorksheetHasExactTableP07("Sales by Exam", "Table5", "A1:M6") &&
+                   WorksheetHasExactTableP07("Exam History", "Table4", "A2:J7") &&
+                   WorksheetHasExactTableP07("Next Period", "Table6", "A3:F21") &&
+                   WorksheetHasNamedChartsP07("Sales by Exam", new[] { "Chart 1", "Chart 2", "Chart 3" }) &&
+                   WorksheetHasNamedChartsP07("Subcribe Results", new[] { "Chart 4" });
+        }
+
+        private bool WorksheetHasExactTableP07(string sheetName, string tableName, string rangeAddress)
+        {
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range range = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                int count = Convert.ToInt32(tables.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(range);
+                    ReleaseCom(table);
+                    range = null;
+                    table = tables.Item[i];
+                    if (table == null || !string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase)) continue;
+                    range = table.Range;
+                    string actual = range == null ? "" : Convert.ToString(range.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    return string.Equals(NormalizeRangeAddress(actual), NormalizeRangeAddress(rangeAddress), StringComparison.OrdinalIgnoreCase);
+                }
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(range); ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        private bool WorksheetHasNamedChartsP07(string sheetName, IList<string> chartNames)
+        {
+            Xl.Worksheet ws = null;
+            Xl.ChartObjects charts = null;
+            Xl.ChartObject chart = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                charts = ws.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (charts == null) return false;
+                foreach (string expectedName in chartNames)
+                {
+                    bool found = false;
+                    int count = Convert.ToInt32(charts.Count);
+                    for (int i = 1; i <= count; i++)
+                    {
+                        ReleaseCom(chart);
+                        chart = charts.Item(i) as Xl.ChartObject;
+                        if (chart != null && string.Equals(chart.Name, expectedName, StringComparison.OrdinalIgnoreCase))
+                        {
+                            found = true;
+                            break;
+                        }
+                    }
+                    if (!found) return false;
+                }
+                return true;
+            }
+            finally
+            {
+                ReleaseCom(chart); ReleaseCom(charts); ReleaseCom(ws);
+            }
+        }
+
+        private bool CellFormulaEqualsP07(Xl.Worksheet ws, string address, string expectedFormula)
+        {
+            Xl.Range cell = null;
+            try
+            {
+                cell = ws.Range[address];
+                return cell != null && Convert.ToBoolean(cell.HasFormula) &&
+                    string.Equals(NormalizeFormula(Convert.ToString(cell.Formula)), NormalizeFormula(expectedFormula), StringComparison.OrdinalIgnoreCase);
+            }
+            finally { ReleaseCom(cell); }
+        }
+
+        private bool InvoiceFormattingMatchesP07(Xl.Worksheet ws)
+        {
+            Xl.Range shiftedTop = null;
+            Xl.Range header = null;
+            Xl.Range quantity = null;
+            Xl.Range price = null;
+            Xl.Range total = null;
+            Xl.Font font = null;
+            Xl.Interior interior = null;
+            Xl.Borders borders = null;
+            Xl.Border border = null;
+            try
+            {
+                shiftedTop = ws.Range["E7:F7"];
+                font = shiftedTop.Font;
+                interior = shiftedTop.Interior;
+                if (Convert.ToBoolean(font.Bold) || Convert.ToInt32(interior.Color) != 10079487)
+                    return false;
+                ReleaseCom(interior); ReleaseCom(font); interior = null; font = null;
+
+                header = ws.Range["E12"];
+                font = header.Font;
+                interior = header.Interior;
+                if (!Convert.ToBoolean(font.Bold) || Convert.ToInt32(font.Color) != 16777215 ||
+                    Convert.ToInt32(interior.Color) != 10855845 ||
+                    Convert.ToInt32(header.HorizontalAlignment) != (int)Xl.XlHAlign.xlHAlignCenter)
+                    return false;
+                ReleaseCom(interior); ReleaseCom(font); interior = null; font = null;
+
+                quantity = ws.Range["E13"];
+                interior = quantity.Interior;
+                if (Convert.ToInt32(interior.Color) != 15592941 ||
+                    Convert.ToInt32(quantity.HorizontalAlignment) != (int)Xl.XlHAlign.xlHAlignCenter)
+                    return false;
+                ReleaseCom(interior); interior = null;
+
+                price = ws.Range["F13"];
+                if (!NormalizeFormat(Convert.ToString(price.NumberFormat)).Contains("#,##0.00")) return false;
+
+                total = ws.Range["F25"];
+                font = total.Font;
+                borders = total.Borders;
+                border = borders.Item[Xl.XlBordersIndex.xlEdgeBottom];
+                return Convert.ToBoolean(font.Bold) && Convert.ToInt32(border.LineStyle) == (int)Xl.XlLineStyle.xlContinuous &&
+                    Convert.ToInt32(border.Weight) == (int)Xl.XlBorderWeight.xlMedium;
+            }
+            finally
+            {
+                ReleaseCom(border); ReleaseCom(borders); ReleaseCom(interior); ReleaseCom(font);
+                ReleaseCom(total); ReleaseCom(price); ReleaseCom(quantity); ReleaseCom(header); ReleaseCom(shiftedTop);
+            }
+        }
+
+        private bool FormulaMatchesStrictIfP07(
+            string formula, string criteriaAddress, string criteriaHeader,
+            double threshold, string trueText, string falseText)
+        {
+            string normalized = NormalizeFormula(formula);
+            string pattern = "^=IF\\((?<condition>.+),\\\"" + Regex.Escape(NormalizeFormula(trueText)) +
+                "\\\",\\\"" + Regex.Escape(NormalizeFormula(falseText)) + "\\\"\\)$";
+            Match match = Regex.Match(normalized, pattern, RegexOptions.IgnoreCase);
+            if (!match.Success) return false;
+            string condition = match.Groups["condition"].Value;
+            if (condition.Contains("<=") || condition.Contains(">=") || condition.Contains("<>")) return false;
+            string[] terms = condition.Split('<');
+            if (terms.Length != 2) return false;
+            return (IsCriteriaReferenceP07(terms[0], criteriaAddress, criteriaHeader) && IsThresholdP07(terms[1], threshold)) ||
+                   (IsThresholdP07(terms[0], threshold) && IsCriteriaReferenceP07(terms[1], criteriaAddress, criteriaHeader));
+        }
+
+        private bool IsCriteriaReferenceP07(string term, string address, string header)
+        {
+            string normalized = NormalizeFormula(term);
+            if (string.Equals(NormalizeRangeAddress(normalized), NormalizeRangeAddress(address), StringComparison.OrdinalIgnoreCase))
+                return true;
+            string structured = "[@[" + NormalizeFormula(header) + "]]";
+            return normalized.EndsWith(structured, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsThresholdP07(string term, double expected)
+        {
+            string text = NormalizeFormula(term);
+            bool percent = text.EndsWith("%", StringComparison.Ordinal);
+            if (percent) text = text.Substring(0, text.Length - 1);
+            double value;
+            if (!double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out value)) return false;
+            if (percent) value /= 100d;
+            return Math.Abs(value - expected) < 0.0000001d;
+        }
+
         public string GetCellDisplayText(string address)
         {
             if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");

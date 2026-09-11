@@ -31,6 +31,7 @@ namespace MosTrainer.Core.Models
         public string TableName { get; set; } = "";
         public string ChartTitle { get; set; } = "";
         public string ChartName { get; set; } = "";
+        public int ExpectedChartType { get; set; }
         public string ShapeName { get; set; } = "";
         public string PropertyName { get; set; } = "";
         public string NamedRange { get; set; } = "";
