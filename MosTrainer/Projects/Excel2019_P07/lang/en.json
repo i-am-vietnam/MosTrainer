@@ -1,0 +1,18 @@
+{
+  "P07_T01_TITLE": "Task 1",
+  "P07_T01_INST": "On the \"Sales by Exam\" worksheet, display the formulas instead of the values.",
+  "P07_T02_TITLE": "Task 2",
+  "P07_T02_INST": "On the \"Invoice\" worksheet, move the cells E8:F27 up to correct the alignment by deleting cells E7:F7.",
+  "P07_T03_TITLE": "Task 3",
+  "P07_T03_INST": "On the \"Subcribe Results\" worksheet, apply Style 7 and the Monochromatic Palette 6 color to the chart.",
+  "P07_T04_TITLE": "Task 4",
+  "P07_T04_INST": "Remove hidden properties and personal information from the workbook. Do not remove any other content.",
+  "P07_T05_TITLE": "Task 5",
+  "P07_T05_INST": "On the \"Next Period\" worksheet, create a Clustered Column chart that displays the \"Course\" names and \"Average cost per student\" data. Place the chart to the right of the table. The exact size and position of the chart does not matter.",
+  "P07_T06_TITLE": "Task 6",
+  "P07_T06_INST": "On the \"Lecturers\" worksheet, convert the range A3:B7 to table with headers. Apply the Green, Table Style Light 14 style.",
+  "P07_T07_TITLE": "Task 7",
+  "P07_T07_INST": "On the \"Exam History\" worksheet, in the \"Total Notice\" column, use a function to display \"Low\" if the \"Total Level\" is less than 15%. Otherwise, leave the \"Total Notice\" blank.",
+  "P07_T08_TITLE": "Task 8",
+  "P07_T08_INST": "On the \"Subcribe Results\" worksheet, name the range A3:B7, \"Registration\""
+}

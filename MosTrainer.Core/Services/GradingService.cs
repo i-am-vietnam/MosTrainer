@@ -51,7 +51,10 @@ namespace MosTrainer.Core.Services
                 "First2CharactersFromCategory", "TtcFromCategoryLeft", "LastFirstNameFormulaAtCell",
                 "CenterFooterPageOfPagesEquals", "ShapeHyperlinkEquals",
                 "ChartDataTableWithoutLegendKeys", "SalesByExamTableConvertedToRange",
-                "TableColumnFormulaUsesNamedRange", "RangesMergedExactly", "CellStylesApplied"
+                "TableColumnFormulaMultipliesColumns", "RangesMergedExactly", "CellStylesApplied",
+                "ChartColorPaletteEquals", "RangeFormattingMatchesSourceCell",
+                "WorkbookBuiltinPropertyEquals", "TableOnRangeWithStyle",
+                "RangeWrapTextEquals", "ChartMovedToChartSheet"
             };
 
         private readonly IExcelController _excel;
@@ -113,6 +116,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P04(task);
                 case "Excel2019_P05":
                     return CheckExcel2019P05(task);
+                case "Excel2019_P06":
+                    return CheckExcel2019P06(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -139,6 +144,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P05(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P06(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -454,13 +463,12 @@ namespace MosTrainer.Core.Services
                         task.ExpectedRowCount));
 
                 // Project 5 task 5
-                case "TableColumnFormulaUsesNamedRange":
-                    return Result(_excel.TableColumnFormulaUsesNamedRange(
+                case "TableColumnFormulaMultipliesColumns":
+                    return Result(_excel.TableColumnFormulaMultipliesColumns(
                         task.SheetName,
                         task.TableName,
                         task.TargetHeader,
-                        task.SourceHeader,
-                        task.NamedRange));
+                        task.SourceHeaders));
 
                 // Project 5 task 7
                 case "RangesMergedExactly":
@@ -476,6 +484,54 @@ namespace MosTrainer.Core.Services
                         task.ExpectedFormat,
                         task.SecondaryRanges,
                         task.SecondaryExpectedFormat));
+
+                // Project 6 task 1
+                case "ChartColorPaletteEquals":
+                    return Result(_excel.ChartColorPaletteEquals(
+                        task.SheetName,
+                        task.ChartName,
+                        task.ChartTitle,
+                        ToInt(task.ExpectedValue),
+                        ToInt(task.ExpectedFormat),
+                        task.TargetRanges));
+
+                // Project 6 task 3
+                case "RangeFormattingMatchesSourceCell":
+                    return Result(_excel.RangeFormattingMatchesSourceCell(
+                        task.SheetName,
+                        task.SourceRange,
+                        task.Range,
+                        task.ExpectedTexts));
+
+                // Project 6 task 4
+                case "WorkbookBuiltinPropertyEquals":
+                    return Result(_excel.WorkbookBuiltinPropertyEquals(
+                        task.PropertyName,
+                        task.ExpectedText));
+
+                // Project 6 task 5
+                case "TableOnRangeWithStyle":
+                    return Result(_excel.TableOnRangeWithStyle(
+                        task.SheetName,
+                        task.Range,
+                        task.ExpectedFormat,
+                        task.SourceHeaders));
+
+                // Project 6 task 7
+                case "RangeWrapTextEquals":
+                    return Result(_excel.RangeWrapTextEquals(
+                        task.SheetName,
+                        task.Range,
+                        ToBool(task.ExpectedValue)));
+
+                // Project 6 task 8
+                case "ChartMovedToChartSheet":
+                    return Result(_excel.ChartMovedToChartSheet(
+                        task.SourceSheetName,
+                        task.SheetName,
+                        task.ChartTitle,
+                        ToInt(task.ExpectedFormat),
+                        task.TargetRanges));
 
 
                 default:

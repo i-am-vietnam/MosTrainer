@@ -1,0 +1,18 @@
+﻿{
+  "P07_T01_TITLE": "Nhiệm vụ 1",
+  "P07_T01_INST": "Trên trang tính \"Sales by Exam\", hiển thị các công thức thay vì các giá trị.",
+  "P07_T02_TITLE": "Nhiệm vụ 2",
+  "P07_T02_INST": "Trên trang tính \"Invoice\", di chuyển các ô E8:F27 lên trên để sửa căn chỉnh bằng cách xóa các ô E7:F7.",
+  "P07_T03_TITLE": "Nhiệm vụ 3",
+  "P07_T03_INST": "Trên trang tính \"Subcribe Results\", áp dụng Style 7 và màu Monochromatic Palette 6 cho biểu đồ.",
+  "P07_T04_TITLE": "Nhiệm vụ 4",
+  "P07_T04_INST": "Xóa các thuộc tính ẩn và thông tin cá nhân khỏi sổ làm việc. Không xóa bất kỳ nội dung nào khác.",
+  "P07_T05_TITLE": "Nhiệm vụ 5",
+  "P07_T05_INST": "Trên trang tính \"Next Period\", tạo biểu đồ Clustered Column hiển thị tên \"Course\" và dữ liệu \"Average cost per student\". Đặt biểu đồ ở bên phải bảng. Kích thước và vị trí chính xác của biểu đồ không quan trọng.",
+  "P07_T06_TITLE": "Nhiệm vụ 6",
+  "P07_T06_INST": "Trên trang tính \"Lecturers\", chuyển vùng A3:B7 thành bảng có tiêu đề. Áp dụng kiểu Green, Table Style Light 14.",
+  "P07_T07_TITLE": "Nhiệm vụ 7",
+  "P07_T07_INST": "Trên trang tính \"Exam History\", trong cột \"Total Notice\", sử dụng một hàm để hiển thị \"Low\" nếu \"Total Level\" nhỏ hơn 15%. Nếu không, để trống \"Total Notice\".",
+  "P07_T08_TITLE": "Nhiệm vụ 8",
+  "P07_T08_INST": "Trên trang tính \"Subcribe Results\", đặt tên vùng A3:B7 là \"Registration\"."
+}

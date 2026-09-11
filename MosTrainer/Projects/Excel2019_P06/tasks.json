@@ -1,27 +1,83 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
-  },
-  {
-  "taskId": "T05",
+    "taskId": "T01",
+    "titleKey": "P06_T01_TITLE",
+    "instructionKey": "P06_T01_INST",
+    "assertionType": "ChartColorPaletteEquals",
+    "sheetName": "Computing Fundamentals",
+    "chartName": "Chart 1",
+    "chartTitle": "Test Results",
+    "expectedValue": "11",
+    "expectedFormat": "51",
+    "targetRanges": ["B1:G1", "B33:G33", "B34:G34"]
   },
   {
-  "taskId": "T06",
+    "taskId": "T02",
+    "titleKey": "P06_T02_TITLE",
+    "instructionKey": "P06_T02_INST",
+    "assertionType": "CellFormulaEqualsNormalized",
+    "sheetName": "Key Applications",
+    "cell": "F32",
+    "expectedFormula": "=COUNTBLANK(F2:F30)"
   },
-
   {
-  "taskId": "T07",
+    "taskId": "T03",
+    "titleKey": "P06_T03_TITLE",
+    "instructionKey": "P06_T03_INST",
+    "assertionType": "RangeFormattingMatchesSourceCell",
+    "sheetName": "Key Applications",
+    "sourceRange": "A32",
+    "range": "A35:A37",
+    "expectedTexts": ["Average", "Min", "Max"]
   },
   {
-  "taskId": "T08",
+    "taskId": "T04",
+    "titleKey": "P06_T04_TITLE",
+    "instructionKey": "P06_T04_INST",
+    "assertionType": "WorkbookBuiltinPropertyEquals",
+    "propertyName": "Title",
+    "expectedText": "Version 20230328"
   },
+  {
+    "taskId": "T05",
+    "titleKey": "P06_T05_TITLE",
+    "instructionKey": "P06_T05_INST",
+    "assertionType": "TableOnRangeWithStyle",
+    "sheetName": "Living Online",
+    "range": "A1:G30",
+    "expectedFormat": "TableStyleMedium7",
+    "sourceHeaders": [
+      "Candidates", "Network", "Electronic Communications", "Using the Internet",
+      "Computing and Society", "Overall", "Passed"
+    ]
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P06_T06_TITLE",
+    "instructionKey": "P06_T06_INST",
+    "assertionType": "ColumnWidthEquals",
+    "sheetName": "Computing Fundamentals",
+    "range": "B:J",
+    "expectedWidth": 15.22
+  },
+  {
+    "taskId": "T07",
+    "titleKey": "P06_T07_TITLE",
+    "instructionKey": "P06_T07_INST",
+    "assertionType": "RangeWrapTextEquals",
+    "sheetName": "Computing Fundamentals",
+    "range": "C1:H1",
+    "expectedValue": "true"
+  },
+  {
+    "taskId": "T08",
+    "titleKey": "P06_T08_TITLE",
+    "instructionKey": "P06_T08_INST",
+    "assertionType": "ChartMovedToChartSheet",
+    "sourceSheetName": "Living Online",
+    "sheetName": "Living Online Chart",
+    "chartTitle": "Test Results",
+    "expectedFormat": "51",
+    "targetRanges": ["B1:E1", "B33:E33", "B34:E34"]
+  }
 ]

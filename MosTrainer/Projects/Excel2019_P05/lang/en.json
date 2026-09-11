@@ -8,7 +8,7 @@
   "P05_T04_TITLE": "Task 4",
   "P05_T04_INST": "On the \"Sales by Exam\" worksheet, remove the table functionality from the table. Retain the font and cell formatting.",
   "P05_T05_TITLE": "Task 5",
-  "P05_T05_INST": "On the \"Informatics\" worksheet, in the \"Total\" column, enter a formula that multiplies the value in the \"Quantity\" column by \"Fee\" named range. Use the range name in the formula instead of a cell reference or value.",
+  "P05_T05_INST": "On the \"Informatics\" worksheet, in the \"Total\" column, enter a formula that multiplies the value in the \"Quantity\" column by the value in the \"Fee\" column.",
   "P05_T06_TITLE": "Task 6",
   "P05_T06_INST": "On the \"Informatics\" worksheet, configure the table style options to automatically shade every other table row.",
   "P05_T07_TITLE": "Task 7",

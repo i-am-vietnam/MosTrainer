@@ -44,12 +44,11 @@
     "taskId": "T05",
     "titleKey": "P05_T05_TITLE",
     "instructionKey": "P05_T05_INST",
-    "assertionType": "TableColumnFormulaUsesNamedRange",
+    "assertionType": "TableColumnFormulaMultipliesColumns",
     "sheetName": "Informatics",
     "tableName": "Informatics",
     "targetHeader": "Total",
-    "sourceHeader": "Quantity",
-    "namedRange": "Fee"
+    "sourceHeaders": ["Quantity", "Fee"]
   },
   {
     "taskId": "T06",

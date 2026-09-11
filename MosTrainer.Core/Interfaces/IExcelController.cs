@@ -106,11 +106,23 @@ namespace MosTrainer.Core.Interfaces
         // Excel 2019 - Project 5 Task 4
         bool SalesByExamTableConvertedToRange(string sheetName, string rangeAddress, string tableName, IList<string> expectedHeaders, int expectedDataRowCount);
         // Excel 2019 - Project 5 Task 5
-        bool TableColumnFormulaUsesNamedRange(string sheetName, string tableName, string targetHeader, string sourceHeader, string namedRangeName);
+        bool TableColumnFormulaMultipliesColumns(string sheetName, string tableName, string targetHeader, IList<string> sourceHeaders);
         // Excel 2019 - Project 5 Task 7
         bool RangesMergedExactly(string sheetName, IList<string> rangeAddresses);
         // Excel 2019 - Project 5 Task 8
         bool CellStylesApplied(string sheetName, IList<string> primaryRanges, string primaryStyleName, IList<string> secondaryRanges, string secondaryStyleName);
+        // Excel 2019 - Project 6 Task 1
+        bool ChartColorPaletteEquals(string sheetName, string chartName, string chartTitle, int expectedChartColor, int expectedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 6 Task 3
+        bool RangeFormattingMatchesSourceCell(string sheetName, string sourceCellAddress, string targetRangeAddress, IList<string> expectedTargetTexts);
+        // Excel 2019 - Project 6 Task 4
+        bool WorkbookBuiltinPropertyEquals(string propertyName, string expectedValue);
+        // Excel 2019 - Project 6 Task 5
+        bool TableOnRangeWithStyle(string sheetName, string rangeAddress, string expectedStyleName, IList<string> expectedHeaders);
+        // Excel 2019 - Project 6 Task 7
+        bool RangeWrapTextEquals(string sheetName, string rangeAddress, bool expectedWrapText);
+        // Excel 2019 - Project 6 Task 8
+        bool ChartMovedToChartSheet(string sourceSheetName, string chartSheetName, string chartTitle, int expectedChartType, IList<string> sourceRanges);
         string GetCellDisplayText(string address);
     }
 }

@@ -10044,84 +10044,84 @@ namespace MosTrainer.Excel
         }
 
         // Project 5 Task 5
-        public bool TableColumnFormulaUsesNamedRange(
+        public bool TableColumnFormulaMultipliesColumns(
             string sheetName,
             string tableName,
             string targetHeader,
-            string sourceHeader,
-            string namedRangeName)
+            IList<string> sourceHeaders)
         {
             if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
             if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(targetHeader) ||
-                string.IsNullOrWhiteSpace(sourceHeader) || string.IsNullOrWhiteSpace(namedRangeName))
+                sourceHeaders == null || sourceHeaders.Count != 2 ||
+                string.IsNullOrWhiteSpace(sourceHeaders[0]) || string.IsNullOrWhiteSpace(sourceHeaders[1]))
                 return false;
 
-            Xl.Workbook workbook = null;
             Xl.Worksheet ws = null;
             Xl.ListObject table = null;
-            Xl.ListColumn targetColumn = null;
-            Xl.ListColumn sourceColumn = null;
+            Xl.Range tableData = null;
             Xl.Range targetData = null;
-            Xl.Range sourceData = null;
-            Xl.Name definedName = null;
-            Xl.Range namedRange = null;
+            Xl.Range firstSourceData = null;
+            Xl.Range secondSourceData = null;
             Xl.Range targetCell = null;
-            Xl.Range sourceCell = null;
-            Xl.Range feeCell = null;
+            Xl.Range firstSourceCell = null;
+            Xl.Range secondSourceCell = null;
 
             try
             {
-                workbook = (Xl.Workbook)_session.Workbook;
                 ws = GetWorksheet(sheetName);
-                if (workbook == null || ws == null) return false;
+                if (ws == null) return false;
 
-                table = FindTableByNameOrHeadersP05T5(ws, tableName, targetHeader, sourceHeader);
+                table = FindTableByNameOrHeadersP05T5(
+                    ws, tableName, targetHeader, sourceHeaders[0], sourceHeaders[1]);
                 if (table == null) return false;
 
-                targetColumn = FindListColumnP05T5(table, targetHeader);
-                sourceColumn = FindListColumnP05T5(table, sourceHeader);
-                if (targetColumn == null || sourceColumn == null) return false;
-
-                targetData = targetColumn.DataBodyRange;
-                sourceData = sourceColumn.DataBodyRange;
-                if (targetData == null || sourceData == null ||
-                    Convert.ToInt32(targetData.Rows.Count) != Convert.ToInt32(sourceData.Rows.Count))
+                int targetColumnIndex = FindTableColumnIndexP05T5(table, targetHeader);
+                int firstSourceColumnIndex = FindTableColumnIndexP05T5(table, sourceHeaders[0]);
+                int secondSourceColumnIndex = FindTableColumnIndexP05T5(table, sourceHeaders[1]);
+                if (targetColumnIndex <= 0 || firstSourceColumnIndex <= 0 || secondSourceColumnIndex <= 0)
                     return false;
 
-                definedName = FindWorkbookNameP05T5(workbook, namedRangeName);
-                if (definedName == null) return false;
-                namedRange = definedName.RefersToRange;
-                if (namedRange == null) return false;
+                tableData = table.DataBodyRange;
+                if (tableData == null) return false;
+                targetData = tableData.Columns[targetColumnIndex] as Xl.Range;
+                firstSourceData = tableData.Columns[firstSourceColumnIndex] as Xl.Range;
+                secondSourceData = tableData.Columns[secondSourceColumnIndex] as Xl.Range;
+                if (targetData == null || firstSourceData == null || secondSourceData == null ||
+                    Convert.ToInt32(targetData.Rows.Count) != Convert.ToInt32(firstSourceData.Rows.Count) ||
+                    Convert.ToInt32(targetData.Rows.Count) != Convert.ToInt32(secondSourceData.Rows.Count))
+                    return false;
 
                 int dataRowCount = Convert.ToInt32(targetData.Rows.Count);
                 for (int row = 1; row <= dataRowCount; row++)
                 {
-                    ReleaseCom(feeCell);
-                    ReleaseCom(sourceCell);
+                    ReleaseCom(secondSourceCell);
+                    ReleaseCom(firstSourceCell);
                     ReleaseCom(targetCell);
-                    feeCell = null;
-                    sourceCell = sourceData.Cells[row, 1] as Xl.Range;
+                    secondSourceCell = secondSourceData.Cells[row, 1] as Xl.Range;
+                    firstSourceCell = firstSourceData.Cells[row, 1] as Xl.Range;
                     targetCell = targetData.Cells[row, 1] as Xl.Range;
-                    if (sourceCell == null || targetCell == null || !Convert.ToBoolean(targetCell.HasFormula))
+                    if (firstSourceCell == null || secondSourceCell == null || targetCell == null ||
+                        !Convert.ToBoolean(targetCell.HasFormula))
                         return false;
 
                     string formula = Convert.ToString(targetCell.Formula);
-                    string sourceAddress = Convert.ToString(sourceCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
-                    if (!IsQuantityTimesNamedRangeFormulaP05T5(formula, sourceHeader, sourceAddress, namedRangeName))
+                    string firstAddress = Convert.ToString(firstSourceCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    string secondAddress = Convert.ToString(secondSourceCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!IsTableColumnsMultiplicationFormulaP05T5(
+                        formula,
+                        sourceHeaders[0], firstAddress,
+                        sourceHeaders[1], secondAddress))
                         return false;
 
-                    feeCell = GetNamedRangeCellForRowP05T5(namedRange, Convert.ToInt32(targetCell.Row), row);
-                    if (feeCell == null) return false;
-
-                    double quantity;
-                    double fee;
+                    double firstValue;
+                    double secondValue;
                     double actual;
-                    if (!TryToDouble(sourceCell.Value2, out quantity) ||
-                        !TryToDouble(feeCell.Value2, out fee) ||
+                    if (!TryToDouble(firstSourceCell.Value2, out firstValue) ||
+                        !TryToDouble(secondSourceCell.Value2, out secondValue) ||
                         !TryToDouble(targetCell.Value2, out actual))
                         return false;
 
-                    double expected = quantity * fee;
+                    double expected = firstValue * secondValue;
                     double tolerance = Math.Max(0.000001d, Math.Abs(expected) * 0.000000001d);
                     if (Math.Abs(actual - expected) > tolerance)
                         return false;
@@ -10131,26 +10131,29 @@ namespace MosTrainer.Excel
             }
             catch (Exception ex)
             {
-                AppLogger.Error("TableColumnFormulaUsesNamedRange", "P05 T05 grading failed.", ex, "Excel2019_P05", "T05");
+                AppLogger.Error("TableColumnFormulaMultipliesColumns", "P05 T05 grading failed.", ex, "Excel2019_P05", "T05");
                 return false;
             }
             finally
             {
-                ReleaseCom(feeCell);
-                ReleaseCom(sourceCell);
+                ReleaseCom(secondSourceCell);
+                ReleaseCom(firstSourceCell);
                 ReleaseCom(targetCell);
-                ReleaseCom(namedRange);
-                ReleaseCom(definedName);
-                ReleaseCom(sourceData);
+                ReleaseCom(secondSourceData);
+                ReleaseCom(firstSourceData);
                 ReleaseCom(targetData);
-                ReleaseCom(sourceColumn);
-                ReleaseCom(targetColumn);
+                ReleaseCom(tableData);
                 ReleaseCom(table);
                 ReleaseCom(ws);
             }
         }
 
-        private Xl.ListObject FindTableByNameOrHeadersP05T5(Xl.Worksheet ws, string tableName, string targetHeader, string sourceHeader)
+        private Xl.ListObject FindTableByNameOrHeadersP05T5(
+            Xl.Worksheet ws,
+            string tableName,
+            string targetHeader,
+            string firstSourceHeader,
+            string secondSourceHeader)
         {
             Xl.ListObjects tables = null;
             Xl.ListObject table = null;
@@ -10166,7 +10169,9 @@ namespace MosTrainer.Excel
 
                     bool nameMatches = string.IsNullOrWhiteSpace(tableName) ||
                                        string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase);
-                    bool headersMatch = TableHasColumnP05T5(table, targetHeader) && TableHasColumnP05T5(table, sourceHeader);
+                    bool headersMatch = TableHasColumnP05T5(table, targetHeader) &&
+                                        TableHasColumnP05T5(table, firstSourceHeader) &&
+                                        TableHasColumnP05T5(table, secondSourceHeader);
                     if (nameMatches && headersMatch)
                     {
                         Xl.ListObject result = table;
@@ -10181,7 +10186,9 @@ namespace MosTrainer.Excel
                 {
                     ReleaseCom(table);
                     table = tables.Item[i];
-                    if (table != null && TableHasColumnP05T5(table, targetHeader) && TableHasColumnP05T5(table, sourceHeader))
+                    if (table != null && TableHasColumnP05T5(table, targetHeader) &&
+                        TableHasColumnP05T5(table, firstSourceHeader) &&
+                        TableHasColumnP05T5(table, secondSourceHeader))
                     {
                         Xl.ListObject result = table;
                         table = null;
@@ -10200,88 +10207,43 @@ namespace MosTrainer.Excel
 
         private bool TableHasColumnP05T5(Xl.ListObject table, string header)
         {
-            Xl.ListColumn column = null;
-            try
-            {
-                column = FindListColumnP05T5(table, header);
-                return column != null;
-            }
-            finally
-            {
-                ReleaseCom(column);
-            }
+            return FindTableColumnIndexP05T5(table, header) > 0;
         }
 
-        private Xl.ListColumn FindListColumnP05T5(Xl.ListObject table, string header)
+        private int FindTableColumnIndexP05T5(Xl.ListObject table, string header)
         {
-            Xl.ListColumns columns = null;
-            Xl.ListColumn column = null;
+            Xl.Range headerRange = null;
+            Xl.Range cell = null;
             try
             {
-                columns = table.ListColumns;
-                int count = Convert.ToInt32(columns.Count);
+                headerRange = table.HeaderRowRange;
+                if (headerRange == null) return 0;
+                int count = Convert.ToInt32(headerRange.Columns.Count);
                 for (int i = 1; i <= count; i++)
                 {
-                    ReleaseCom(column);
-                    column = columns.Item[i];
-                    if (column != null && string.Equals(
-                        NormalizeText(Convert.ToString(column.Name)),
+                    ReleaseCom(cell);
+                    cell = headerRange.Cells[1, i] as Xl.Range;
+                    if (cell != null && string.Equals(
+                        NormalizeText(Convert.ToString(cell.Value2)),
                         NormalizeText(header),
                         StringComparison.OrdinalIgnoreCase))
-                    {
-                        Xl.ListColumn result = column;
-                        column = null;
-                        return result;
-                    }
+                        return i;
                 }
-                return null;
+                return 0;
             }
             finally
             {
-                ReleaseCom(column);
-                ReleaseCom(columns);
+                ReleaseCom(cell);
+                ReleaseCom(headerRange);
             }
         }
 
-        private Xl.Name FindWorkbookNameP05T5(Xl.Workbook workbook, string expectedName)
-        {
-            Xl.Names names = null;
-            Xl.Name name = null;
-            try
-            {
-                names = workbook.Names;
-                int count = Convert.ToInt32(names.Count);
-                for (int i = 1; i <= count; i++)
-                {
-                    ReleaseCom(name);
-                    name = names.Item(i, Type.Missing, Type.Missing);
-                    if (name == null) continue;
-
-                    string actual = Convert.ToString(name.Name);
-                    int bang = actual.LastIndexOf('!');
-                    if (bang >= 0) actual = actual.Substring(bang + 1);
-                    actual = actual.Trim('\'', ' ');
-                    if (string.Equals(actual, expectedName, StringComparison.OrdinalIgnoreCase))
-                    {
-                        Xl.Name result = name;
-                        name = null;
-                        return result;
-                    }
-                }
-                return null;
-            }
-            finally
-            {
-                ReleaseCom(name);
-                ReleaseCom(names);
-            }
-        }
-
-        private bool IsQuantityTimesNamedRangeFormulaP05T5(
+        private bool IsTableColumnsMultiplicationFormulaP05T5(
             string formula,
-            string sourceHeader,
-            string sourceAddress,
-            string namedRangeName)
+            string firstSourceHeader,
+            string firstSourceAddress,
+            string secondSourceHeader,
+            string secondSourceAddress)
         {
             string expression = NormalizeFormula(formula);
             if (expression.StartsWith("=", StringComparison.Ordinal))
@@ -10293,8 +10255,10 @@ namespace MosTrainer.Excel
 
             string left = TrimOuterParenthesesP05T5(terms[0]);
             string right = TrimOuterParenthesesP05T5(terms[1]);
-            return (IsNamedRangeTermP05T5(left, namedRangeName) && IsSourceTermP05T5(right, sourceHeader, sourceAddress)) ||
-                   (IsNamedRangeTermP05T5(right, namedRangeName) && IsSourceTermP05T5(left, sourceHeader, sourceAddress));
+            return (IsSourceTermP05T5(left, firstSourceHeader, firstSourceAddress) &&
+                    IsSourceTermP05T5(right, secondSourceHeader, secondSourceAddress)) ||
+                   (IsSourceTermP05T5(right, firstSourceHeader, firstSourceAddress) &&
+                    IsSourceTermP05T5(left, secondSourceHeader, secondSourceAddress));
         }
 
         private string TrimOuterParenthesesP05T5(string expression)
@@ -10319,19 +10283,6 @@ namespace MosTrainer.Excel
             return depth == 0;
         }
 
-        private bool IsNamedRangeTermP05T5(string term, string namedRangeName)
-        {
-            if (string.IsNullOrWhiteSpace(term) || term.IndexOf('[') >= 0 ||
-                term.IndexOf(']') >= 0 || term.IndexOf('@') >= 0)
-                return false;
-
-            string normalized = term.Trim();
-            int bang = normalized.LastIndexOf('!');
-            if (bang >= 0) normalized = normalized.Substring(bang + 1);
-            normalized = normalized.Trim('\'', ' ');
-            return string.Equals(normalized, namedRangeName, StringComparison.OrdinalIgnoreCase);
-        }
-
         private bool IsSourceTermP05T5(string term, string sourceHeader, string sourceAddress)
         {
             string normalized = term.Trim();
@@ -10343,23 +10294,6 @@ namespace MosTrainer.Excel
             if (bang >= 0) normalized = normalized.Substring(bang + 1);
             normalized = normalized.Replace("$", "").Trim('\'', ' ');
             return string.Equals(normalized, NormalizeRangeAddress(sourceAddress), StringComparison.OrdinalIgnoreCase);
-        }
-
-        private Xl.Range GetNamedRangeCellForRowP05T5(Xl.Range namedRange, int worksheetRow, int ordinalRow)
-        {
-            if (namedRange == null) return null;
-            int count = Convert.ToInt32(namedRange.Cells.Count);
-            if (count == 1) return namedRange.Cells[1, 1] as Xl.Range;
-
-            int firstRow = Convert.ToInt32(namedRange.Row);
-            int rowCount = Convert.ToInt32(namedRange.Rows.Count);
-            if (worksheetRow >= firstRow && worksheetRow < firstRow + rowCount)
-                return namedRange.Cells[worksheetRow - firstRow + 1, 1] as Xl.Range;
-
-            if (ordinalRow >= 1 && ordinalRow <= rowCount)
-                return namedRange.Cells[ordinalRow, 1] as Xl.Range;
-
-            return null;
         }
 
         // Project 5 Task 7
@@ -10485,6 +10419,476 @@ namespace MosTrainer.Excel
                 ReleaseCom(cell);
                 ReleaseCom(range);
             }
+        }
+
+        // Project 6 Task 1
+        public bool ChartColorPaletteEquals(
+            string sheetName,
+            string chartName,
+            string chartTitle,
+            int expectedChartColor,
+            int expectedChartType,
+            IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(chartName) ||
+                string.IsNullOrWhiteSpace(chartTitle) || expectedChartColor <= 0)
+                return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ChartObjects chartObjects = null;
+            Xl.ChartObject chartObject = null;
+            Xl.Chart chart = null;
+            Xl.ChartTitle title = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                chartObjects = ws.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (chartObjects == null) return false;
+
+                int count = Convert.ToInt32(chartObjects.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(title);
+                    ReleaseCom(chart);
+                    ReleaseCom(chartObject);
+                    title = null;
+                    chart = null;
+                    chartObject = chartObjects.Item(i) as Xl.ChartObject;
+                    if (chartObject == null || !string.Equals(chartObject.Name, chartName, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    chart = chartObject.Chart;
+                    if (chart == null || !Convert.ToBoolean(chart.HasTitle)) return false;
+                    title = chart.ChartTitle;
+                    if (title == null || !string.Equals(
+                        NormalizeText(Convert.ToString(title.Text)), NormalizeText(chartTitle),
+                        StringComparison.OrdinalIgnoreCase))
+                        return false;
+
+                    if (Convert.ToInt32(chart.ChartColor) != expectedChartColor ||
+                        (expectedChartType != 0 && Convert.ToInt32(chart.ChartType) != expectedChartType))
+                        return false;
+
+                    return ChartReferencesExpectedRangesP06(chart, sheetName, sourceRanges);
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ChartColorPaletteEquals", "P06 T01 grading failed.", ex, "Excel2019_P06", "T01");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(title);
+                ReleaseCom(chart);
+                ReleaseCom(chartObject);
+                ReleaseCom(chartObjects);
+                ReleaseCom(ws);
+            }
+        }
+
+        // Project 6 Task 3
+        public bool RangeFormattingMatchesSourceCell(
+            string sheetName,
+            string sourceCellAddress,
+            string targetRangeAddress,
+            IList<string> expectedTargetTexts)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(sourceCellAddress) ||
+                string.IsNullOrWhiteSpace(targetRangeAddress) || expectedTargetTexts == null || expectedTargetTexts.Count == 0)
+                return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range source = null;
+            Xl.Range target = null;
+            Xl.Range cell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                source = ws.Range[sourceCellAddress];
+                target = ws.Range[targetRangeAddress];
+                if (source == null || target == null || Convert.ToInt32(target.Cells.Count) != expectedTargetTexts.Count)
+                    return false;
+
+                string sourceSignature = GetCellFormatSignatureP06T3(source);
+                for (int i = 1; i <= expectedTargetTexts.Count; i++)
+                {
+                    ReleaseCom(cell);
+                    cell = target.Cells[i] as Xl.Range;
+                    if (cell == null || !string.Equals(
+                        NormalizeText(Convert.ToString(cell.Value2)), NormalizeText(expectedTargetTexts[i - 1]),
+                        StringComparison.OrdinalIgnoreCase))
+                        return false;
+
+                    if (!string.Equals(sourceSignature, GetCellFormatSignatureP06T3(cell), StringComparison.Ordinal))
+                        return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("RangeFormattingMatchesSourceCell", "P06 T03 grading failed.", ex, "Excel2019_P06", "T03");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(cell);
+                ReleaseCom(target);
+                ReleaseCom(source);
+                ReleaseCom(ws);
+            }
+        }
+
+        // Project 6 Task 4
+        public bool WorkbookBuiltinPropertyEquals(string propertyName, string expectedValue)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(propertyName)) return false;
+
+            Xl.Workbook workbook = null;
+            ZipArchive archive = null;
+            Stream stream = null;
+            string tempPath = Path.Combine(
+                Path.GetTempPath(),
+                "MosTrainer-P06-T04-" + Guid.NewGuid().ToString("N") + ".xlsx");
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                workbook.SaveCopyAs(tempPath);
+                archive = ZipFile.OpenRead(tempPath);
+                ZipArchiveEntry entry = archive.GetEntry("docProps/core.xml");
+                if (entry == null) return false;
+                stream = entry.Open();
+                XDocument document = XDocument.Load(stream);
+                XElement property = document.Descendants().FirstOrDefault(element =>
+                    string.Equals(element.Name.LocalName, propertyName, StringComparison.OrdinalIgnoreCase));
+                return property != null && string.Equals(
+                    Convert.ToString(property.Value).Trim(),
+                    Convert.ToString(expectedValue).Trim(),
+                    StringComparison.Ordinal);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("WorkbookBuiltinPropertyEquals", "P06 T04 grading failed.", ex, "Excel2019_P06", "T04");
+                return false;
+            }
+            finally
+            {
+                if (stream != null) stream.Dispose();
+                if (archive != null) archive.Dispose();
+                try
+                {
+                    if (File.Exists(tempPath)) File.Delete(tempPath);
+                }
+                catch
+                {
+                }
+            }
+        }
+
+        // Project 6 Task 5
+        public bool TableOnRangeWithStyle(
+            string sheetName,
+            string rangeAddress,
+            string expectedStyleName,
+            IList<string> expectedHeaders)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(rangeAddress) ||
+                string.IsNullOrWhiteSpace(expectedStyleName) || expectedHeaders == null || expectedHeaders.Count == 0)
+                return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range tableRange = null;
+            Xl.Range headerRange = null;
+            Xl.Range headerCell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                int tableCount = Convert.ToInt32(tables.Count);
+                for (int i = 1; i <= tableCount; i++)
+                {
+                    ReleaseCom(headerCell);
+                    ReleaseCom(headerRange);
+                    ReleaseCom(tableRange);
+                    ReleaseCom(table);
+                    headerCell = null;
+                    headerRange = null;
+                    tableRange = null;
+                    table = tables.Item[i];
+                    if (table == null) continue;
+
+                    tableRange = table.Range;
+                    if (tableRange == null || !string.Equals(
+                        NormalizeRangeAddress(Convert.ToString(tableRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing])),
+                        NormalizeRangeAddress(rangeAddress), StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    if (!Convert.ToBoolean(table.ShowHeaders) || !ListObjectTableStyleEqualsP2T8(table, expectedStyleName))
+                        return false;
+
+                    headerRange = table.HeaderRowRange;
+                    if (headerRange == null || Convert.ToInt32(headerRange.Columns.Count) != expectedHeaders.Count)
+                        return false;
+
+                    for (int column = 1; column <= expectedHeaders.Count; column++)
+                    {
+                        ReleaseCom(headerCell);
+                        headerCell = headerRange.Cells[1, column] as Xl.Range;
+                        if (headerCell == null || !string.Equals(
+                            NormalizeText(Convert.ToString(headerCell.Value2)), NormalizeText(expectedHeaders[column - 1]),
+                            StringComparison.OrdinalIgnoreCase))
+                            return false;
+                    }
+
+                    return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("TableOnRangeWithStyle", "P06 T05 grading failed.", ex, "Excel2019_P06", "T05");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(headerCell);
+                ReleaseCom(headerRange);
+                ReleaseCom(tableRange);
+                ReleaseCom(table);
+                ReleaseCom(tables);
+                ReleaseCom(ws);
+            }
+        }
+
+        // Project 6 Task 7
+        public bool RangeWrapTextEquals(string sheetName, string rangeAddress, bool expectedWrapText)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(rangeAddress)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range range = null;
+            Xl.Range cell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                range = ws.Range[rangeAddress];
+                if (range == null) return false;
+
+                int count = Convert.ToInt32(range.Cells.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(cell);
+                    cell = range.Cells[i] as Xl.Range;
+                    if (cell == null || cell.WrapText == null || Convert.ToBoolean(cell.WrapText) != expectedWrapText)
+                        return false;
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("RangeWrapTextEquals", "P06 T07 grading failed.", ex, "Excel2019_P06", "T07");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(cell);
+                ReleaseCom(range);
+                ReleaseCom(ws);
+            }
+        }
+
+        // Project 6 Task 8
+        public bool ChartMovedToChartSheet(
+            string sourceSheetName,
+            string chartSheetName,
+            string chartTitle,
+            int expectedChartType,
+            IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sourceSheetName) || string.IsNullOrWhiteSpace(chartSheetName) ||
+                string.IsNullOrWhiteSpace(chartTitle))
+                return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Worksheet sourceSheet = null;
+            Xl.ChartObjects sourceCharts = null;
+            Xl.Sheets sheets = null;
+            object sheetObject = null;
+            Xl.Chart chartSheet = null;
+            Xl.ChartTitle title = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                sourceSheet = GetWorksheet(sourceSheetName);
+                if (sourceSheet == null) return false;
+                sourceCharts = sourceSheet.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (sourceCharts == null || Convert.ToInt32(sourceCharts.Count) != 0) return false;
+
+                sheets = workbook.Sheets;
+                int sheetCount = Convert.ToInt32(sheets.Count);
+                for (int i = 1; i <= sheetCount; i++)
+                {
+                    ReleaseCom(sheetObject);
+                    sheetObject = sheets.Item[i];
+                    chartSheet = sheetObject as Xl.Chart;
+                    if (chartSheet == null)
+                    {
+                        ReleaseCom(sheetObject);
+                        sheetObject = null;
+                        continue;
+                    }
+
+                    if (!string.Equals(chartSheet.Name, chartSheetName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        ReleaseCom(chartSheet);
+                        chartSheet = null;
+                        sheetObject = null;
+                        continue;
+                    }
+
+                    if (!Convert.ToBoolean(chartSheet.HasTitle)) return false;
+                    title = chartSheet.ChartTitle;
+                    if (title == null || !string.Equals(
+                        NormalizeText(Convert.ToString(title.Text)), NormalizeText(chartTitle),
+                        StringComparison.OrdinalIgnoreCase))
+                        return false;
+
+                    if (expectedChartType != 0 && Convert.ToInt32(chartSheet.ChartType) != expectedChartType)
+                        return false;
+
+                    return ChartReferencesExpectedRangesP06(chartSheet, sourceSheetName, sourceRanges);
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ChartMovedToChartSheet", "P06 T08 grading failed.", ex, "Excel2019_P06", "T08");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(title);
+                ReleaseCom(chartSheet);
+                ReleaseCom(sheetObject);
+                ReleaseCom(sheets);
+                ReleaseCom(sourceCharts);
+                ReleaseCom(sourceSheet);
+            }
+        }
+
+        private bool ChartReferencesExpectedRangesP06(Xl.Chart chart, string sourceSheetName, IList<string> sourceRanges)
+        {
+            if (chart == null || sourceRanges == null || sourceRanges.Count == 0) return false;
+
+            Xl.SeriesCollection seriesCollection = null;
+            Xl.Series series = null;
+            try
+            {
+                seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) == 0) return false;
+
+                StringBuilder formulas = new StringBuilder();
+                int count = Convert.ToInt32(seriesCollection.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(series);
+                    series = seriesCollection.Item(i);
+                    if (series != null) formulas.Append('|').Append(Convert.ToString(series.Formula));
+                }
+
+                string normalizedFormulas = NormalizeChartReferenceP06(formulas.ToString());
+                foreach (string range in sourceRanges)
+                {
+                    string expected = NormalizeChartReferenceP06(sourceSheetName + "!" + range);
+                    if (!normalizedFormulas.Contains(expected)) return false;
+                }
+
+                return true;
+            }
+            finally
+            {
+                ReleaseCom(series);
+                ReleaseCom(seriesCollection);
+            }
+        }
+
+        private string NormalizeChartReferenceP06(string text)
+        {
+            return Regex.Replace((text ?? "").Replace("$", "").Replace("'", ""), @"\s+", "").ToUpperInvariant();
+        }
+
+        private string GetCellFormatSignatureP06T3(Xl.Range cell)
+        {
+            Xl.Font font = null;
+            Xl.Interior interior = null;
+            Xl.Borders borders = null;
+            Xl.Border border = null;
+            try
+            {
+                font = cell.Font;
+                interior = cell.Interior;
+                borders = cell.Borders;
+
+                StringBuilder result = new StringBuilder();
+                AppendFormatValueP06(result, font == null ? null : font.Name);
+                AppendFormatValueP06(result, font == null ? null : font.Size);
+                AppendFormatValueP06(result, font == null ? null : font.Bold);
+                AppendFormatValueP06(result, font == null ? null : font.Italic);
+                AppendFormatValueP06(result, font == null ? null : font.Underline);
+                AppendFormatValueP06(result, font == null ? null : font.Strikethrough);
+                AppendFormatValueP06(result, font == null ? null : font.Color);
+                AppendFormatValueP06(result, interior == null ? null : interior.Pattern);
+                AppendFormatValueP06(result, interior == null ? null : interior.Color);
+                AppendFormatValueP06(result, interior == null ? null : interior.PatternColor);
+                AppendFormatValueP06(result, cell.NumberFormat);
+                AppendFormatValueP06(result, cell.HorizontalAlignment);
+                AppendFormatValueP06(result, cell.VerticalAlignment);
+                AppendFormatValueP06(result, cell.WrapText);
+                AppendFormatValueP06(result, cell.IndentLevel);
+                AppendFormatValueP06(result, cell.Orientation);
+                AppendFormatValueP06(result, cell.ShrinkToFit);
+
+                int[] borderIndexes = { 7, 8, 9, 10, 11, 12 };
+                foreach (int borderIndex in borderIndexes)
+                {
+                    ReleaseCom(border);
+                    border = borders == null ? null : borders.Item[(Xl.XlBordersIndex)borderIndex];
+                    AppendFormatValueP06(result, border == null ? null : border.LineStyle);
+                    AppendFormatValueP06(result, border == null ? null : border.Weight);
+                }
+
+                return result.ToString();
+            }
+            finally
+            {
+                ReleaseCom(border);
+                ReleaseCom(borders);
+                ReleaseCom(interior);
+                ReleaseCom(font);
+            }
+        }
+
+        private void AppendFormatValueP06(StringBuilder builder, object value)
+        {
+            builder.Append(Convert.ToString(value, CultureInfo.InvariantCulture)).Append('\u001f');
         }
 
         public string GetCellDisplayText(string address)
