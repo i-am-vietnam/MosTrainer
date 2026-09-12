@@ -1,4 +1,4 @@
-﻿using MosTrainer.Core.Interfaces;
+using MosTrainer.Core.Interfaces;
 using MosTrainer.Core.Models;
 using System;
 using MosTrainer.Core.Diagnostics;
@@ -58,7 +58,11 @@ namespace MosTrainer.Core.Services
                 "WorksheetShowFormulasEquals", "InvoiceCellsDeletedShiftUp",
                 "ChartStyleAndPaletteEquals", "WorkbookPersonalInformationRemoved",
                 "ClusteredColumnChartFromRanges", "IfFormulaByHeadersStrict",
-                "NamedRangeRefersToRange"
+                "NamedRangeRefersToRange", "TableColumnFormulaMultipliesNamedRange",
+                "TableRowContainingTextDeletedPreserveOutside", "RangeAlignmentIndentEquals",
+                "SparklinesByRangeAndType", "TableTotalRowSumsByHeaders",
+                "CountBlankFormulaByHeaders", "TableMultiLevelSortStateEquals",
+                "ChartQuickLayoutEquals"
             };
 
         private readonly IExcelController _excel;
@@ -124,6 +128,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P06(task);
                 case "Excel2019_P07":
                     return CheckExcel2019P07(task);
+                case "Excel2019_P08":
+                    return CheckExcel2019P08(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -158,6 +164,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P07(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P08(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -579,6 +589,55 @@ namespace MosTrainer.Core.Services
                 case "NamedRangeRefersToRange":
                     return Result(_excel.NamedRangeRefersToRange(
                         task.NamedRange, task.SheetName, task.Range));
+
+                // Project 8 task 1
+                case "TableColumnFormulaMultipliesNamedRange":
+                    return Result(_excel.TableColumnFormulaMultipliesNamedRange(
+                        task.SheetName, task.TableName, task.TargetHeader,
+                        task.SourceHeader, task.NamedRange, task.SourceRange));
+
+                // Project 8 task 2
+                case "TableRowContainingTextDeletedPreserveOutside":
+                    return Result(_excel.TableRowContainingTextDeletedPreserveOutside(
+                        task.SheetName, task.TableName, task.ExpectedText,
+                        task.ExpectedRowCount, task.Range, task.SourceRange,
+                        task.ExpectedTexts));
+
+                // Project 8 task 3
+                case "RangeAlignmentIndentEquals":
+                    return Result(_excel.RangeAlignmentIndentEquals(
+                        task.SheetName, task.Range, task.ExpectedFormat,
+                        ToInt(task.ExpectedValue)));
+
+                // Project 8 task 4
+                case "SparklinesByRangeAndType":
+                    return Result(_excel.SparklinesByRangeAndType(
+                        task.SheetName, task.LocationRange, task.DataRange,
+                        task.ExpectedFormat));
+
+                // Project 8 task 5
+                case "TableTotalRowSumsByHeaders":
+                    return Result(_excel.TableTotalRowSumsByHeaders(
+                        task.SheetName, task.TableName, task.SourceHeaders));
+
+                // Project 8 task 6
+                case "CountBlankFormulaByHeaders":
+                    return Result(_excel.CountBlankFormulaByHeaders(
+                        task.SheetName, task.TableName, task.TargetHeader,
+                        task.SourceHeaders));
+
+                // Project 8 task 7
+                case "TableMultiLevelSortStateEquals":
+                    return Result(_excel.TableMultiLevelSortStateEquals(
+                        task.SheetName, task.TableName, task.Range,
+                        task.SortHeaders, task.SortOrders));
+
+                // Project 8 task 8
+                case "ChartQuickLayoutEquals":
+                    return Result(_excel.ChartQuickLayoutEquals(
+                        task.SheetName, task.ChartName, ToInt(task.ExpectedValue),
+                        task.ExpectedChartType, task.SourceRange, task.Range,
+                        task.DataRange));
 
 
                 default:

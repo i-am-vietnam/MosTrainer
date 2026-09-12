@@ -1,0 +1,18 @@
+﻿{
+  "P09_T01_TITLE": "Nhiệm vụ 1",
+  "P09_T01_INST": "Trên trang tính \"Invoice\", di chuyển các ô E5:F16 lên trên để sửa căn chỉnh bằng cách xóa các ô E1:F4.",
+  "P09_T02_TITLE": "Nhiệm vụ 2",
+  "P09_T02_INST": "Trên trang tính \"Suppliers Information\", trong cột \"Email Address\", sử dụng một hàm để tạo địa chỉ email cho mỗi người bằng Supplier ID và \"@hocict.edu.vn\".",
+  "P09_T03_TITLE": "Nhiệm vụ 3",
+  "P09_T03_INST": "Trên trang tính \"Suppliers Information\", tạo biểu đồ Clustered Column hiển thị \"Total Value\" của tất cả các nhà cung cấp, với các nhà cung cấp làm nhãn trục ngang. Đặt biểu đồ bên dưới bảng. Kích thước và vị trí chính xác của biểu đồ không quan trọng.",
+  "P09_T04_TITLE": "Nhiệm vụ 4",
+  "P09_T04_INST": "Trên trang tính \"Invoice\", trong các ô G2:G11, sử dụng định dạng có điều kiện để áp dụng định dạng Yellow Fill with Dark Yellow Text cho các ô chứa giá trị lớn hơn \"$ 500,000\".",
+  "P09_T05_TITLE": "Nhiệm vụ 5",
+  "P09_T05_INST": "Trên trang tính biểu đồ \"Summary\", chèn tiêu đề biểu đồ phía trên biểu đồ, ở phía trên vùng vẽ. Hiển thị các giá trị dưới dạng nhãn dữ liệu ở bên phải của mỗi thanh dữ liệu.",
+  "P09_T06_TITLE": "Nhiệm vụ 6",
+  "P09_T06_INST": "Trên trang tính \"Invoice\", thiết lập A1:G1 để văn bản tự động xuống dòng.",
+  "P09_T07_TITLE": "Nhiệm vụ 7",
+  "P09_T07_INST": "Trên trang tính \"Invoice\", tại ô J2, sử dụng một hàm để hiển thị giá trị tồn kho cao nhất từ cột \"Stock Value\".",
+  "P09_T08_TITLE": "Nhiệm vụ 8",
+  "P09_T08_INST": "Trên trang tính \"Suppliers Information\", trong cột \"SupplierID\", sửa đổi các công thức để hiển thị các chữ cái ở dạng chữ hoa."
+}

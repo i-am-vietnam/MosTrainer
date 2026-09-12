@@ -1,8 +1,8 @@
-﻿{
+{
   "P08_T01_TITLE": "Nhiệm vụ 1",
   "P08_T01_INST": "Trên trang tính \"Forecast\", trong cột \"Quarter 2\", nhập một công thức nhân giá trị trong cột \"Quarter 1\" với vùng được đặt tên \"Q2_Increase\". Sử dụng tên vùng trong công thức thay vì tham chiếu ô hoặc giá trị.",
   "P08_T02_TITLE": "Nhiệm vụ 2",
-  "P08_T02_INST": "Trên trang tính \"Supplier\", xóa hàng trong bảng chứa dữ liệu \"Wooden Toys\". Không thay đổi bất kỳ nội dung nào bên ngoài bảng.",
+  "P08_T02_INST": "Trên trang tính \"Suppliers\", xóa hàng trong bảng chứa dữ liệu \"Wooden Toys\". Không thay đổi bất kỳ nội dung nào bên ngoài bảng.",
   "P08_T03_TITLE": "Nhiệm vụ 3",
   "P08_T03_INST": "Trên trang tính \"First half of the year\", thay đổi căn chỉnh ngang của các tên \"Test site\" thành Left (Indent). Đặt mức thụt lề là 1.",
   "P08_T04_TITLE": "Nhiệm vụ 4",

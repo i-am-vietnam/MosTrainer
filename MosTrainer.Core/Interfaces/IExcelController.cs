@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace MosTrainer.Core.Interfaces
@@ -137,6 +137,22 @@ namespace MosTrainer.Core.Interfaces
         bool IfFormulaByHeadersStrict(string sheetName, string tableName, string targetHeader, string criteriaHeader, string compareOperator, double threshold, string trueText, string falseText);
         // Excel 2019 - Project 7 Task 8
         bool NamedRangeRefersToRange(string name, string sheetName, string rangeAddress);
+        // Excel 2019 - Project 8 Task 1
+        bool TableColumnFormulaMultipliesNamedRange(string sheetName, string tableName, string targetHeader, string sourceHeader, string namedRange, string namedRangeAddress);
+        // Excel 2019 - Project 8 Task 2
+        bool TableRowContainingTextDeletedPreserveOutside(string sheetName, string tableName, string searchText, int expectedDataRowCount, string expectedTableRange, string preservedFilterRange, IList<string> expectedFirstColumnValues);
+        // Excel 2019 - Project 8 Task 3
+        bool RangeAlignmentIndentEquals(string sheetName, string rangeAddress, string expectedAlignment, int expectedIndent);
+        // Excel 2019 - Project 8 Task 4
+        bool SparklinesByRangeAndType(string sheetName, string locationRange, string dataRange, string expectedType);
+        // Excel 2019 - Project 8 Task 5
+        bool TableTotalRowSumsByHeaders(string sheetName, string tableName, IList<string> sumHeaders);
+        // Excel 2019 - Project 8 Task 6
+        bool CountBlankFormulaByHeaders(string sheetName, string tableName, string targetHeader, IList<string> sourceHeaders);
+        // Excel 2019 - Project 8 Task 7
+        bool TableMultiLevelSortStateEquals(string sheetName, string tableName, string tableRange, IList<string> sortHeaders, IList<string> sortOrders);
+        // Excel 2019 - Project 8 Task 8
+        bool ChartQuickLayoutEquals(string sheetName, string chartName, int expectedLayout, int expectedChartType, string seriesNameRange, string categoryRange, string valuesRange);
         string GetCellDisplayText(string address);
     }
 }

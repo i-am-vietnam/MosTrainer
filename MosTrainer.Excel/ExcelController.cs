@@ -1,4 +1,4 @@
-﻿using Microsoft.Office.Interop.Excel;
+using Microsoft.Office.Interop.Excel;
 using MosTrainer.Core.Interfaces;
 using MosTrainer.Core.Diagnostics;
 using System;
@@ -11515,6 +11515,740 @@ namespace MosTrainer.Excel
             if (!double.TryParse(text, NumberStyles.Any, CultureInfo.InvariantCulture, out value)) return false;
             if (percent) value /= 100d;
             return Math.Abs(value - expected) < 0.0000001d;
+        }
+
+        // Project 8 Task 1
+        public bool TableColumnFormulaMultipliesNamedRange(
+            string sheetName,
+            string tableName,
+            string targetHeader,
+            string sourceHeader,
+            string namedRange,
+            string namedRangeAddress)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(tableName) ||
+                string.IsNullOrWhiteSpace(targetHeader) || string.IsNullOrWhiteSpace(sourceHeader) ||
+                string.IsNullOrWhiteSpace(namedRange) || string.IsNullOrWhiteSpace(namedRangeAddress))
+                return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range tableData = null;
+            Xl.Range targetData = null;
+            Xl.Range sourceData = null;
+            Xl.Range targetCell = null;
+            Xl.Range sourceCell = null;
+            Xl.Names names = null;
+            Xl.Name name = null;
+            Xl.Range namedCell = null;
+            Xl.Worksheet namedSheet = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+
+                tables = ws.ListObjects;
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(table);
+                    table = tables.Item[i];
+                    if (table != null && string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase)) break;
+                    table = null;
+                }
+                if (table == null) return false;
+
+                int targetIndex = FindTableColumnIndexP05T5(table, targetHeader);
+                int sourceIndex = FindTableColumnIndexP05T5(table, sourceHeader);
+                if (targetIndex <= 0 || sourceIndex <= 0) return false;
+
+                names = workbook.Names;
+                for (int i = 1; i <= Convert.ToInt32(names.Count); i++)
+                {
+                    ReleaseCom(name);
+                    name = names.Item(i, Type.Missing, Type.Missing);
+                    if (name != null && string.Equals(Convert.ToString(name.Name), namedRange, StringComparison.OrdinalIgnoreCase)) break;
+                    name = null;
+                }
+                if (name == null) return false;
+                try { namedCell = name.RefersToRange; } catch { namedCell = null; }
+                if (namedCell == null || Convert.ToInt32(namedCell.Cells.Count) != 1) return false;
+                namedSheet = namedCell.Worksheet;
+                string actualNamedAddress = Convert.ToString(namedCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                if (namedSheet == null || !string.Equals(namedSheet.Name, sheetName, StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(NormalizeRangeAddress(actualNamedAddress), NormalizeRangeAddress(namedRangeAddress), StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                double namedValue;
+                if (!TryToDouble(namedCell.Value2, out namedValue)) return false;
+
+                tableData = table.DataBodyRange;
+                if (tableData == null) return false;
+                targetData = tableData.Columns[targetIndex] as Xl.Range;
+                sourceData = tableData.Columns[sourceIndex] as Xl.Range;
+                if (targetData == null || sourceData == null ||
+                    Convert.ToInt32(targetData.Rows.Count) != Convert.ToInt32(sourceData.Rows.Count)) return false;
+
+                int rowCount = Convert.ToInt32(targetData.Rows.Count);
+                for (int row = 1; row <= rowCount; row++)
+                {
+                    ReleaseCom(targetCell);
+                    ReleaseCom(sourceCell);
+                    targetCell = targetData.Cells[row, 1] as Xl.Range;
+                    sourceCell = sourceData.Cells[row, 1] as Xl.Range;
+                    if (targetCell == null || sourceCell == null || !Convert.ToBoolean(targetCell.HasFormula)) return false;
+
+                    string sourceAddress = Convert.ToString(sourceCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!FormulaMultipliesNamedRangeP08(Convert.ToString(targetCell.Formula), sourceHeader, sourceAddress, namedRange))
+                        return false;
+
+                    double sourceValue;
+                    double actualValue;
+                    if (!TryToDouble(sourceCell.Value2, out sourceValue) || !TryToDouble(targetCell.Value2, out actualValue)) return false;
+                    double expectedValue = sourceValue * namedValue;
+                    double tolerance = Math.Max(0.000001d, Math.Abs(expectedValue) * 0.000000001d);
+                    if (Math.Abs(actualValue - expectedValue) > tolerance) return false;
+                }
+
+                return rowCount > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("TableColumnFormulaMultipliesNamedRange", "P08 T01 grading failed.", ex, "Excel2019_P08", "T01");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(namedSheet); ReleaseCom(namedCell); ReleaseCom(name); ReleaseCom(names);
+                ReleaseCom(sourceCell); ReleaseCom(targetCell); ReleaseCom(sourceData); ReleaseCom(targetData);
+                ReleaseCom(tableData); ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        // Project 8 Task 2
+        public bool TableRowContainingTextDeletedPreserveOutside(
+            string sheetName,
+            string tableName,
+            string searchText,
+            int expectedDataRowCount,
+            string expectedTableRange,
+            string preservedFilterRange,
+            IList<string> expectedFirstColumnValues)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(tableName) ||
+                string.IsNullOrWhiteSpace(searchText) || expectedDataRowCount <= 0 ||
+                expectedFirstColumnValues == null || expectedFirstColumnValues.Count != expectedDataRowCount)
+                return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range tableRange = null;
+            Xl.Range data = null;
+            Xl.Range cell = null;
+            Xl.Names names = null;
+            Xl.Name filterName = null;
+            Xl.Range filterRange = null;
+            Xl.Worksheet filterSheet = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(table);
+                    table = tables.Item[i];
+                    if (table != null && string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase)) break;
+                    table = null;
+                }
+                if (table == null) return false;
+                tableRange = table.Range;
+                data = table.DataBodyRange;
+                if (tableRange == null || data == null || Convert.ToInt32(data.Rows.Count) != expectedDataRowCount) return false;
+                string actualTableRange = Convert.ToString(tableRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                if (!string.Equals(NormalizeRangeAddress(actualTableRange), NormalizeRangeAddress(expectedTableRange), StringComparison.OrdinalIgnoreCase) ||
+                    RangeContainsTextP3T3(data, searchText)) return false;
+
+                for (int row = 1; row <= expectedDataRowCount; row++)
+                {
+                    ReleaseCom(cell);
+                    cell = data.Cells[row, 1] as Xl.Range;
+                    if (cell == null || !string.Equals(
+                        NormalizeText(Convert.ToString(cell.Value2)), NormalizeText(expectedFirstColumnValues[row - 1]),
+                        StringComparison.OrdinalIgnoreCase)) return false;
+                }
+
+                names = workbook.Names;
+                string expectedFilterName = sheetName + "!_FilterDatabase";
+                for (int i = 1; i <= Convert.ToInt32(names.Count); i++)
+                {
+                    ReleaseCom(filterName);
+                    filterName = names.Item(i, Type.Missing, Type.Missing);
+                    if (filterName != null && string.Equals(Convert.ToString(filterName.Name), expectedFilterName, StringComparison.OrdinalIgnoreCase)) break;
+                    filterName = null;
+                }
+                if (filterName == null) return false;
+                try { filterRange = filterName.RefersToRange; } catch { filterRange = null; }
+                if (filterRange == null) return false;
+                filterSheet = filterRange.Worksheet;
+                string actualFilterRange = Convert.ToString(filterRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                return filterSheet != null && string.Equals(filterSheet.Name, sheetName, StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(NormalizeRangeAddress(actualFilterRange), NormalizeRangeAddress(preservedFilterRange), StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("TableRowContainingTextDeletedPreserveOutside", "P08 T02 grading failed.", ex, "Excel2019_P08", "T02");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(filterSheet); ReleaseCom(filterRange); ReleaseCom(filterName); ReleaseCom(names);
+                ReleaseCom(cell); ReleaseCom(data); ReleaseCom(tableRange); ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        // Project 8 Task 3
+        public bool RangeAlignmentIndentEquals(string sheetName, string rangeAddress, string expectedAlignment, int expectedIndent)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(rangeAddress) ||
+                expectedIndent < 0 || expectedIndent > 15) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range range = null;
+            Xl.Range cell = null;
+            try
+            {
+                int expectedAlignmentValue = ParseHorizontalAlignment(expectedAlignment);
+                if (expectedAlignmentValue == 0) return false;
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                range = ws.Range[rangeAddress];
+                if (range == null) return false;
+                int count = Convert.ToInt32(range.Cells.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(cell);
+                    cell = range.Cells[i] as Xl.Range;
+                    if (cell == null || Convert.ToInt32(cell.HorizontalAlignment) != expectedAlignmentValue ||
+                        Convert.ToInt32(cell.IndentLevel) != expectedIndent) return false;
+                }
+                return count > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("RangeAlignmentIndentEquals", "P08 T03 grading failed.", ex, "Excel2019_P08", "T03");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(cell); ReleaseCom(range); ReleaseCom(ws);
+            }
+        }
+
+        // Project 8 Task 4
+        public bool SparklinesByRangeAndType(string sheetName, string locationRange, string dataRange, string expectedType)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(locationRange) ||
+                string.IsNullOrWhiteSpace(dataRange)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range expectedLocation = null;
+            Xl.Range expectedData = null;
+            object groups = null;
+            object group = null;
+            Xl.Range groupLocation = null;
+            Xl.Range groupData = null;
+            try
+            {
+                int expectedSparkType;
+                if (!TryParseSparklineTypeP08(expectedType, out expectedSparkType)) return false;
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                expectedLocation = ws.Range[locationRange];
+                expectedData = ws.Range[dataRange];
+                if (expectedLocation == null || expectedData == null ||
+                    Convert.ToInt32(expectedLocation.Columns.Count) != 1 ||
+                    Convert.ToInt32(expectedLocation.Rows.Count) != Convert.ToInt32(expectedData.Rows.Count)) return false;
+
+                int firstLocationRow = Convert.ToInt32(expectedLocation.Row);
+                int lastLocationRow = firstLocationRow + Convert.ToInt32(expectedLocation.Rows.Count) - 1;
+                int locationColumn = Convert.ToInt32(expectedLocation.Column);
+                int dataFirstColumn = Convert.ToInt32(expectedData.Column);
+                int dataLastColumn = dataFirstColumn + Convert.ToInt32(expectedData.Columns.Count) - 1;
+                bool[] covered = new bool[Convert.ToInt32(expectedLocation.Rows.Count)];
+
+                groups = GetComPropertyP2T3(expectedLocation, "SparklineGroups");
+                int groupCount = ToIntP2T3(GetComPropertyP2T3(groups, "Count"));
+                if (groupCount <= 0) return false;
+                for (int i = 1; i <= groupCount; i++)
+                {
+                    ReleaseCom(groupData); ReleaseCom(groupLocation); ReleaseCom(group);
+                    groupData = null; groupLocation = null;
+                    group = GetComIndexedPropertyP2T3(groups, "Item", i);
+                    if (group == null) continue;
+                    groupLocation = GetComPropertyP2T3(group, "Location") as Xl.Range;
+                    if (groupLocation == null) continue;
+                    int groupColumn = Convert.ToInt32(groupLocation.Column);
+                    int groupFirstRow = Convert.ToInt32(groupLocation.Row);
+                    int groupLastRow = groupFirstRow + Convert.ToInt32(groupLocation.Rows.Count) - 1;
+                    bool touchesTarget = groupColumn == locationColumn && groupLastRow >= firstLocationRow && groupFirstRow <= lastLocationRow;
+                    if (!touchesTarget) continue;
+                    if (ToIntP2T3(GetComPropertyP2T3(group, "Type")) != expectedSparkType || Convert.ToInt32(groupLocation.Columns.Count) != 1 ||
+                        groupFirstRow < firstLocationRow || groupLastRow > lastLocationRow) return false;
+
+                    string sourceData = Convert.ToString(GetComPropertyP2T3(group, "SourceData"));
+                    string sourceAddress = NormalizeRangeAddress(sourceData);
+                    try { groupData = ws.Range[sourceAddress]; } catch { groupData = null; }
+                    if (groupData == null || Convert.ToInt32(groupData.Column) != dataFirstColumn ||
+                        Convert.ToInt32(groupData.Columns.Count) != dataLastColumn - dataFirstColumn + 1 ||
+                        Convert.ToInt32(groupData.Row) != groupFirstRow ||
+                        Convert.ToInt32(groupData.Rows.Count) != groupLastRow - groupFirstRow + 1) return false;
+
+                    for (int row = groupFirstRow; row <= groupLastRow; row++)
+                    {
+                        int index = row - firstLocationRow;
+                        if (covered[index]) return false;
+                        covered[index] = true;
+                    }
+                }
+
+                for (int i = 0; i < covered.Length; i++) if (!covered[i]) return false;
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("SparklinesByRangeAndType", "P08 T04 grading failed.", ex, "Excel2019_P08", "T04");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(groupData); ReleaseCom(groupLocation); ReleaseCom(group); ReleaseCom(groups);
+                ReleaseCom(expectedData); ReleaseCom(expectedLocation); ReleaseCom(ws);
+            }
+        }
+
+        // Project 8 Task 5
+        public bool TableTotalRowSumsByHeaders(string sheetName, string tableName, IList<string> sumHeaders)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(tableName) ||
+                sumHeaders == null || sumHeaders.Count == 0) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.ListColumns columns = null;
+            Xl.ListColumn column = null;
+            Xl.Range data = null;
+            Xl.Range totalsRow = null;
+            Xl.Range total = null;
+            Xl.Range cell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(table);
+                    table = tables.Item[i];
+                    if (table != null && string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase)) break;
+                    table = null;
+                }
+                if (table == null || !Convert.ToBoolean(table.ShowTotals)) return false;
+                columns = table.ListColumns;
+                foreach (string header in sumHeaders)
+                {
+                    ReleaseCom(cell); ReleaseCom(total); ReleaseCom(data); ReleaseCom(column);
+                    cell = null; total = null; data = null; column = null;
+                    int index = FindTableColumnIndexP05T5(table, header);
+                    if (index <= 0) return false;
+                    column = columns.Item[index];
+                    if (column == null || Convert.ToInt32(column.TotalsCalculation) != (int)Xl.XlTotalsCalculation.xlTotalsCalculationSum)
+                        return false;
+                    data = column.DataBodyRange;
+                    ReleaseCom(totalsRow);
+                    totalsRow = table.TotalsRowRange;
+                    total = totalsRow == null ? null : totalsRow.Cells[1, index] as Xl.Range;
+                    if (data == null || total == null || !Convert.ToBoolean(total.HasFormula)) return false;
+                    double expected = 0d;
+                    for (int row = 1; row <= Convert.ToInt32(data.Rows.Count); row++)
+                    {
+                        ReleaseCom(cell);
+                        cell = data.Cells[row, 1] as Xl.Range;
+                        double value;
+                        if (cell != null && TryToDouble(cell.Value2, out value)) expected += value;
+                    }
+                    double actual;
+                    if (!TryToDouble(total.Value2, out actual) || Math.Abs(actual - expected) > 0.000001d) return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("TableTotalRowSumsByHeaders", "P08 T05 grading failed.", ex, "Excel2019_P08", "T05");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(cell); ReleaseCom(total); ReleaseCom(totalsRow); ReleaseCom(data); ReleaseCom(column); ReleaseCom(columns);
+                ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        // Project 8 Task 6
+        public bool CountBlankFormulaByHeaders(string sheetName, string tableName, string targetHeader, IList<string> sourceHeaders)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(tableName) ||
+                string.IsNullOrWhiteSpace(targetHeader) || sourceHeaders == null || sourceHeaders.Count < 2) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range tableData = null;
+            Xl.Range targetData = null;
+            Xl.Range targetCell = null;
+            Xl.Range sourceCell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(table);
+                    table = tables.Item[i];
+                    if (table != null && string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase)) break;
+                    table = null;
+                }
+                if (table == null) return false;
+                int targetIndex = FindTableColumnIndexP05T5(table, targetHeader);
+                int firstSourceIndex = FindTableColumnIndexP05T5(table, sourceHeaders[0]);
+                if (targetIndex <= 0 || firstSourceIndex <= 0) return false;
+                for (int i = 0; i < sourceHeaders.Count; i++)
+                    if (FindTableColumnIndexP05T5(table, sourceHeaders[i]) != firstSourceIndex + i) return false;
+
+                tableData = table.DataBodyRange;
+                if (tableData == null) return false;
+                targetData = tableData.Columns[targetIndex] as Xl.Range;
+                if (targetData == null) return false;
+                int rowCount = Convert.ToInt32(targetData.Rows.Count);
+                for (int row = 1; row <= rowCount; row++)
+                {
+                    ReleaseCom(targetCell);
+                    targetCell = targetData.Cells[row, 1] as Xl.Range;
+                    if (targetCell == null || !Convert.ToBoolean(targetCell.HasFormula)) return false;
+                    int worksheetRow = Convert.ToInt32(targetCell.Row);
+                    string firstAddress = ExcelColumnNameP1T3(Convert.ToInt32(tableData.Column) + firstSourceIndex - 1) + worksheetRow;
+                    string lastAddress = ExcelColumnNameP1T3(Convert.ToInt32(tableData.Column) + firstSourceIndex + sourceHeaders.Count - 2) + worksheetRow;
+                    if (!FormulaIsCountBlankP08(Convert.ToString(targetCell.Formula), firstAddress + ":" + lastAddress,
+                        sourceHeaders[0], sourceHeaders[sourceHeaders.Count - 1])) return false;
+
+                    int expectedBlanks = 0;
+                    for (int source = 0; source < sourceHeaders.Count; source++)
+                    {
+                        ReleaseCom(sourceCell);
+                        sourceCell = tableData.Cells[row, firstSourceIndex + source] as Xl.Range;
+                        if (sourceCell == null) return false;
+                        object value = sourceCell.Value2;
+                        if (value == null || string.IsNullOrEmpty(Convert.ToString(value))) expectedBlanks++;
+                    }
+                    double actual;
+                    if (!TryToDouble(targetCell.Value2, out actual) || Math.Abs(actual - expectedBlanks) > 0.000001d) return false;
+                }
+                return rowCount > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("CountBlankFormulaByHeaders", "P08 T06 grading failed.", ex, "Excel2019_P08", "T06");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(sourceCell); ReleaseCom(targetCell); ReleaseCom(targetData); ReleaseCom(tableData);
+                ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        // Project 8 Task 7
+        public bool TableMultiLevelSortStateEquals(
+            string sheetName,
+            string tableName,
+            string tableRangeAddress,
+            IList<string> sortHeaders,
+            IList<string> sortOrders)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(tableName) ||
+                sortHeaders == null || sortOrders == null || sortHeaders.Count != 2 || sortOrders.Count != 2)
+                return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range tableRange = null;
+            Xl.Sort sort = null;
+            Xl.SortFields fields = null;
+            Xl.SortField field = null;
+            Xl.Range key = null;
+            Xl.Range expectedKey = null;
+            Xl.Range previous = null;
+            Xl.Range current = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(table);
+                    table = tables.Item[i];
+                    if (table != null && string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase)) break;
+                    table = null;
+                }
+                if (table == null) return false;
+                tableRange = table.Range;
+                string actualTableRange = tableRange == null ? "" : Convert.ToString(tableRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                if (!string.Equals(NormalizeRangeAddress(actualTableRange), NormalizeRangeAddress(tableRangeAddress), StringComparison.OrdinalIgnoreCase)) return false;
+
+                sort = table.Sort;
+                fields = sort.SortFields;
+                if (fields == null || Convert.ToInt32(fields.Count) != 2) return false;
+                int[] keyIndexes = new int[2];
+                bool[] ascending = new bool[2];
+                for (int i = 0; i < 2; i++)
+                {
+                    ReleaseCom(expectedKey); ReleaseCom(key); ReleaseCom(field);
+                    expectedKey = null; key = null;
+                    keyIndexes[i] = FindTableColumnIndexP05T5(table, sortHeaders[i]);
+                    if (keyIndexes[i] <= 0) return false;
+                    field = fields.Item[i + 1];
+                    key = field.Key;
+                    Xl.ListColumn listColumn = table.ListColumns.Item[keyIndexes[i]];
+                    try { expectedKey = listColumn.DataBodyRange; }
+                    finally { ReleaseCom(listColumn); }
+                    if (field == null || key == null || expectedKey == null ||
+                        Convert.ToInt32(field.SortOn) != (int)Xl.XlSortOn.xlSortOnValues) return false;
+                    string actualKey = Convert.ToString(key.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    string expectedKeyAddress = Convert.ToString(expectedKey.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!string.Equals(NormalizeRangeAddress(actualKey), NormalizeRangeAddress(expectedKeyAddress), StringComparison.OrdinalIgnoreCase)) return false;
+                    ascending[i] = IsAscendingSortOrderP1T4(sortOrders, i);
+                    int expectedOrder = ascending[i] ? (int)Xl.XlSortOrder.xlAscending : (int)Xl.XlSortOrder.xlDescending;
+                    if (Convert.ToInt32(field.Order) != expectedOrder) return false;
+                }
+
+                Xl.Range data = table.DataBodyRange;
+                try
+                {
+                    int rowCount = Convert.ToInt32(data.Rows.Count);
+                    for (int row = 2; row <= rowCount; row++)
+                    {
+                        bool resolved = false;
+                        for (int level = 0; level < 2; level++)
+                        {
+                            ReleaseCom(previous); ReleaseCom(current);
+                            previous = data.Cells[row - 1, keyIndexes[level]] as Xl.Range;
+                            current = data.Cells[row, keyIndexes[level]] as Xl.Range;
+                            int comparison = CompareSortValueP1T4(GetCellTextP1T3(previous), GetCellTextP1T3(current));
+                            if (comparison == 0) continue;
+                            if ((ascending[level] && comparison > 0) || (!ascending[level] && comparison < 0)) return false;
+                            resolved = true;
+                            break;
+                        }
+                        if (!resolved) continue;
+                    }
+                }
+                finally { ReleaseCom(data); }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("TableMultiLevelSortStateEquals", "P08 T07 grading failed.", ex, "Excel2019_P08", "T07");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(current); ReleaseCom(previous); ReleaseCom(expectedKey); ReleaseCom(key); ReleaseCom(field);
+                ReleaseCom(fields); ReleaseCom(sort); ReleaseCom(tableRange); ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        // Project 8 Task 8
+        public bool ChartQuickLayoutEquals(
+            string sheetName,
+            string chartName,
+            int expectedLayout,
+            int expectedChartType,
+            string seriesNameRange,
+            string categoryRange,
+            string valuesRange)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(chartName) || expectedLayout != 3)
+                return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ChartObjects charts = null;
+            Xl.ChartObject chartObject = null;
+            Xl.Chart chart = null;
+            Xl.Legend legend = null;
+            Xl.Axis categoryAxis = null;
+            Xl.Axis valueAxis = null;
+            Xl.SeriesCollection seriesCollection = null;
+            Xl.Series series = null;
+            Xl.Range names = null;
+            Xl.Range categories = null;
+            Xl.Range values = null;
+            Xl.Range nameCell = null;
+            Xl.Range valueRow = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                charts = ws.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (charts == null) return false;
+                for (int i = 1; i <= Convert.ToInt32(charts.Count); i++)
+                {
+                    ReleaseCom(chartObject);
+                    chartObject = charts.Item(i) as Xl.ChartObject;
+                    if (chartObject != null && string.Equals(chartObject.Name, chartName, StringComparison.OrdinalIgnoreCase)) break;
+                    chartObject = null;
+                }
+                if (chartObject == null) return false;
+                chart = chartObject.Chart;
+                if (chart == null || Convert.ToInt32(chart.ChartType) != expectedChartType ||
+                    !Convert.ToBoolean(chart.HasTitle) || !Convert.ToBoolean(chart.HasLegend)) return false;
+                legend = chart.Legend;
+                if (legend == null || Convert.ToInt32(legend.Position) != (int)Xl.XlLegendPosition.xlLegendPositionBottom) return false;
+
+                categoryAxis = chart.Axes(Xl.XlAxisType.xlCategory, Xl.XlAxisGroup.xlPrimary) as Xl.Axis;
+                valueAxis = chart.Axes(Xl.XlAxisType.xlValue, Xl.XlAxisGroup.xlPrimary) as Xl.Axis;
+                if (categoryAxis == null || valueAxis == null || Convert.ToBoolean(categoryAxis.HasTitle) ||
+                    Convert.ToBoolean(valueAxis.HasTitle) || Convert.ToBoolean(categoryAxis.HasMajorGridlines) ||
+                    !Convert.ToBoolean(valueAxis.HasMajorGridlines)) return false;
+
+                names = ws.Range[seriesNameRange];
+                categories = ws.Range[categoryRange];
+                values = ws.Range[valuesRange];
+                if (names == null || categories == null || values == null ||
+                    Convert.ToInt32(names.Columns.Count) != 1 || Convert.ToInt32(values.Rows.Count) != Convert.ToInt32(names.Rows.Count))
+                    return false;
+                seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                int seriesCount = Convert.ToInt32(names.Rows.Count);
+                if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != seriesCount) return false;
+                string expectedCategory = NormalizeChartReferenceP06(sheetName + "!" +
+                    Convert.ToString(categories.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]));
+                for (int i = 1; i <= seriesCount; i++)
+                {
+                    ReleaseCom(valueRow); ReleaseCom(nameCell); ReleaseCom(series);
+                    valueRow = null; nameCell = null;
+                    series = seriesCollection.Item(i);
+                    if (series == null || Convert.ToBoolean(series.HasDataLabels)) return false;
+                    nameCell = names.Cells[i, 1] as Xl.Range;
+                    valueRow = values.Rows[i] as Xl.Range;
+                    if (nameCell == null || valueRow == null) return false;
+                    string formula = NormalizeChartReferenceP06(Convert.ToString(series.Formula));
+                    string expectedName = NormalizeChartReferenceP06(sheetName + "!" +
+                        Convert.ToString(nameCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]));
+                    string expectedValues = NormalizeChartReferenceP06(sheetName + "!" +
+                        Convert.ToString(valueRow.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]));
+                    if (!formula.Contains(expectedName) || !formula.Contains(expectedCategory) || !formula.Contains(expectedValues))
+                        return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ChartQuickLayoutEquals", "P08 T08 grading failed.", ex, "Excel2019_P08", "T08");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(valueRow); ReleaseCom(nameCell); ReleaseCom(values); ReleaseCom(categories); ReleaseCom(names);
+                ReleaseCom(series); ReleaseCom(seriesCollection); ReleaseCom(valueAxis); ReleaseCom(categoryAxis);
+                ReleaseCom(legend); ReleaseCom(chart); ReleaseCom(chartObject); ReleaseCom(charts); ReleaseCom(ws);
+            }
+        }
+
+        private bool FormulaMultipliesNamedRangeP08(string formula, string sourceHeader, string sourceAddress, string namedRange)
+        {
+            string expression = NormalizeFormula(formula);
+            if (expression.StartsWith("=", StringComparison.Ordinal)) expression = expression.Substring(1);
+            expression = TrimOuterParenthesesP05T5(expression);
+            string[] terms = expression.Split('*');
+            if (terms.Length != 2) return false;
+            string left = TrimOuterParenthesesP05T5(terms[0]);
+            string right = TrimOuterParenthesesP05T5(terms[1]);
+            return (IsSourceTermP08(left, sourceHeader, sourceAddress) && IsNamedRangeTermP08(right, namedRange)) ||
+                   (IsSourceTermP08(right, sourceHeader, sourceAddress) && IsNamedRangeTermP08(left, namedRange));
+        }
+
+        private bool IsSourceTermP08(string term, string sourceHeader, string sourceAddress)
+        {
+            string normalized = TrimOuterParenthesesP05T5(NormalizeFormula(term));
+            string header = NormalizeText(sourceHeader).Replace(" ", "");
+            if (string.Equals(normalized, "[@" + header + "]", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(normalized, "[@[" + header + "]]", StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            int bang = normalized.LastIndexOf('!');
+            if (bang >= 0) normalized = normalized.Substring(bang + 1);
+            normalized = normalized.Replace("$", "").Trim('\'', ' ');
+            return string.Equals(normalized, NormalizeRangeAddress(sourceAddress), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool IsNamedRangeTermP08(string term, string namedRange)
+        {
+            string normalized = TrimOuterParenthesesP05T5(NormalizeFormula(term));
+            int bang = normalized.LastIndexOf('!');
+            if (bang >= 0) normalized = normalized.Substring(bang + 1);
+            normalized = normalized.Trim('\'', ' ');
+            return string.Equals(normalized, NormalizeFormula(namedRange), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool TryParseSparklineTypeP08(string text, out int sparkType)
+        {
+            sparkType = 0;
+            string normalized = Regex.Replace(text ?? "", @"[^A-Z0-9]+", "", RegexOptions.IgnoreCase).ToUpperInvariant();
+            if (normalized == "WINLOSS" || normalized == "XLSPARKCOLUMNSTACKED100")
+            {
+                sparkType = (int)Xl.XlSparkType.xlSparkColumnStacked100;
+                return true;
+            }
+            if (normalized == "COLUMN" || normalized == "XLSPARKCOLUMN")
+            {
+                sparkType = (int)Xl.XlSparkType.xlSparkColumn;
+                return true;
+            }
+            if (normalized == "LINE" || normalized == "XLSPARKLINE")
+            {
+                sparkType = (int)Xl.XlSparkType.xlSparkLine;
+                return true;
+            }
+            return false;
+        }
+
+        private bool FormulaIsCountBlankP08(string formula, string directRange, string firstHeader, string lastHeader)
+        {
+            string normalized = NormalizeFormula(formula);
+            if (!normalized.StartsWith("=COUNTBLANK(", StringComparison.OrdinalIgnoreCase) || !normalized.EndsWith(")", StringComparison.Ordinal))
+                return false;
+            string argument = normalized.Substring(12, normalized.Length - 13);
+            argument = TrimOuterParenthesesP05T5(argument);
+            if (string.Equals(NormalizeRangeAddress(argument), NormalizeRangeAddress(directRange), StringComparison.OrdinalIgnoreCase))
+                return true;
+            string structured = "[@[" + NormalizeFormula(firstHeader) + "]:[" + NormalizeFormula(lastHeader) + "]]";
+            return argument.EndsWith(structured, StringComparison.OrdinalIgnoreCase);
         }
 
         public string GetCellDisplayText(string address)

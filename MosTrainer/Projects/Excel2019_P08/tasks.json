@@ -1,27 +1,90 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
-  },
-  {
-  "taskId": "T05",
+    "taskId": "T01",
+    "titleKey": "P08_T01_TITLE",
+    "instructionKey": "P08_T01_INST",
+    "assertionType": "TableColumnFormulaMultipliesNamedRange",
+    "sheetName": "Forecast",
+    "tableName": "Table5",
+    "targetHeader": "Quarter 2",
+    "sourceHeader": "Quarter 1",
+    "namedRange": "Q2_Increase",
+    "sourceRange": "B16"
   },
   {
-  "taskId": "T06",
+    "taskId": "T02",
+    "titleKey": "P08_T02_TITLE",
+    "instructionKey": "P08_T02_INST",
+    "assertionType": "TableRowContainingTextDeletedPreserveOutside",
+    "sheetName": "Suppliers",
+    "tableName": "Table2",
+    "expectedText": "Wooden Toys",
+    "expectedRowCount": 9,
+    "range": "A1:G10",
+    "sourceRange": "A1:L11",
+    "expectedTexts": ["P020", "P029", "P027", "P043", "P014", "P016", "P017", "P034", "P004"]
   },
-
   {
-  "taskId": "T07",
+    "taskId": "T03",
+    "titleKey": "P08_T03_TITLE",
+    "instructionKey": "P08_T03_INST",
+    "assertionType": "RangeAlignmentIndentEquals",
+    "sheetName": "First half of the year",
+    "range": "A4:A11",
+    "expectedFormat": "Left",
+    "expectedValue": "1"
   },
   {
-  "taskId": "T08",
+    "taskId": "T04",
+    "titleKey": "P08_T04_TITLE",
+    "instructionKey": "P08_T04_INST",
+    "assertionType": "SparklinesByRangeAndType",
+    "sheetName": "First half of the year",
+    "locationRange": "J4:J11",
+    "dataRange": "B4:G11",
+    "expectedFormat": "WinLoss"
   },
+  {
+    "taskId": "T05",
+    "titleKey": "P08_T05_TITLE",
+    "instructionKey": "P08_T05_INST",
+    "assertionType": "TableTotalRowSumsByHeaders",
+    "sheetName": "First half of the year",
+    "tableName": "Q1_Sales",
+    "sourceHeaders": ["January", "February", "March", "April", "May", "June", "Total"]
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P08_T06_TITLE",
+    "instructionKey": "P08_T06_INST",
+    "assertionType": "CountBlankFormulaByHeaders",
+    "sheetName": "First half of the year",
+    "tableName": "Q1_Sales",
+    "targetHeader": "Inactive",
+    "sourceHeaders": ["January", "February", "March", "April", "May", "June"]
+  },
+  {
+    "taskId": "T07",
+    "titleKey": "P08_T07_TITLE",
+    "instructionKey": "P08_T07_INST",
+    "assertionType": "TableMultiLevelSortStateEquals",
+    "sheetName": "Top Toys Category",
+    "tableName": "Table4",
+    "range": "A2:B12",
+    "sortHeaders": ["Toys", "Total Sales"],
+    "sortOrders": ["Ascending", "Descending"]
+  },
+  {
+    "taskId": "T08",
+    "titleKey": "P08_T08_TITLE",
+    "instructionKey": "P08_T08_INST",
+    "assertionType": "ChartQuickLayoutEquals",
+    "sheetName": "Last half of the year",
+    "chartName": "Chart 1",
+    "expectedValue": "3",
+    "expectedChartType": 51,
+    "sourceRange": "A4:A11",
+    "range": "B3:H3",
+    "dataRange": "B4:H11"
+  }
 ]

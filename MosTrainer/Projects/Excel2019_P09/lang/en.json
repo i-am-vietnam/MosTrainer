@@ -1,0 +1,18 @@
+{
+  "P09_T01_TITLE": "Task 1",
+  "P09_T01_INST": "On the \"Invoice\" worksheet, move the cells E5:F16 up to correct the alignment by deleting cells E1:F4",
+  "P09_T02_TITLE": "Task 2",
+  "P09_T02_INST": "On the \"Suppliers Information\" worksheet, in the \"Email Address\" column, use a function to construct email addresses for each person using the supplier ID and \"@hocict.edu.vn\"",
+  "P09_T03_TITLE": "Task 3",
+  "P09_T03_INST": "On the \"Suppliers Information\" worksheet, create a Clustered Column chart that shows the \"Total Value\" for all the suppliers, with the suppliers as the horizontal axis labels. Place the chart below the table. The exact size and position of the chart do not matter.",
+  "P09_T04_TITLE": "Task 4",
+  "P09_T04_INST": "On the \"Invoice\" worksheet, in cells G2:G11, use conditional formatting to apply the Yellow Fill with Dark Yellow Text format to cells that contain values greater than \"$ 500,000\"",
+  "P09_T05_TITLE": "Task 5",
+  "P09_T05_INST": "On the \"Summary\" chart sheet, insert a chart title above the chart, at the top of the plot area. Display the values as data labels to the right of each data bar.",
+  "P09_T06_TITLE": "Task 6",
+  "P09_T06_INST": "On the \"Invoice\" worksheet, configure A1:G1 to automatically wrap the text",
+  "P09_T07_TITLE": "Task 7",
+  "P09_T07_INST": "On the \"Invoice\" worksheet, in the cell J2, use a function to display the highest stock value amount from the \"Stock Value\" column.",
+  "P09_T08_TITLE": "Task 8",
+  "P09_T08_INST": "On the \"Suppliers Information\" worksheet, in the \"SupplierID\" column, modify the formulas to display the letters in uppercase."
+}
