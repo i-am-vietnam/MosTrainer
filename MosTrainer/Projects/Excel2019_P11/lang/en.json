@@ -1,0 +1,14 @@
+{
+  "P11_T01_TITLE": "Task 1",
+  "P11_T01_INST": "On the \"Kadry\" worksheet, extend the formula in cell E4 to the end of the table column.",
+  "P11_T02_TITLE": "Task 2",
+  "P11_T02_INST": "Remove all conditional formatting rules from the \"Kadry\" worksheet.",
+  "P11_T03_TITLE": "Task 3",
+  "P11_T03_INST": "On the \"Elmenshawy\" worksheet, perform a multi-level sort. Sort the table data by \"Country of Region\" (A to Z) and then by \"City\" (A to Z)",
+  "P11_T04_TITLE": "Task 4",
+  "P11_T04_INST": "On the \"Elmenshawy\" worksheet, in cell D22, use a function to display the highest number from the \"Air Miles\" column.",
+  "P11_T05_TITLE": "Task 5",
+  "P11_T05_INST": "On the \"Elmenshawy\" worksheet, create a Clustered Column chart shows the \"Air Miles\" for all the cities with the cities as the horizontal axis labels. Place the char below the table. The exact size and position of the chart do not matter.",
+  "P11_T06_TITLE": "Task 6",
+  "P11_T06_INST": "On the \"Kadry\" worksheet, for the \"Air Miles\" chart, display a data table without legend key"
+}

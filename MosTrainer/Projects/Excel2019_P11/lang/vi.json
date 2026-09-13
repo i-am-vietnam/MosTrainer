@@ -1,0 +1,14 @@
+﻿{
+  "P11_T01_TITLE": "Nhiệm vụ 1",
+  "P11_T01_INST": "Trên trang tính \"Kadry\", mở rộng công thức trong ô E4 đến cuối cột của bảng.",
+  "P11_T02_TITLE": "Nhiệm vụ 2",
+  "P11_T02_INST": "Xóa tất cả các quy tắc định dạng có điều kiện khỏi trang tính \"Kadry\".",
+  "P11_T03_TITLE": "Nhiệm vụ 3",
+  "P11_T03_INST": "Trên trang tính \"Elmenshawy\", thực hiện sắp xếp nhiều mức. Sắp xếp dữ liệu trong bảng theo \"Country of Region\" (A đến Z), sau đó theo \"City\" (A đến Z).",
+  "P11_T04_TITLE": "Nhiệm vụ 4",
+  "P11_T04_INST": "Trên trang tính \"Elmenshawy\", tại ô D22, sử dụng một hàm để hiển thị số lớn nhất từ cột \"Air Miles\".",
+  "P11_T05_TITLE": "Nhiệm vụ 5",
+  "P11_T05_INST": "Trên trang tính \"Elmenshawy\", tạo biểu đồ Clustered Column hiển thị \"Air Miles\" của tất cả các thành phố, với các thành phố làm nhãn trục ngang. Đặt biểu đồ bên dưới bảng. Kích thước và vị trí chính xác của biểu đồ không quan trọng.",
+  "P11_T06_TITLE": "Nhiệm vụ 6",
+  "P11_T06_INST": "Trên trang tính \"Kadry\", đối với biểu đồ \"Air Miles\", hiển thị bảng dữ liệu không có khóa chú giải."
+}
