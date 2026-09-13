@@ -1,0 +1,18 @@
+{
+  "P10_T01_TITLE": "Task 1",
+  "P10_T01_INST": "On the \"Survey Result\" worksheet, apply the Title style to cell A1.",
+  "P10_T02_TITLE": "Task 2",
+  "P10_T02_INST": "On the \"Sales by month\" chart sheet, swap the data over the axis.",
+  "P10_T03_TITLE": "Task 3",
+  "P10_T03_INST": "On the \"Q4 Sales\" worksheet, in the Tax column, enter a formula that multiplies the value in the \"Total\" column by cell M2.",
+  "P10_T04_TITLE": "Task 4",
+  "P10_T04_INST": "On the \"Q3 Sales\" worksheet, move the pie chart to its own chart sheet named, \"Q3 Total Sales\"",
+  "P10_T05_TITLE": "Task 5",
+  "P10_T05_INST": "On the \"Q3 Sales\" worksheet, expand the column chart to include the \"September\" data.",
+  "P10_T06_TITLE": "Task 6",
+  "P10_T06_INST": "On the \"Q2 Sales\" worksheet, filter the data to display only the orders of the MOS Exam from test site \"Nguyen Tat Thanh University\"",
+  "P10_T07_TITLE": "Task 7",
+  "P10_T07_INST": "On the \"Q1 Sales\" worksheet, in the Bonus column, use a function to display \"500\" if the \"Total\" is greater than 10,000. Otherwise, display \"100\".",
+  "P10_T08_TITLE": "Task 8",
+  "P10_T08_INST": "On the \"Lecturers\" worksheet, from the existing text in cell A5, insert a hyperlink to the \"https://youtube.com/c/hocictofficialchannel\" with a screentip that displays \"HOCICT YouTube Channel\""
+}

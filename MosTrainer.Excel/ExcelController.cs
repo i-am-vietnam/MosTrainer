@@ -12251,6 +12251,387 @@ namespace MosTrainer.Excel
             return argument.EndsWith(structured, StringComparison.OrdinalIgnoreCase);
         }
 
+        // Project 9 Task 1
+        public bool InvoiceStockBlockDeletedShiftUp(string sheetName, string deletedRangeAddress, string sourceRangeAddress)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (!string.Equals(NormalizeRangeAddress(deletedRangeAddress), "E1:F4", StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(NormalizeRangeAddress(sourceRangeAddress), "E5:F16", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range used = null;
+            Xl.Range cell = null;
+            Xl.Font font = null;
+            Xl.Interior interior = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+
+                if (!CellValueEqualsP07(ws, "A1", "PART NUMBER") ||
+                    !CellValueEqualsP07(ws, "B1", "SUPPLIER NAME") ||
+                    !CellValueEqualsP07(ws, "C1", "TOY CATEGORY") ||
+                    !CellValueEqualsP07(ws, "D1", "TOY DETAIL") ||
+                    !CellValueEqualsP07(ws, "G1", "STOCK VALUE") ||
+                    !CellValueEqualsP07(ws, "I2", "Maximum Stock Value:"))
+                    return false;
+
+                if (!CellValueEqualsP07(ws, "E1", "QUANTITY IN STOCK") ||
+                    !CellValueEqualsP07(ws, "F1", "PRICE") ||
+                    !CellValueEqualsP07(ws, "F12", "Total Value") ||
+                    !CellValueEqualsP07(ws, "E12", ""))
+                    return false;
+
+                double[] quantities = { 9054d, 8587d, 8103d, 9062d, 8565d, 6520d, 8475d, 2142d, 4057d, 2014d };
+                double[] prices = { 57.5d, 56.56d, 45.5d, 23.99d, 19.9d, 21.5d, 12.99d, 45.99d, 10.99d, 14.99d };
+                for (int i = 0; i < quantities.Length; i++)
+                {
+                    int row = i + 2;
+                    if (!CellValueEqualsP07(ws, "E" + row, quantities[i]) ||
+                        !CellValueEqualsP07(ws, "F" + row, prices[i]))
+                        return false;
+
+                    string expectedFormula = "=Invoice!$E" + row + "*Invoice!$F" + row;
+                    if (!CellFormulaEqualsP07(ws, "G" + row, expectedFormula)) return false;
+                }
+                if (!CellFormulaEqualsP07(ws, "G12", "=SUM(G2:G11)")) return false;
+
+                for (int row = 13; row <= 16; row++)
+                {
+                    if (!CellValueEqualsP07(ws, "E" + row, "") || !CellValueEqualsP07(ws, "F" + row, ""))
+                        return false;
+                }
+
+                used = ws.UsedRange;
+                if (used == null || Convert.ToInt32(used.Row) != 1 ||
+                    Convert.ToInt32(used.Row) + Convert.ToInt32(used.Rows.Count) - 1 != 12)
+                    return false;
+
+                cell = ws.Range["E1"];
+                font = cell.Font;
+                interior = cell.Interior;
+                if (font == null || !Convert.ToBoolean(font.Bold) || interior == null ||
+                    Convert.ToInt32(interior.Color) != 12874308)
+                    return false;
+                ReleaseCom(interior); interior = null;
+                ReleaseCom(font); font = null;
+                ReleaseCom(cell); cell = ws.Range["F12"];
+                font = cell.Font;
+                return font != null && Convert.ToBoolean(font.Bold);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("InvoiceStockBlockDeletedShiftUp", "P09 T01 grading failed.", ex, "Excel2019_P09", "T01");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(interior); ReleaseCom(font); ReleaseCom(cell); ReleaseCom(used); ReleaseCom(ws);
+            }
+        }
+
+        // Project 9 Task 2
+        public bool EmailFormulaByHeadersStrict(string sheetName, string targetHeader, string sourceHeader, string domain)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(targetHeader) ||
+                string.IsNullOrWhiteSpace(sourceHeader) || string.IsNullOrWhiteSpace(domain)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range used = null;
+            Xl.Range cell = null;
+            Xl.Range sourceCell = null;
+            Xl.Range targetCell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                used = ws.UsedRange;
+                if (used == null) return false;
+
+                int headerRow = 0;
+                int sourceColumn = 0;
+                int targetColumn = 0;
+                int firstRow = Convert.ToInt32(used.Row);
+                int lastRow = firstRow + Convert.ToInt32(used.Rows.Count) - 1;
+                int firstColumn = Convert.ToInt32(used.Column);
+                int lastColumn = firstColumn + Convert.ToInt32(used.Columns.Count) - 1;
+                for (int row = firstRow; row <= lastRow && headerRow == 0; row++)
+                {
+                    sourceColumn = 0;
+                    targetColumn = 0;
+                    for (int column = firstColumn; column <= lastColumn; column++)
+                    {
+                        ReleaseCom(cell);
+                        cell = ws.Cells[row, column] as Xl.Range;
+                        string text = NormalizeText(Convert.ToString(cell == null ? null : cell.Value2));
+                        if (string.Equals(text, NormalizeText(sourceHeader), StringComparison.OrdinalIgnoreCase)) sourceColumn = column;
+                        if (string.Equals(text, NormalizeText(targetHeader), StringComparison.OrdinalIgnoreCase)) targetColumn = column;
+                    }
+                    if (sourceColumn > 0 && targetColumn > 0) headerRow = row;
+                }
+                if (headerRow <= 0 || sourceColumn <= 0 || targetColumn <= 0) return false;
+
+                string normalizedDomain = domain.Trim();
+                if (!normalizedDomain.StartsWith("@", StringComparison.Ordinal)) normalizedDomain = "@" + normalizedDomain;
+                int checkedRows = 0;
+                for (int row = headerRow + 1; row <= lastRow; row++)
+                {
+                    ReleaseCom(sourceCell); ReleaseCom(targetCell);
+                    sourceCell = ws.Cells[row, sourceColumn] as Xl.Range;
+                    targetCell = ws.Cells[row, targetColumn] as Xl.Range;
+                    string sourceText = Convert.ToString(sourceCell == null ? null : sourceCell.Value2).Trim();
+                    string targetText = Convert.ToString(targetCell == null ? null : targetCell.Value2).Trim();
+                    if (string.IsNullOrWhiteSpace(sourceText) && string.IsNullOrWhiteSpace(targetText)) continue;
+                    if (string.IsNullOrWhiteSpace(sourceText) || targetCell == null || !Convert.ToBoolean(targetCell.HasFormula)) return false;
+                    if (!string.Equals(targetText, sourceText + normalizedDomain, StringComparison.OrdinalIgnoreCase)) return false;
+                    if (!EmailFormulaUsesSameRowSourceP09(Convert.ToString(targetCell.Formula),
+                        ExcelColumnNameP1T3(sourceColumn) + row, normalizedDomain)) return false;
+                    checkedRows++;
+                }
+                return checkedRows == 3;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("EmailFormulaByHeadersStrict", "P09 T02 grading failed.", ex, "Excel2019_P09", "T02");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(targetCell); ReleaseCom(sourceCell); ReleaseCom(cell); ReleaseCom(used); ReleaseCom(ws);
+            }
+        }
+
+        // Project 9 Task 3
+        public bool ClusteredColumnChartBelowRange(string sheetName, string sourceBlockRange, int expectedChartType, IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(sourceBlockRange) ||
+                sourceRanges == null || sourceRanges.Count != 3) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range sourceBlock = null;
+            Xl.ChartObjects charts = null;
+            Xl.ChartObject chartObject = null;
+            Xl.Chart chart = null;
+            Xl.SeriesCollection seriesCollection = null;
+            Xl.Series series = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                sourceBlock = ws.Range[sourceBlockRange];
+                if (sourceBlock == null) return false;
+                double bottom = Convert.ToDouble(sourceBlock.Top) + Convert.ToDouble(sourceBlock.Height);
+
+                charts = ws.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (charts == null) return false;
+                for (int i = 1; i <= Convert.ToInt32(charts.Count); i++)
+                {
+                    ReleaseCom(series); ReleaseCom(seriesCollection); ReleaseCom(chart); ReleaseCom(chartObject);
+                    series = null; seriesCollection = null; chart = null;
+                    chartObject = charts.Item(i) as Xl.ChartObject;
+                    if (chartObject == null || Convert.ToDouble(chartObject.Top) + 2d < bottom) continue;
+                    chart = chartObject.Chart;
+                    if (chart == null || Convert.ToInt32(chart.ChartType) != expectedChartType) continue;
+                    seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                    if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != 1) continue;
+                    series = seriesCollection.Item(1);
+                    if (series != null && SeriesFormulaMatchesRangesP09(
+                        Convert.ToString(series.Formula), sheetName, sourceRanges)) return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ClusteredColumnChartBelowRange", "P09 T03 grading failed.", ex, "Excel2019_P09", "T03");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(series); ReleaseCom(seriesCollection); ReleaseCom(chart); ReleaseCom(chartObject);
+                ReleaseCom(charts); ReleaseCom(sourceBlock); ReleaseCom(ws);
+            }
+        }
+
+        // Project 9 Task 4
+        public bool RangeGreaterThanConditionalFormattingEquals(string sheetName, string rangeAddress, double threshold, string expectedFormat)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(rangeAddress) ||
+                !string.Equals(NormalizeText(expectedFormat), "Yellow Fill with Dark Yellow Text", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range range = null;
+            Xl.FormatConditions conditions = null;
+            Xl.FormatCondition condition = null;
+            Xl.Range appliesTo = null;
+            Xl.Interior interior = null;
+            Xl.Font font = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                range = ws.Range[rangeAddress];
+                conditions = range == null ? null : range.FormatConditions;
+                if (conditions == null || Convert.ToInt32(conditions.Count) != 1) return false;
+                condition = conditions.Item(1) as Xl.FormatCondition;
+                if (condition == null || Convert.ToInt32(condition.Type) != (int)Xl.XlFormatConditionType.xlCellValue ||
+                    Convert.ToInt32(condition.Operator) != (int)Xl.XlFormatConditionOperator.xlGreater) return false;
+                string formula = Convert.ToString(condition.Formula1).Trim().TrimStart('=');
+                double actualThreshold;
+                if (!TryToDouble(formula, out actualThreshold) || Math.Abs(actualThreshold - threshold) > 0.000001d) return false;
+                appliesTo = condition.AppliesTo;
+                string actualRange = Convert.ToString(appliesTo.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                if (!string.Equals(NormalizeRangeAddress(actualRange), NormalizeRangeAddress(rangeAddress), StringComparison.OrdinalIgnoreCase)) return false;
+                interior = condition.Interior;
+                font = condition.Font;
+                return interior != null && font != null && Convert.ToInt32(interior.Color) == 10284031 &&
+                    Convert.ToInt32(font.Color) == 26012;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("RangeGreaterThanConditionalFormattingEquals", "P09 T04 grading failed.", ex, "Excel2019_P09", "T04");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(font); ReleaseCom(interior); ReleaseCom(appliesTo); ReleaseCom(condition);
+                ReleaseCom(conditions); ReleaseCom(range); ReleaseCom(ws);
+            }
+        }
+
+        // Project 9 Task 5
+        public bool ChartSheetTitleAboveValueLabelsOutsideEnd(string chartSheetName, int expectedChartType, IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(chartSheetName) || sourceRanges == null || sourceRanges.Count != 3) return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Sheets charts = null;
+            Xl.Chart chart = null;
+            Xl.ChartTitle title = null;
+            Xl.SeriesCollection seriesCollection = null;
+            Xl.Series series = null;
+            Xl.DataLabels labels = null;
+            Xl.DataLabel label = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                charts = workbook.Charts;
+                for (int i = 1; i <= Convert.ToInt32(charts.Count); i++)
+                {
+                    ReleaseCom(chart);
+                    chart = charts.Item[i] as Xl.Chart;
+                    if (chart != null && string.Equals(chart.Name, chartSheetName, StringComparison.OrdinalIgnoreCase)) break;
+                    chart = null;
+                }
+                if (chart == null || Convert.ToInt32(chart.ChartType) != expectedChartType || !Convert.ToBoolean(chart.HasTitle)) return false;
+                title = chart.ChartTitle;
+                if (title == null || !Convert.ToBoolean(title.IncludeInLayout) ||
+                    Convert.ToDouble(title.Top) >= Convert.ToDouble(chart.PlotArea.Top)) return false;
+                if (!ChartReferencesExpectedRangesP06(chart, "Supplier Information", sourceRanges)) return false;
+
+                seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != 1) return false;
+                series = seriesCollection.Item(1);
+                if (series == null || !Convert.ToBoolean(series.HasDataLabels)) return false;
+                labels = series.DataLabels(Type.Missing) as Xl.DataLabels;
+                if (labels == null || Convert.ToInt32(labels.Count) != 3) return false;
+                for (int i = 1; i <= Convert.ToInt32(labels.Count); i++)
+                {
+                    ReleaseCom(label);
+                    label = labels.Item(i) as Xl.DataLabel;
+                    if (label == null || Convert.ToInt32(label.Position) != (int)Xl.XlDataLabelPosition.xlLabelPositionOutsideEnd ||
+                        !Convert.ToBoolean(label.ShowValue) || Convert.ToBoolean(label.ShowCategoryName) ||
+                        Convert.ToBoolean(label.ShowSeriesName)) return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ChartSheetTitleAboveValueLabelsOutsideEnd", "P09 T05 grading failed.", ex, "Excel2019_P09", "T05");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(label); ReleaseCom(labels); ReleaseCom(series); ReleaseCom(seriesCollection);
+                ReleaseCom(title); ReleaseCom(chart); ReleaseCom(charts);
+            }
+        }
+
+        // Project 9 Task 8
+        public bool UpperFormulaFilledRange(string sheetName, string rangeAddress, string expectedPrefix)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(rangeAddress) ||
+                string.IsNullOrWhiteSpace(expectedPrefix)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range range = null;
+            Xl.Range cell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                range = ws.Range[rangeAddress];
+                if (range == null || Convert.ToInt32(range.Columns.Count) != 1) return false;
+                int rowCount = Convert.ToInt32(range.Rows.Count);
+                for (int i = 1; i <= rowCount; i++)
+                {
+                    ReleaseCom(cell);
+                    cell = range.Cells[i, 1] as Xl.Range;
+                    if (cell == null || !Convert.ToBoolean(cell.HasFormula)) return false;
+                    int worksheetRow = Convert.ToInt32(cell.Row);
+                    string expectedText = expectedPrefix.ToUpperInvariant() + i;
+                    if (!string.Equals(Convert.ToString(cell.Value2), expectedText, StringComparison.Ordinal)) return false;
+                    if (!UpperSupplierIdFormulaMatchesP09(Convert.ToString(cell.Formula), worksheetRow)) return false;
+                }
+                return rowCount == 3;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("UpperFormulaFilledRange", "P09 T08 grading failed.", ex, "Excel2019_P09", "T08");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(cell); ReleaseCom(range); ReleaseCom(ws);
+            }
+        }
+
+        private bool EmailFormulaUsesSameRowSourceP09(string formula, string expectedSourceAddress, string expectedDomain)
+        {
+            string normalized = NormalizeFormula(formula);
+            Match match = Regex.Match(normalized,
+                @"^=(?:_XLFN\.)?(?:CONCATENATE|CONCAT)\((?<source>[^,]+),""(?<domain>[^""]+)""\)$",
+                RegexOptions.IgnoreCase);
+            if (!match.Success) return false;
+            return string.Equals(NormalizeRangeAddress(match.Groups["source"].Value),
+                    NormalizeRangeAddress(expectedSourceAddress), StringComparison.OrdinalIgnoreCase) &&
+                string.Equals(match.Groups["domain"].Value, expectedDomain, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool SeriesFormulaMatchesRangesP09(string formula, string sheetName, IList<string> sourceRanges)
+        {
+            if (sourceRanges == null || sourceRanges.Count != 3) return false;
+            string normalized = NormalizeChartReferenceP06(formula);
+            string expected = NormalizeChartReferenceP06("=SERIES(" + sheetName + "!" + sourceRanges[0] + "," +
+                sheetName + "!" + sourceRanges[1] + "," + sheetName + "!" + sourceRanges[2] + ",1)");
+            return string.Equals(normalized, expected, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool UpperSupplierIdFormulaMatchesP09(string formula, int worksheetRow)
+        {
+            string normalized = NormalizeFormula(formula);
+            string functionPattern = @"(?:_XLFN\.)?(?:CONCATENATE|CONCAT)";
+            string rowPattern = @"(?:ROW\(A" + worksheetRow + @"\)|ROW\(\))";
+            string pattern = @"^=UPPER\(" + functionPattern + @"\(""SID""," + rowPattern + @"-2\)\)$";
+            return Regex.IsMatch(normalized, pattern, RegexOptions.IgnoreCase);
+        }
+
         public string GetCellDisplayText(string address)
         {
             if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");

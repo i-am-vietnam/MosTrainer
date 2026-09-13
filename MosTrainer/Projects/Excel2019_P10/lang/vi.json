@@ -1,0 +1,18 @@
+﻿{
+  "P10_T01_TITLE": "Nhiệm vụ 1",
+  "P10_T01_INST": "Trên trang tính \"Survey Result\", áp dụng kiểu Title cho ô A1.",
+  "P10_T02_TITLE": "Nhiệm vụ 2",
+  "P10_T02_INST": "Trên trang tính biểu đồ \"Sales by month\", hoán đổi dữ liệu trên các trục.",
+  "P10_T03_TITLE": "Nhiệm vụ 3",
+  "P10_T03_INST": "Trên trang tính \"Q4 Sales\", trong cột Tax, nhập một công thức nhân giá trị trong cột \"Total\" với ô M2.",
+  "P10_T04_TITLE": "Nhiệm vụ 4",
+  "P10_T04_INST": "Trên trang tính \"Q3 Sales\", di chuyển biểu đồ tròn sang một trang tính biểu đồ riêng có tên \"Q3 Total Sales\".",
+  "P10_T05_TITLE": "Nhiệm vụ 5",
+  "P10_T05_INST": "Trên trang tính \"Q3 Sales\", mở rộng biểu đồ cột để bao gồm dữ liệu \"September\".",
+  "P10_T06_TITLE": "Nhiệm vụ 6",
+  "P10_T06_INST": "Trên trang tính \"Q2 Sales\", lọc dữ liệu để chỉ hiển thị các đơn hàng của kỳ thi MOS từ địa điểm thi \"Nguyen Tat Thanh University\".",
+  "P10_T07_TITLE": "Nhiệm vụ 7",
+  "P10_T07_INST": "Trên trang tính \"Q1 Sales\", trong cột Bonus, sử dụng một hàm để hiển thị \"500\" nếu \"Total\" lớn hơn 10,000. Nếu không, hiển thị \"100\".",
+  "P10_T08_TITLE": "Nhiệm vụ 8",
+  "P10_T08_INST": "Trên trang tính \"Lecturers\", từ văn bản hiện có trong ô A5, chèn một siêu liên kết đến \"https://youtube.com/c/hocictofficialchannel\" với ScreenTip hiển thị \"HOCICT YouTube Channel\"."
+}

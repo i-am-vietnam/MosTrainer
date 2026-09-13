@@ -1,27 +1,77 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P09_T01_TITLE",
+    "instructionKey": "P09_T01_INST",
+    "assertionType": "InvoiceStockBlockDeletedShiftUp",
+    "sheetName": "Invoice",
+    "range": "E1:F4",
+    "sourceRange": "E5:F16"
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P09_T02_TITLE",
+    "instructionKey": "P09_T02_INST",
+    "assertionType": "EmailFormulaByHeadersStrict",
+    "sheetName": "Supplier Information",
+    "targetHeader": "Email Address",
+    "sourceHeader": "SupplierID",
+    "domain": "@hocict.edu.vn"
   },
   {
-  "taskId": "T06",
+    "taskId": "T03",
+    "titleKey": "P09_T03_TITLE",
+    "instructionKey": "P09_T03_INST",
+    "assertionType": "ClusteredColumnChartBelowRange",
+    "sheetName": "Supplier Information",
+    "sourceRange": "A1:D5",
+    "expectedChartType": 51,
+    "targetRanges": ["D2", "B3:B5", "D3:D5"]
   },
-
   {
-  "taskId": "T07",
+    "taskId": "T04",
+    "titleKey": "P09_T04_TITLE",
+    "instructionKey": "P09_T04_INST",
+    "assertionType": "RangeGreaterThanConditionalFormattingEquals",
+    "sheetName": "Invoice",
+    "range": "G2:G11",
+    "threshold": 500000,
+    "expectedFormat": "Yellow Fill with Dark Yellow Text"
   },
   {
-  "taskId": "T08",
+    "taskId": "T05",
+    "titleKey": "P09_T05_TITLE",
+    "instructionKey": "P09_T05_INST",
+    "assertionType": "ChartSheetTitleAboveValueLabelsOutsideEnd",
+    "sheetName": "Summary",
+    "expectedChartType": 51,
+    "targetRanges": ["D2", "B3:B5", "D3:D5"]
   },
+  {
+    "taskId": "T06",
+    "titleKey": "P09_T06_TITLE",
+    "instructionKey": "P09_T06_INST",
+    "assertionType": "RangeWrapTextEquals",
+    "sheetName": "Invoice",
+    "range": "A1:G1",
+    "expectedValue": "true"
+  },
+  {
+    "taskId": "T07",
+    "titleKey": "P09_T07_TITLE",
+    "instructionKey": "P09_T07_INST",
+    "assertionType": "CellFormulaEqualsNormalized",
+    "sheetName": "Invoice",
+    "cell": "J2",
+    "expectedFormula": "=MAX(G2:G11)"
+  },
+  {
+    "taskId": "T08",
+    "titleKey": "P09_T08_TITLE",
+    "instructionKey": "P09_T08_INST",
+    "assertionType": "UpperFormulaFilledRange",
+    "sheetName": "Supplier Information",
+    "range": "A3:A5",
+    "expectedText": "SID"
+  }
 ]

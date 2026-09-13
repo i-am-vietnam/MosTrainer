@@ -62,7 +62,10 @@ namespace MosTrainer.Core.Services
                 "TableRowContainingTextDeletedPreserveOutside", "RangeAlignmentIndentEquals",
                 "SparklinesByRangeAndType", "TableTotalRowSumsByHeaders",
                 "CountBlankFormulaByHeaders", "TableMultiLevelSortStateEquals",
-                "ChartQuickLayoutEquals"
+                "ChartQuickLayoutEquals", "InvoiceStockBlockDeletedShiftUp",
+                "EmailFormulaByHeadersStrict", "ClusteredColumnChartBelowRange",
+                "RangeGreaterThanConditionalFormattingEquals",
+                "ChartSheetTitleAboveValueLabelsOutsideEnd", "UpperFormulaFilledRange"
             };
 
         private readonly IExcelController _excel;
@@ -130,6 +133,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P07(task);
                 case "Excel2019_P08":
                     return CheckExcel2019P08(task);
+                case "Excel2019_P09":
+                    return CheckExcel2019P09(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -168,6 +173,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P08(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P09(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -638,6 +647,40 @@ namespace MosTrainer.Core.Services
                         task.SheetName, task.ChartName, ToInt(task.ExpectedValue),
                         task.ExpectedChartType, task.SourceRange, task.Range,
                         task.DataRange));
+
+                // Project 9 task 1
+                case "InvoiceStockBlockDeletedShiftUp":
+                    return Result(_excel.InvoiceStockBlockDeletedShiftUp(
+                        task.SheetName, task.Range, task.SourceRange));
+
+                // Project 9 task 2
+                case "EmailFormulaByHeadersStrict":
+                    return Result(_excel.EmailFormulaByHeadersStrict(
+                        task.SheetName, task.TargetHeader, task.SourceHeader,
+                        task.Domain));
+
+                // Project 9 task 3
+                case "ClusteredColumnChartBelowRange":
+                    return Result(_excel.ClusteredColumnChartBelowRange(
+                        task.SheetName, task.SourceRange, task.ExpectedChartType,
+                        task.TargetRanges));
+
+                // Project 9 task 4
+                case "RangeGreaterThanConditionalFormattingEquals":
+                    return Result(_excel.RangeGreaterThanConditionalFormattingEquals(
+                        task.SheetName, task.Range, task.Threshold,
+                        task.ExpectedFormat));
+
+                // Project 9 task 5
+                case "ChartSheetTitleAboveValueLabelsOutsideEnd":
+                    return Result(_excel.ChartSheetTitleAboveValueLabelsOutsideEnd(
+                        task.SheetName, task.ExpectedChartType,
+                        task.TargetRanges));
+
+                // Project 9 task 8
+                case "UpperFormulaFilledRange":
+                    return Result(_excel.UpperFormulaFilledRange(
+                        task.SheetName, task.Range, task.ExpectedText));
 
 
                 default:

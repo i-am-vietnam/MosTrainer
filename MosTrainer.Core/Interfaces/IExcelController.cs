@@ -153,6 +153,18 @@ namespace MosTrainer.Core.Interfaces
         bool TableMultiLevelSortStateEquals(string sheetName, string tableName, string tableRange, IList<string> sortHeaders, IList<string> sortOrders);
         // Excel 2019 - Project 8 Task 8
         bool ChartQuickLayoutEquals(string sheetName, string chartName, int expectedLayout, int expectedChartType, string seriesNameRange, string categoryRange, string valuesRange);
+        // Excel 2019 - Project 9 Task 1
+        bool InvoiceStockBlockDeletedShiftUp(string sheetName, string deletedRangeAddress, string sourceRangeAddress);
+        // Excel 2019 - Project 9 Task 2
+        bool EmailFormulaByHeadersStrict(string sheetName, string targetHeader, string sourceHeader, string domain);
+        // Excel 2019 - Project 9 Task 3
+        bool ClusteredColumnChartBelowRange(string sheetName, string sourceBlockRange, int expectedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 9 Task 4
+        bool RangeGreaterThanConditionalFormattingEquals(string sheetName, string rangeAddress, double threshold, string expectedFormat);
+        // Excel 2019 - Project 9 Task 5
+        bool ChartSheetTitleAboveValueLabelsOutsideEnd(string chartSheetName, int expectedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 9 Task 8
+        bool UpperFormulaFilledRange(string sheetName, string rangeAddress, string expectedPrefix);
         string GetCellDisplayText(string address);
     }
 }
