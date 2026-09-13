@@ -12468,28 +12468,41 @@ namespace MosTrainer.Excel
             Xl.FormatConditions conditions = null;
             Xl.FormatCondition condition = null;
             Xl.Range appliesTo = null;
-            Xl.Interior interior = null;
-            Xl.Font font = null;
             try
             {
                 ws = GetWorksheet(sheetName);
                 if (ws == null) return false;
                 range = ws.Range[rangeAddress];
                 conditions = range == null ? null : range.FormatConditions;
-                if (conditions == null || Convert.ToInt32(conditions.Count) != 1) return false;
-                condition = conditions.Item(1) as Xl.FormatCondition;
-                if (condition == null || Convert.ToInt32(condition.Type) != (int)Xl.XlFormatConditionType.xlCellValue ||
-                    Convert.ToInt32(condition.Operator) != (int)Xl.XlFormatConditionOperator.xlGreater) return false;
-                string formula = Convert.ToString(condition.Formula1).Trim().TrimStart('=');
-                double actualThreshold;
-                if (!TryToDouble(formula, out actualThreshold) || Math.Abs(actualThreshold - threshold) > 0.000001d) return false;
-                appliesTo = condition.AppliesTo;
-                string actualRange = Convert.ToString(appliesTo.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
-                if (!string.Equals(NormalizeRangeAddress(actualRange), NormalizeRangeAddress(rangeAddress), StringComparison.OrdinalIgnoreCase)) return false;
-                interior = condition.Interior;
-                font = condition.Font;
-                return interior != null && font != null && Convert.ToInt32(interior.Color) == 10284031 &&
-                    Convert.ToInt32(font.Color) == 26012;
+                if (conditions == null) return false;
+
+                int count = Convert.ToInt32(conditions.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(appliesTo);
+                    ReleaseCom(condition);
+                    appliesTo = null;
+                    condition = conditions.Item(i) as Xl.FormatCondition;
+                    if (condition == null || Convert.ToInt32(condition.Type) != (int)Xl.XlFormatConditionType.xlCellValue ||
+                        Convert.ToInt32(condition.Operator) != (int)Xl.XlFormatConditionOperator.xlGreater)
+                        continue;
+
+                    string formula = Convert.ToString(condition.Formula1).Trim().TrimStart('=');
+                    double actualThreshold;
+                    if (!TryToDouble(formula, out actualThreshold) || Math.Abs(actualThreshold - threshold) > 0.000001d)
+                        continue;
+
+                    appliesTo = condition.AppliesTo;
+                    string actualRange = Convert.ToString(appliesTo.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!string.Equals(NormalizeRangeAddress(actualRange), NormalizeRangeAddress(rangeAddress), StringComparison.OrdinalIgnoreCase))
+                        continue;
+
+                    if (ConditionalFormatHasYellowFillDarkYellowTextP09(condition) &&
+                        RangeDisplaysYellowFillDarkYellowTextP09(range, threshold))
+                        return true;
+                }
+
+                return false;
             }
             catch (Exception ex)
             {
@@ -12498,8 +12511,79 @@ namespace MosTrainer.Excel
             }
             finally
             {
-                ReleaseCom(font); ReleaseCom(interior); ReleaseCom(appliesTo); ReleaseCom(condition);
+                ReleaseCom(appliesTo); ReleaseCom(condition);
                 ReleaseCom(conditions); ReleaseCom(range); ReleaseCom(ws);
+            }
+        }
+
+        private bool ConditionalFormatHasYellowFillDarkYellowTextP09(Xl.FormatCondition condition)
+        {
+            Xl.Interior interior = null;
+            Xl.Font font = null;
+            try
+            {
+                interior = condition == null ? null : condition.Interior;
+                font = condition == null ? null : condition.Font;
+                return interior != null && font != null &&
+                    Convert.ToInt32(interior.Color) == 10284031 &&
+                    Convert.ToInt32(font.Color) == 22428;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(font);
+                ReleaseCom(interior);
+            }
+        }
+
+        private bool RangeDisplaysYellowFillDarkYellowTextP09(Xl.Range range, double threshold)
+        {
+            Xl.Range cell = null;
+            Xl.DisplayFormat display = null;
+            Xl.Interior interior = null;
+            Xl.Font font = null;
+            try
+            {
+                if (range == null) return false;
+                ((Xl.Application)_session.App).Calculate();
+                int count = Convert.ToInt32(range.Cells.Count);
+                bool foundQualifyingCell = false;
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(font); ReleaseCom(interior); ReleaseCom(display); ReleaseCom(cell);
+                    font = null; interior = null; display = null;
+                    cell = range.Cells[i] as Xl.Range;
+                    if (cell == null) return false;
+                    double value;
+                    if (!TryToDouble(cell.Value2, out value)) continue;
+                    display = cell.DisplayFormat;
+                    interior = display == null ? null : display.Interior;
+                    font = display == null ? null : display.Font;
+                    bool hasExpectedDisplay = interior != null && font != null &&
+                        Convert.ToInt32(interior.Color) == 10284031 &&
+                        Convert.ToInt32(font.Color) == 22428;
+                    if (value > threshold)
+                    {
+                        foundQualifyingCell = true;
+                        if (!hasExpectedDisplay) return false;
+                    }
+                    else if (hasExpectedDisplay)
+                    {
+                        return false;
+                    }
+                }
+                return foundQualifyingCell;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(font); ReleaseCom(interior); ReleaseCom(display); ReleaseCom(cell);
             }
         }
 
@@ -12630,6 +12714,412 @@ namespace MosTrainer.Excel
             string rowPattern = @"(?:ROW\(A" + worksheetRow + @"\)|ROW\(\))";
             string pattern = @"^=UPPER\(" + functionPattern + @"\(""SID""," + rowPattern + @"-2\)\)$";
             return Regex.IsMatch(normalized, pattern, RegexOptions.IgnoreCase);
+        }
+
+        // Project 10 Task 1
+        public bool CellStyleEquals(string sheetName, string cellAddress, string expectedStyleName, string expectedText)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(cellAddress) ||
+                string.IsNullOrWhiteSpace(expectedStyleName)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range cell = null;
+            Xl.Style style = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                cell = ws.Range[cellAddress];
+                if (cell == null || (!string.IsNullOrEmpty(expectedText) &&
+                    !string.Equals(Convert.ToString(cell.Value2), expectedText, StringComparison.Ordinal))) return false;
+                style = cell.Style as Xl.Style;
+                return style != null && Convert.ToBoolean(style.BuiltIn) &&
+                    string.Equals(Convert.ToString(style.Name), expectedStyleName, StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("CellStyleEquals", "P10 T01 grading failed.", ex, "Excel2019_P10", "T01");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(style); ReleaseCom(cell); ReleaseCom(ws);
+            }
+        }
+
+        // Project 10 Task 2
+        public bool ChartSheetSwitchedRowColumn(string chartSheetName, string sourceSheetName, int expectedChartType, IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(chartSheetName) || string.IsNullOrWhiteSpace(sourceSheetName)) return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Sheets chartSheets = null;
+            Xl.Chart chart = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                chartSheets = workbook.Charts;
+                int count = Convert.ToInt32(chartSheets.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(chart);
+                    chart = chartSheets.Item[i] as Xl.Chart;
+                    if (chart != null && string.Equals(chart.Name, chartSheetName, StringComparison.OrdinalIgnoreCase))
+                        break;
+                    chart = null;
+                }
+                return chart != null && Convert.ToInt32(chart.ChartType) == expectedChartType &&
+                    Convert.ToInt32(chart.PlotBy) == (int)Xl.XlRowCol.xlRows &&
+                    ChartSeriesMatchRangeTriplesP10(chart, sourceSheetName, sourceRanges);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ChartSheetSwitchedRowColumn", "P10 T02 grading failed.", ex, "Excel2019_P10", "T02");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(chart); ReleaseCom(chartSheets);
+            }
+        }
+
+        // Project 10 Task 3
+        public bool RangeFormulaMultipliesFixedCell(string sheetName, string targetRangeAddress, string sourceRangeAddress, string fixedCellAddress)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(targetRangeAddress) ||
+                string.IsNullOrWhiteSpace(sourceRangeAddress) || string.IsNullOrWhiteSpace(fixedCellAddress)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range targets = null;
+            Xl.Range sources = null;
+            Xl.Range fixedCell = null;
+            Xl.Range target = null;
+            Xl.Range source = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                targets = ws.Range[targetRangeAddress];
+                sources = ws.Range[sourceRangeAddress];
+                fixedCell = ws.Range[fixedCellAddress];
+                if (targets == null || sources == null || fixedCell == null ||
+                    Convert.ToInt32(targets.Cells.Count) != Convert.ToInt32(sources.Cells.Count)) return false;
+                double fixedValue;
+                if (!TryToDouble(fixedCell.Value2, out fixedValue)) return false;
+
+                int count = Convert.ToInt32(targets.Cells.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(source); ReleaseCom(target);
+                    target = targets.Cells[i] as Xl.Range;
+                    source = sources.Cells[i] as Xl.Range;
+                    if (target == null || source == null || !Convert.ToBoolean(target.HasFormula)) return false;
+                    string sourceAddress = Convert.ToString(source.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!FormulaMultipliesReferencesP10(Convert.ToString(target.Formula), sourceAddress, fixedCellAddress)) return false;
+                    double sourceValue;
+                    double actualValue;
+                    if (!TryToDouble(source.Value2, out sourceValue) || !TryToDouble(target.Value2, out actualValue) ||
+                        Math.Abs(actualValue - (sourceValue * fixedValue)) > 0.000001d) return false;
+                }
+                return count > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("RangeFormulaMultipliesFixedCell", "P10 T03 grading failed.", ex, "Excel2019_P10", "T03");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(source); ReleaseCom(target); ReleaseCom(fixedCell);
+                ReleaseCom(sources); ReleaseCom(targets); ReleaseCom(ws);
+            }
+        }
+
+        // Project 10 Task 4
+        public bool SpecificChartMovedToChartSheet(string sourceSheetName, string chartSheetName, int expectedChartType, int preservedChartType, IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sourceSheetName) || string.IsNullOrWhiteSpace(chartSheetName)) return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Sheets chartSheets = null;
+            Xl.Chart targetChart = null;
+            Xl.Worksheet sourceSheet = null;
+            Xl.ChartObjects embeddedCharts = null;
+            Xl.ChartObject chartObject = null;
+            Xl.Chart embeddedChart = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                chartSheets = workbook.Charts;
+                for (int i = 1; i <= Convert.ToInt32(chartSheets.Count); i++)
+                {
+                    ReleaseCom(targetChart);
+                    targetChart = chartSheets.Item[i] as Xl.Chart;
+                    if (targetChart != null && string.Equals(targetChart.Name, chartSheetName, StringComparison.OrdinalIgnoreCase)) break;
+                    targetChart = null;
+                }
+                if (targetChart == null || Convert.ToInt32(targetChart.ChartType) != expectedChartType ||
+                    !ChartSeriesMatchRangeTriplesP10(targetChart, sourceSheetName, sourceRanges)) return false;
+
+                sourceSheet = GetWorksheet(sourceSheetName);
+                if (sourceSheet == null) return false;
+                embeddedCharts = sourceSheet.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (embeddedCharts == null) return false;
+                bool preservedChartFound = false;
+                for (int i = 1; i <= Convert.ToInt32(embeddedCharts.Count); i++)
+                {
+                    ReleaseCom(embeddedChart); ReleaseCom(chartObject);
+                    embeddedChart = null;
+                    chartObject = embeddedCharts.Item(i) as Xl.ChartObject;
+                    if (chartObject == null) continue;
+                    embeddedChart = chartObject.Chart;
+                    if (embeddedChart == null) continue;
+                    int chartType = Convert.ToInt32(embeddedChart.ChartType);
+                    if (chartType == expectedChartType && ChartSeriesMatchRangeTriplesP10(embeddedChart, sourceSheetName, sourceRanges))
+                        return false;
+                    if (chartType == preservedChartType) preservedChartFound = true;
+                }
+                return preservedChartFound;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("SpecificChartMovedToChartSheet", "P10 T04 grading failed.", ex, "Excel2019_P10", "T04");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(embeddedChart); ReleaseCom(chartObject); ReleaseCom(embeddedCharts);
+                ReleaseCom(sourceSheet); ReleaseCom(targetChart); ReleaseCom(chartSheets);
+            }
+        }
+
+        // Project 10 Task 5
+        public bool ChartExpandedToIncludeRange(string sheetName, int expectedChartType, IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            Xl.Worksheet ws = null;
+            Xl.ChartObjects charts = null;
+            Xl.ChartObject chartObject = null;
+            Xl.Chart chart = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                charts = ws.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (charts == null) return false;
+                for (int i = 1; i <= Convert.ToInt32(charts.Count); i++)
+                {
+                    ReleaseCom(chart); ReleaseCom(chartObject);
+                    chart = null;
+                    chartObject = charts.Item(i) as Xl.ChartObject;
+                    if (chartObject == null) continue;
+                    chart = chartObject.Chart;
+                    if (chart != null && Convert.ToInt32(chart.ChartType) == expectedChartType &&
+                        ChartSeriesMatchRangeTriplesP10(chart, sheetName, sourceRanges)) return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ChartExpandedToIncludeRange", "P10 T05 grading failed.", ex, "Excel2019_P10", "T05");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(chart); ReleaseCom(chartObject); ReleaseCom(charts); ReleaseCom(ws);
+            }
+        }
+
+        // Project 10 Task 7
+        public bool IfNumericFormulaByHeadersStrict(string sheetName, string tableName, string targetHeader, string criteriaHeader, string compareOperator, double threshold, string trueValue, string falseValue)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(tableName) ||
+                string.IsNullOrWhiteSpace(targetHeader) || string.IsNullOrWhiteSpace(criteriaHeader) || compareOperator != ">") return false;
+            double expectedTrue;
+            double expectedFalse;
+            if (!TryToDouble(trueValue, out expectedTrue) || !TryToDouble(falseValue, out expectedFalse)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range data = null;
+            Xl.Range targetData = null;
+            Xl.Range criteriaData = null;
+            Xl.Range targetCell = null;
+            Xl.Range criteriaCell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(table);
+                    table = tables.Item[i];
+                    if (table != null && string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase)) break;
+                    table = null;
+                }
+                if (table == null) return false;
+                int targetIndex = FindTableColumnIndexP05T5(table, targetHeader);
+                int criteriaIndex = FindTableColumnIndexP05T5(table, criteriaHeader);
+                if (targetIndex <= 0 || criteriaIndex <= 0) return false;
+                data = table.DataBodyRange;
+                if (data == null) return false;
+                targetData = data.Columns[targetIndex] as Xl.Range;
+                criteriaData = data.Columns[criteriaIndex] as Xl.Range;
+                if (targetData == null || criteriaData == null ||
+                    Convert.ToInt32(targetData.Rows.Count) != Convert.ToInt32(criteriaData.Rows.Count)) return false;
+
+                int rowCount = Convert.ToInt32(targetData.Rows.Count);
+                for (int row = 1; row <= rowCount; row++)
+                {
+                    ReleaseCom(criteriaCell); ReleaseCom(targetCell);
+                    targetCell = targetData.Cells[row, 1] as Xl.Range;
+                    criteriaCell = criteriaData.Cells[row, 1] as Xl.Range;
+                    if (targetCell == null || criteriaCell == null || !Convert.ToBoolean(targetCell.HasFormula)) return false;
+                    double criteria;
+                    double actual;
+                    if (!TryToDouble(criteriaCell.Value2, out criteria) || !TryToDouble(targetCell.Value2, out actual)) return false;
+                    double expected = criteria > threshold ? expectedTrue : expectedFalse;
+                    if (Math.Abs(actual - expected) > 0.000001d) return false;
+                    string criteriaAddress = Convert.ToString(criteriaCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!FormulaMatchesNumericIfP10(Convert.ToString(targetCell.Formula), criteriaAddress, criteriaHeader,
+                        threshold, expectedTrue, expectedFalse)) return false;
+                }
+                return rowCount > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("IfNumericFormulaByHeadersStrict", "P10 T07 grading failed.", ex, "Excel2019_P10", "T07");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(criteriaCell); ReleaseCom(targetCell); ReleaseCom(criteriaData);
+                ReleaseCom(targetData); ReleaseCom(data); ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        // Project 10 Task 8
+        public bool CellHyperlinkWithScreenTipEquals(string sheetName, string cellAddress, string expectedAddress, string expectedScreenTip, string expectedDisplayText)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(cellAddress) ||
+                string.IsNullOrWhiteSpace(expectedAddress)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range cell = null;
+            Xl.Hyperlinks hyperlinks = null;
+            Xl.Hyperlink hyperlink = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                cell = ws.Range[cellAddress];
+                if (cell == null || !string.Equals(Convert.ToString(cell.Value2), expectedDisplayText, StringComparison.Ordinal)) return false;
+                hyperlinks = cell.Hyperlinks;
+                if (hyperlinks == null) return false;
+                for (int i = 1; i <= Convert.ToInt32(hyperlinks.Count); i++)
+                {
+                    ReleaseCom(hyperlink);
+                    hyperlink = hyperlinks.Item[i];
+                    if (hyperlink != null && string.Equals(Convert.ToString(hyperlink.Address), expectedAddress, StringComparison.Ordinal) &&
+                        string.IsNullOrEmpty(Convert.ToString(hyperlink.SubAddress)) &&
+                        string.Equals(Convert.ToString(hyperlink.ScreenTip), expectedScreenTip, StringComparison.Ordinal)) return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("CellHyperlinkWithScreenTipEquals", "P10 T08 grading failed.", ex, "Excel2019_P10", "T08");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(hyperlink); ReleaseCom(hyperlinks); ReleaseCom(cell); ReleaseCom(ws);
+            }
+        }
+
+        private bool ChartSeriesMatchRangeTriplesP10(Xl.Chart chart, string sourceSheetName, IList<string> sourceRanges)
+        {
+            if (chart == null || sourceRanges == null || sourceRanges.Count == 0 || sourceRanges.Count % 3 != 0) return false;
+            Xl.SeriesCollection seriesCollection = null;
+            Xl.Series series = null;
+            try
+            {
+                seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                int expectedCount = sourceRanges.Count / 3;
+                if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != expectedCount) return false;
+                for (int i = 1; i <= expectedCount; i++)
+                {
+                    ReleaseCom(series);
+                    series = seriesCollection.Item(i);
+                    if (series == null) return false;
+                    int offset = (i - 1) * 3;
+                    string expected = "=SERIES(" + sourceSheetName + "!" + sourceRanges[offset] + "," +
+                        sourceSheetName + "!" + sourceRanges[offset + 1] + "," +
+                        sourceSheetName + "!" + sourceRanges[offset + 2] + "," + i.ToString(CultureInfo.InvariantCulture) + ")";
+                    if (!string.Equals(NormalizeChartReferenceP06(Convert.ToString(series.Formula)),
+                        NormalizeChartReferenceP06(expected), StringComparison.OrdinalIgnoreCase)) return false;
+                }
+                return true;
+            }
+            finally
+            {
+                ReleaseCom(series); ReleaseCom(seriesCollection);
+            }
+        }
+
+        private bool FormulaMultipliesReferencesP10(string formula, string sourceAddress, string fixedCellAddress)
+        {
+            string expression = TrimOuterParenthesesP05T5(NormalizeFormula(formula).TrimStart('='));
+            int multiplyIndex = expression.IndexOf('*');
+            if (multiplyIndex <= 0 || multiplyIndex != expression.LastIndexOf('*')) return false;
+            string left = TrimOuterParenthesesP05T5(expression.Substring(0, multiplyIndex));
+            string right = TrimOuterParenthesesP05T5(expression.Substring(multiplyIndex + 1));
+            return (ReferenceEqualsP10(left, sourceAddress) && ReferenceEqualsP10(right, fixedCellAddress)) ||
+                (ReferenceEqualsP10(right, sourceAddress) && ReferenceEqualsP10(left, fixedCellAddress));
+        }
+
+        private bool ReferenceEqualsP10(string formulaToken, string expectedAddress)
+        {
+            return string.Equals(NormalizeRangeAddress(formulaToken), NormalizeRangeAddress(expectedAddress), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool FormulaMatchesNumericIfP10(string formula, string criteriaAddress, string criteriaHeader,
+            double threshold, double trueValue, double falseValue)
+        {
+            string normalized = NormalizeFormula(formula);
+            Match match = Regex.Match(normalized, @"^=IF\((?<condition>.+),(?<true>[^,]+),(?<false>[^,]+)\)$", RegexOptions.IgnoreCase);
+            if (!match.Success || match.Groups["true"].Value.Contains("\"") || match.Groups["false"].Value.Contains("\"")) return false;
+            double actualTrue;
+            double actualFalse;
+            if (!TryToDouble(match.Groups["true"].Value, out actualTrue) || !TryToDouble(match.Groups["false"].Value, out actualFalse) ||
+                Math.Abs(actualTrue - trueValue) > 0.000001d || Math.Abs(actualFalse - falseValue) > 0.000001d) return false;
+            string condition = match.Groups["condition"].Value;
+            if (condition.Contains(">=") || condition.Contains("<=") || condition.Contains("<>")) return false;
+            int greater = condition.IndexOf('>');
+            if (greater > 0 && greater == condition.LastIndexOf('>'))
+                return IsCriteriaReferenceP10(condition.Substring(0, greater), criteriaAddress, criteriaHeader) &&
+                    IsThresholdP07(condition.Substring(greater + 1), threshold);
+            int less = condition.IndexOf('<');
+            return less > 0 && less == condition.LastIndexOf('<') &&
+                IsThresholdP07(condition.Substring(0, less), threshold) &&
+                IsCriteriaReferenceP10(condition.Substring(less + 1), criteriaAddress, criteriaHeader);
+        }
+
+        private bool IsCriteriaReferenceP10(string token, string address, string header)
+        {
+            string normalized = TrimOuterParenthesesP05T5(NormalizeFormula(token));
+            if (ReferenceEqualsP10(normalized, address)) return true;
+            string normalizedHeader = NormalizeFormula(header);
+            return normalized.EndsWith("[@" + normalizedHeader + "]", StringComparison.OrdinalIgnoreCase) ||
+                normalized.EndsWith("[@[" + normalizedHeader + "]]", StringComparison.OrdinalIgnoreCase);
         }
 
         public string GetCellDisplayText(string address)

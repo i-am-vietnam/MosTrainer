@@ -1,27 +1,97 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P10_T01_TITLE",
+    "instructionKey": "P10_T01_INST",
+    "assertionType": "CellStyleEquals",
+    "sheetName": "Survey Results",
+    "cell": "A1",
+    "expectedFormat": "Title",
+    "expectedText": "Weekly Student Survey"
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P10_T02_TITLE",
+    "instructionKey": "P10_T02_INST",
+    "assertionType": "ChartSheetSwitchedRowColumn",
+    "sheetName": "Sales by month",
+    "sourceSheetName": "Summary",
+    "expectedChartType": 51,
+    "targetRanges": [
+      "A2", "B1:M1", "B2:M2",
+      "A3", "B1:M1", "B3:M3",
+      "A4", "B1:M1", "B4:M4",
+      "A5", "B1:M1", "B5:M5"
+    ]
   },
   {
-  "taskId": "T06",
+    "taskId": "T03",
+    "titleKey": "P10_T03_TITLE",
+    "instructionKey": "P10_T03_INST",
+    "assertionType": "RangeFormulaMultipliesFixedCell",
+    "sheetName": "Q4 Sales",
+    "range": "H8:H11",
+    "sourceRange": "G8:G11",
+    "cell": "M2"
   },
-
   {
-  "taskId": "T07",
+    "taskId": "T04",
+    "titleKey": "P10_T04_TITLE",
+    "instructionKey": "P10_T04_INST",
+    "assertionType": "SpecificChartMovedToChartSheet",
+    "sourceSheetName": "Q3 Sales",
+    "sheetName": "Q3 Total Sales",
+    "expectedChartType": -4102,
+    "expectedValue": "54",
+    "targetRanges": ["G7", "C8:C11", "G8:G11"]
   },
   {
-  "taskId": "T08",
+    "taskId": "T05",
+    "titleKey": "P10_T05_TITLE",
+    "instructionKey": "P10_T05_INST",
+    "assertionType": "ChartExpandedToIncludeRange",
+    "sheetName": "Q3 Sales",
+    "chartName": "Chart 2",
+    "expectedChartType": 54,
+    "targetRanges": [
+      "C8", "D7:F7", "D8:F8",
+      "C9", "D7:F7", "D9:F9",
+      "C10", "D7:F7", "D10:F10",
+      "C11", "D7:F7", "D11:F11"
+    ]
   },
+  {
+    "taskId": "T06",
+    "titleKey": "P10_T06_TITLE",
+    "instructionKey": "P10_T06_INST",
+    "assertionType": "AutoFilterByHeaderEquals",
+    "sheetName": "Q2 Sales",
+    "columnHeader": "Test Site",
+    "expectedText": "Nguyen Tat Thanh University"
+  },
+  {
+    "taskId": "T07",
+    "titleKey": "P10_T07_TITLE",
+    "instructionKey": "P10_T07_INST",
+    "assertionType": "IfNumericFormulaByHeadersStrict",
+    "sheetName": "Q1 Sales",
+    "tableName": "Q1_Sales",
+    "targetHeader": "Bonus",
+    "criteriaHeader": "Total",
+    "operator": ">",
+    "threshold": 10000,
+    "trueText": "500",
+    "falseText": "100"
+  },
+  {
+    "taskId": "T08",
+    "titleKey": "P10_T08_TITLE",
+    "instructionKey": "P10_T08_INST",
+    "assertionType": "CellHyperlinkWithScreenTipEquals",
+    "sheetName": "Lecturers",
+    "cell": "A5",
+    "expectedValue": "https://youtube.com/c/hocictofficialchannel",
+    "expectedFormat": "HOCICT YouTube Channel",
+    "expectedText": "HOCICT Official Channel"
+  }
 ]

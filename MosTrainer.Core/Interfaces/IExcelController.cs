@@ -165,6 +165,20 @@ namespace MosTrainer.Core.Interfaces
         bool ChartSheetTitleAboveValueLabelsOutsideEnd(string chartSheetName, int expectedChartType, IList<string> sourceRanges);
         // Excel 2019 - Project 9 Task 8
         bool UpperFormulaFilledRange(string sheetName, string rangeAddress, string expectedPrefix);
+        // Excel 2019 - Project 10 Task 1
+        bool CellStyleEquals(string sheetName, string cellAddress, string expectedStyleName, string expectedText);
+        // Excel 2019 - Project 10 Task 2
+        bool ChartSheetSwitchedRowColumn(string chartSheetName, string sourceSheetName, int expectedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 10 Task 3
+        bool RangeFormulaMultipliesFixedCell(string sheetName, string targetRangeAddress, string sourceRangeAddress, string fixedCellAddress);
+        // Excel 2019 - Project 10 Task 4
+        bool SpecificChartMovedToChartSheet(string sourceSheetName, string chartSheetName, int expectedChartType, int preservedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 10 Task 5
+        bool ChartExpandedToIncludeRange(string sheetName, int expectedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 10 Task 7
+        bool IfNumericFormulaByHeadersStrict(string sheetName, string tableName, string targetHeader, string criteriaHeader, string compareOperator, double threshold, string trueValue, string falseValue);
+        // Excel 2019 - Project 10 Task 8
+        bool CellHyperlinkWithScreenTipEquals(string sheetName, string cellAddress, string expectedAddress, string expectedScreenTip, string expectedDisplayText);
         string GetCellDisplayText(string address);
     }
 }

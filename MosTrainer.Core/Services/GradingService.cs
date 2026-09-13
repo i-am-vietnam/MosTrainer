@@ -65,7 +65,11 @@ namespace MosTrainer.Core.Services
                 "ChartQuickLayoutEquals", "InvoiceStockBlockDeletedShiftUp",
                 "EmailFormulaByHeadersStrict", "ClusteredColumnChartBelowRange",
                 "RangeGreaterThanConditionalFormattingEquals",
-                "ChartSheetTitleAboveValueLabelsOutsideEnd", "UpperFormulaFilledRange"
+                "ChartSheetTitleAboveValueLabelsOutsideEnd", "UpperFormulaFilledRange",
+                "CellStyleEquals", "ChartSheetSwitchedRowColumn",
+                "RangeFormulaMultipliesFixedCell", "SpecificChartMovedToChartSheet",
+                "ChartExpandedToIncludeRange", "IfNumericFormulaByHeadersStrict",
+                "CellHyperlinkWithScreenTipEquals"
             };
 
         private readonly IExcelController _excel;
@@ -135,6 +139,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P08(task);
                 case "Excel2019_P09":
                     return CheckExcel2019P09(task);
+                case "Excel2019_P10":
+                    return CheckExcel2019P10(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -177,6 +183,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P09(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P10(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -681,6 +691,50 @@ namespace MosTrainer.Core.Services
                 case "UpperFormulaFilledRange":
                     return Result(_excel.UpperFormulaFilledRange(
                         task.SheetName, task.Range, task.ExpectedText));
+
+                // Project 10 task 1
+                case "CellStyleEquals":
+                    return Result(_excel.CellStyleEquals(
+                        task.SheetName, task.Cell, task.ExpectedFormat,
+                        task.ExpectedText));
+
+                // Project 10 task 2
+                case "ChartSheetSwitchedRowColumn":
+                    return Result(_excel.ChartSheetSwitchedRowColumn(
+                        task.SheetName, task.SourceSheetName,
+                        task.ExpectedChartType, task.TargetRanges));
+
+                // Project 10 task 3
+                case "RangeFormulaMultipliesFixedCell":
+                    return Result(_excel.RangeFormulaMultipliesFixedCell(
+                        task.SheetName, task.Range, task.SourceRange,
+                        task.Cell));
+
+                // Project 10 task 4
+                case "SpecificChartMovedToChartSheet":
+                    return Result(_excel.SpecificChartMovedToChartSheet(
+                        task.SourceSheetName, task.SheetName,
+                        task.ExpectedChartType, ToInt(task.ExpectedValue),
+                        task.TargetRanges));
+
+                // Project 10 task 5
+                case "ChartExpandedToIncludeRange":
+                    return Result(_excel.ChartExpandedToIncludeRange(
+                        task.SheetName, task.ExpectedChartType,
+                        task.TargetRanges));
+
+                // Project 10 task 7
+                case "IfNumericFormulaByHeadersStrict":
+                    return Result(_excel.IfNumericFormulaByHeadersStrict(
+                        task.SheetName, task.TableName, task.TargetHeader,
+                        task.CriteriaHeader, task.Operator, task.Threshold,
+                        task.TrueText, task.FalseText));
+
+                // Project 10 task 8
+                case "CellHyperlinkWithScreenTipEquals":
+                    return Result(_excel.CellHyperlinkWithScreenTipEquals(
+                        task.SheetName, task.Cell, task.ExpectedValue,
+                        task.ExpectedFormat, task.ExpectedText));
 
 
                 default:
