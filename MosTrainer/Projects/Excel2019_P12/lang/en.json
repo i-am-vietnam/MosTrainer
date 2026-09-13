@@ -1,0 +1,14 @@
+{
+  "P12_T01_TITLE": "Task 1",
+  "P12_T01_INST": "Navigate to the range named \"kadry\" and delete the contents of the selected cells.",
+  "P12_T02_TITLE": "Task 2",
+  "P12_T02_INST": "On the \"Elmenshawy\" worksheet, in cells B3:E11, format the cell to display the numbers to two decimal places.",
+  "P12_T03_TITLE": "Task 3",
+  "P12_T03_INST": "On the \"Elmenshawy\" worksheet. Remove the table row that contains \"Kadry Elmensawy\" data. Do not change any contents outsile the table.",
+  "P12_T04_TITLE": "Task 4",
+  "P12_T04_INST": "On the \"Elmenshawy\" worksheet, in the \"Monthly Average\" column, use a function to calculate the average monthly balance for each account from January through April.",
+  "P12_T05_TITLE": "Task 5",
+  "P12_T05_INST": "On the \"El3ameed\" worksheet, in the \"Email Address\" column, use a function to construct email address for each person using the first name and \"@wood.com\".",
+  "P12_T06_TITLE": "Task 6",
+  "P12_T06_INST": "On the \"Elmenshawy\" worksheet, for the \"Account Balances\" chart swap the data over the axis."
+}

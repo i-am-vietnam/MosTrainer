@@ -5915,7 +5915,7 @@ namespace MosTrainer.Excel
             return s;
         }
         //Project 3 Task 7
-        public bool TableColumnFormulaFilledDown(string sheetName, string startCellAddress)
+        public bool TableColumnFormulaFilledDown(string sheetName, string startCellAddress, string expectedFormula)
         {
             if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
 
@@ -5947,6 +5947,13 @@ namespace MosTrainer.Excel
                 string baseFormulaR1C1 = GetFormulaR1C1P3T7(startCell);
                 if (string.IsNullOrWhiteSpace(baseFormulaR1C1))
                     return false;
+
+                if (!string.IsNullOrWhiteSpace(expectedFormula))
+                {
+                    string actualSeedFormula = Convert.ToString(startCell.Formula);
+                    if (!FormulaR1C1EqualsP3T7(actualSeedFormula, expectedFormula))
+                        return false;
+                }
 
                 listObjects = ws.ListObjects;
                 if (listObjects == null) return false;
@@ -8450,8 +8457,8 @@ namespace MosTrainer.Excel
                 int chartTopRow = Convert.ToInt32(topLeft.Row);
 
                 // Đề yêu cầu đặt dưới bảng, size/position chính xác không quan trọng.
-                // Cho phép top row bằng dòng cuối + 1 hoặc thấp hơn.
-                return chartTopRow >= lastDataRow;
+                // Chart phải bắt đầu sau dòng dữ liệu cuối cùng.
+                return chartTopRow > lastDataRow;
             }
             catch
             {
@@ -9773,7 +9780,7 @@ namespace MosTrainer.Excel
         }
 
         // Project 5 Task 3
-        public bool ChartDataTableWithoutLegendKeys(string sheetName, string chartTitle, string chartName)
+        public bool ChartDataTableWithoutLegendKeys(string sheetName, string chartTitle, string chartName, string sourceHeader)
         {
             if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
             if (string.IsNullOrWhiteSpace(sheetName)) return false;
@@ -9784,11 +9791,18 @@ namespace MosTrainer.Excel
             Xl.Chart chart = null;
             Xl.ChartTitle title = null;
             Xl.DataTable dataTable = null;
+            Xl.Range sourceDataRange = null;
 
             try
             {
                 ws = GetWorksheet(sheetName);
                 if (ws == null) return false;
+
+                if (!string.IsNullOrWhiteSpace(sourceHeader))
+                {
+                    sourceDataRange = FindTableColumnDataBodyRangeByHeaderP3T8(ws, sourceHeader);
+                    if (sourceDataRange == null) return false;
+                }
 
                 chartObjects = ws.ChartObjects(Type.Missing) as Xl.ChartObjects;
                 if (chartObjects == null) return false;
@@ -9832,6 +9846,9 @@ namespace MosTrainer.Excel
                     }
 
                     if (!isTarget) continue;
+                    if (sourceDataRange != null &&
+                        !ChartContainsSeriesForRangeP11T6(chart, sourceDataRange, sourceHeader))
+                        continue;
                     if (!Convert.ToBoolean(chart.HasDataTable)) return false;
 
                     dataTable = chart.DataTable;
@@ -9847,12 +9864,63 @@ namespace MosTrainer.Excel
             }
             finally
             {
+                ReleaseCom(sourceDataRange);
                 ReleaseCom(dataTable);
                 ReleaseCom(title);
                 ReleaseCom(chart);
                 ReleaseCom(chartObject);
                 ReleaseCom(chartObjects);
                 ReleaseCom(ws);
+            }
+        }
+
+        private bool ChartContainsSeriesForRangeP11T6(
+            Xl.Chart chart,
+            Xl.Range sourceDataRange,
+            string sourceHeader)
+        {
+            if (chart == null || sourceDataRange == null || string.IsNullOrWhiteSpace(sourceHeader))
+                return false;
+
+            Xl.SeriesCollection seriesCollection = null;
+            Xl.Series series = null;
+
+            try
+            {
+                seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                if (seriesCollection == null) return false;
+
+                string expectedRange = NormalizeChartFormulaP4T5(
+                    GetRangeAddressWithSheetP4T5(sourceDataRange));
+                string expectedName = NormalizeHeaderP4T5(sourceHeader);
+
+                for (int i = 1; i <= Convert.ToInt32(seriesCollection.Count); i++)
+                {
+                    ReleaseCom(series);
+                    series = seriesCollection.Item(i) as Xl.Series;
+                    if (series == null) continue;
+
+                    string formula = NormalizeChartFormulaP4T5(Convert.ToString(series.Formula));
+                    string name = NormalizeHeaderP4T5(Convert.ToString(series.Name));
+
+                    if (!string.IsNullOrWhiteSpace(expectedRange) &&
+                        formula.Contains(expectedRange) &&
+                        string.Equals(name, expectedName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(series);
+                ReleaseCom(seriesCollection);
             }
         }
 
@@ -12002,8 +12070,6 @@ namespace MosTrainer.Excel
             Xl.SortField field = null;
             Xl.Range key = null;
             Xl.Range expectedKey = null;
-            Xl.Range previous = null;
-            Xl.Range current = null;
             try
             {
                 ws = GetWorksheet(sheetName);
@@ -12024,17 +12090,15 @@ namespace MosTrainer.Excel
                 sort = table.Sort;
                 fields = sort.SortFields;
                 if (fields == null || Convert.ToInt32(fields.Count) != 2) return false;
-                int[] keyIndexes = new int[2];
-                bool[] ascending = new bool[2];
                 for (int i = 0; i < 2; i++)
                 {
                     ReleaseCom(expectedKey); ReleaseCom(key); ReleaseCom(field);
                     expectedKey = null; key = null;
-                    keyIndexes[i] = FindTableColumnIndexP05T5(table, sortHeaders[i]);
-                    if (keyIndexes[i] <= 0) return false;
+                    int keyIndex = FindTableColumnIndexP05T5(table, sortHeaders[i]);
+                    if (keyIndex <= 0) return false;
                     field = fields.Item[i + 1];
                     key = field.Key;
-                    Xl.ListColumn listColumn = table.ListColumns.Item[keyIndexes[i]];
+                    Xl.ListColumn listColumn = table.ListColumns.Item[keyIndex];
                     try { expectedKey = listColumn.DataBodyRange; }
                     finally { ReleaseCom(listColumn); }
                     if (field == null || key == null || expectedKey == null ||
@@ -12042,33 +12106,11 @@ namespace MosTrainer.Excel
                     string actualKey = Convert.ToString(key.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
                     string expectedKeyAddress = Convert.ToString(expectedKey.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
                     if (!string.Equals(NormalizeRangeAddress(actualKey), NormalizeRangeAddress(expectedKeyAddress), StringComparison.OrdinalIgnoreCase)) return false;
-                    ascending[i] = IsAscendingSortOrderP1T4(sortOrders, i);
-                    int expectedOrder = ascending[i] ? (int)Xl.XlSortOrder.xlAscending : (int)Xl.XlSortOrder.xlDescending;
+                    int expectedOrder = IsAscendingSortOrderP1T4(sortOrders, i)
+                        ? (int)Xl.XlSortOrder.xlAscending
+                        : (int)Xl.XlSortOrder.xlDescending;
                     if (Convert.ToInt32(field.Order) != expectedOrder) return false;
                 }
-
-                Xl.Range data = table.DataBodyRange;
-                try
-                {
-                    int rowCount = Convert.ToInt32(data.Rows.Count);
-                    for (int row = 2; row <= rowCount; row++)
-                    {
-                        bool resolved = false;
-                        for (int level = 0; level < 2; level++)
-                        {
-                            ReleaseCom(previous); ReleaseCom(current);
-                            previous = data.Cells[row - 1, keyIndexes[level]] as Xl.Range;
-                            current = data.Cells[row, keyIndexes[level]] as Xl.Range;
-                            int comparison = CompareSortValueP1T4(GetCellTextP1T3(previous), GetCellTextP1T3(current));
-                            if (comparison == 0) continue;
-                            if ((ascending[level] && comparison > 0) || (!ascending[level] && comparison < 0)) return false;
-                            resolved = true;
-                            break;
-                        }
-                        if (!resolved) continue;
-                    }
-                }
-                finally { ReleaseCom(data); }
                 return true;
             }
             catch (Exception ex)
@@ -12078,7 +12120,7 @@ namespace MosTrainer.Excel
             }
             finally
             {
-                ReleaseCom(current); ReleaseCom(previous); ReleaseCom(expectedKey); ReleaseCom(key); ReleaseCom(field);
+                ReleaseCom(expectedKey); ReleaseCom(key); ReleaseCom(field);
                 ReleaseCom(fields); ReleaseCom(sort); ReleaseCom(tableRange); ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
             }
         }

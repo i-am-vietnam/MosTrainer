@@ -1,20 +1,65 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P11_T01_TITLE",
+    "instructionKey": "P11_T01_INST",
+    "assertionType": "TableColumnFormulaFilledDown",
+    "sheetName": "Kadry",
+    "cell": "E4",
+    "expectedFormula": "=D4*8%"
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P11_T02_TITLE",
+    "instructionKey": "P11_T02_INST",
+    "assertionType": "NoConditionalFormatting",
+    "sheetName": "Kadry"
   },
   {
-  "taskId": "T06",
+    "taskId": "T03",
+    "titleKey": "P11_T03_TITLE",
+    "instructionKey": "P11_T03_INST",
+    "assertionType": "TableMultiLevelSortStateEquals",
+    "sheetName": "Elmenshawy",
+    "tableName": "Table2",
+    "range": "A3:D20",
+    "sortHeaders": [
+      "Country or Region",
+      "City"
+    ],
+    "sortOrders": [
+      "Ascending",
+      "Ascending"
+    ]
+  },
+  {
+    "taskId": "T04",
+    "titleKey": "P11_T04_TITLE",
+    "instructionKey": "P11_T04_INST",
+    "assertionType": "MaxFormulaFromHeader",
+    "sheetName": "Elmenshawy",
+    "cell": "D22",
+    "sourceHeader": "Air Miles"
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P11_T05_TITLE",
+    "instructionKey": "P11_T05_INST",
+    "assertionType": "ClusteredColumnChartByHeaders",
+    "sheetName": "Elmenshawy",
+    "sourceHeaders": [
+      "City",
+      "Air Miles"
+    ]
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P11_T06_TITLE",
+    "instructionKey": "P11_T06_INST",
+    "assertionType": "ChartDataTableWithoutLegendKeys",
+    "sheetName": "Kadry",
+    "chartTitle": "Air Miles",
+    "chartName": "Chart 12",
+    "sourceHeader": "Air Miles"
   }
 ]

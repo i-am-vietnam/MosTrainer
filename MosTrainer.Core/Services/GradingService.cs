@@ -141,6 +141,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P09(task);
                 case "Excel2019_P10":
                     return CheckExcel2019P10(task);
+                case "Excel2019_P11":
+                    return CheckExcel2019P11(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -187,6 +189,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P10(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P11(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -378,7 +384,8 @@ namespace MosTrainer.Core.Services
                 case "ExtendFormulaToEndOfTableColumn":
                     return Result(_excel.TableColumnFormulaFilledDown(
                         task.SheetName,
-                        task.Cell));
+                        task.Cell,
+                        task.ExpectedFormula));
 
                 //Project 3 task 8
                 case "MaxFormulaFromHeader":
@@ -490,7 +497,8 @@ namespace MosTrainer.Core.Services
                     return Result(_excel.ChartDataTableWithoutLegendKeys(
                         task.SheetName,
                         task.ChartTitle,
-                        task.ChartName));
+                        task.ChartName,
+                        task.SourceHeader));
 
                 // Project 5 task 4
                 case "SalesByExamTableConvertedToRange":

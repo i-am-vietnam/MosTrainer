@@ -76,7 +76,7 @@ namespace MosTrainer.Core.Interfaces
         // Excel 2019 - Project 3 Task 5
         bool ChartPrimaryVerticalAxisTitleEquals(string sheetName, string expectedTitle);
         // Excel 2019 - Project 3 Task 7
-        bool TableColumnFormulaFilledDown(string sheetName, string startCellAddress);
+        bool TableColumnFormulaFilledDown(string sheetName, string startCellAddress, string expectedFormula);
 
         // Excel 2019 - Project 3 Task 8
         bool MaxFormulaFromHeader(string sheetName, string targetCellAddress, string sourceHeader);
@@ -102,7 +102,7 @@ namespace MosTrainer.Core.Interfaces
         // Excel 2019 - Project 5 Task 1
         bool ShapeHyperlinkEquals(string sheetName, string shapeName, string topLeftCellAddress, string expectedUrl);
         // Excel 2019 - Project 5 Task 3
-        bool ChartDataTableWithoutLegendKeys(string sheetName, string chartTitle, string chartName);
+        bool ChartDataTableWithoutLegendKeys(string sheetName, string chartTitle, string chartName, string sourceHeader);
         // Excel 2019 - Project 5 Task 4
         bool SalesByExamTableConvertedToRange(string sheetName, string rangeAddress, string tableName, IList<string> expectedHeaders, int expectedDataRowCount);
         // Excel 2019 - Project 5 Task 5
