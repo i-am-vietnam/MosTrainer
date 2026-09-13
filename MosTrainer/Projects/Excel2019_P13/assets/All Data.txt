@@ -1,0 +1,7 @@
+﻿Last Name	First Name	Subject	Preferred Contact
+Syed	Abbas	Painting/Drawing	213-555-0199
+Geoff	Grisso	Sculpture	geoff@fineartschool.net
+Tamara	Johnston	Photography	tamara@fineartschool.net
+Borka	Clarke	Painting/Drawing	borka@fineartschool.net
+Nigel	Westbury	Painting/Drawing	213-555-0167
+Bob	Gage	Studio Art	bob@fineartschool.net

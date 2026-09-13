@@ -1,0 +1,14 @@
+{
+  "P13_T01_TITLE": "Task 1",
+  "P13_T01_INST": "On the \"El3ameed\" worksheet, beginning at cell A2, import the data from the All Data.text file in the Document folder. Use the first of the data soaurce as headers.",
+  "P13_T02_TITLE": "Task 2",
+  "P13_T02_INST": "On the \"Elmenshawy\" worksheet, adjust the width of columns B:G to exactly 11.",
+  "P13_T03_TITLE": "Task 3",
+  "P13_T03_INST": "On the \"Kadry\" worksheet, in cells G4:G24, insert Column sparklines to compare the last, current, and next term value for each class period.",
+  "P13_T04_TITLE": "Task 4",
+  "P13_T04_INST": "On the \"School\" worksheet, convert the table to a cell range. Keep the formatting.",
+  "P13_T05_TITLE": "Task 5",
+  "P13_T05_INST": "From the \"School 22\" worksheet, move the chart to a new chart sheet name \"School chart\"",
+  "P13_T06_TITLE": "Task 6",
+  "P13_T06_INST": "On the \"Elmenshawy\" worksheet, modify the chart to display \"Hours\" as the Primary Vertical Axis Title."
+}

@@ -1036,7 +1036,7 @@ namespace MosTrainer.Excel
         }
 
         //Project 1 Task 5
-        public bool EmailFormulaFromHeader(string sheetName, string targetHeader, string sourceHeader, string domain)
+        public bool EmailFormulaFromHeader(string sheetName, string targetHeader, string sourceHeader, string domain, bool requireFunction)
         {
             if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
 
@@ -1116,7 +1116,8 @@ namespace MosTrainer.Excel
                         worksheetRow,
                         sourceWorksheetColumn,
                         sourceHeader,
-                        normalizedDomain);
+                        normalizedDomain,
+                        requireFunction);
 
                     if (!formulaOk)
                         return false;
@@ -1309,7 +1310,8 @@ namespace MosTrainer.Excel
             int row,
             int sourceColumn,
             string sourceHeader,
-            string domain)
+            string domain,
+            bool requireFunction)
         {
             string f1 = NormalizeFormulaP1T5(formula);
             string f2 = NormalizeFormulaP1T5(formulaLocal);
@@ -1338,11 +1340,13 @@ namespace MosTrainer.Excel
             if (!hasDomain)
                 return false;
 
-            bool looksLikeConstructFormula =
+            bool usesFunction =
                 combined.Contains("CONCATENATE(") ||
                 combined.Contains("CONCAT(") ||
-                combined.Contains("TEXTJOIN(") ||
-                combined.Contains("&");
+                combined.Contains("TEXTJOIN(");
+
+            bool looksLikeConstructFormula = usesFunction ||
+                (!requireFunction && combined.Contains("&"));
 
             if (!looksLikeConstructFormula)
                 return false;
@@ -6573,7 +6577,12 @@ namespace MosTrainer.Excel
             return s;
         }
         //Project 4 Task 1
-        public bool ChartSwitchedRowColumn(string sheetName, string chartTitle, string sourceRange)
+        public bool ChartSwitchedRowColumn(
+            string sheetName,
+            string chartTitle,
+            string chartName,
+            string sourceRange,
+            int expectedChartType)
         {
             if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
 
@@ -6605,11 +6614,27 @@ namespace MosTrainer.Excel
                     chartObject = (Xl.ChartObject)chartObjects.Item(i);
                     if (chartObject == null) continue;
 
+                    if (!string.IsNullOrWhiteSpace(chartName) &&
+                        !string.Equals(Convert.ToString(chartObject.Name), chartName, StringComparison.OrdinalIgnoreCase))
+                        continue;
+
                     chart = chartObject.Chart;
                     if (chart == null) continue;
 
                     if (!ChartTitleMatchesP4T1(chart, chartTitle))
                         continue;
+
+                    if (expectedChartType > 0 && Convert.ToInt32(chart.ChartType) != expectedChartType)
+                        continue;
+
+                    if (expectedChartType > 0)
+                    {
+                        if (ChartPlotByRowsP4T1(chart) &&
+                            ChartSeriesLooksExactlySwitchedP12T6(chart, ws, sourceRange))
+                            return true;
+
+                        continue;
+                    }
 
                     // Cách ổn định nhất: nếu Excel đọc được PlotBy = xlRows thì PASS.
                     if (ChartPlotByRowsP4T1(chart))
@@ -6794,6 +6819,70 @@ namespace MosTrainer.Excel
                 // Cho phép lệch nhẹ 1 series nếu Excel build ghi formula khác,
                 // nhưng phải thấy đa số series lấy dữ liệu theo từng hàng.
                 return rowSeriesMatches >= Math.Max(1, expectedSeriesCount - 1);
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(series);
+                ReleaseCom(seriesCollection);
+                ReleaseCom(sourceRange);
+            }
+        }
+
+        private bool ChartSeriesLooksExactlySwitchedP12T6(
+            Xl.Chart chart,
+            Xl.Worksheet ws,
+            string sourceRangeAddress)
+        {
+            if (chart == null || ws == null || string.IsNullOrWhiteSpace(sourceRangeAddress))
+                return false;
+
+            Xl.Range sourceRange = null;
+            Xl.SeriesCollection seriesCollection = null;
+            Xl.Series series = null;
+
+            try
+            {
+                sourceRange = ws.Range[sourceRangeAddress];
+                if (sourceRange == null) return false;
+
+                int firstRow = Convert.ToInt32(sourceRange.Row);
+                int firstColumn = Convert.ToInt32(sourceRange.Column);
+                int rowCount = Convert.ToInt32(sourceRange.Rows.Count);
+                int columnCount = Convert.ToInt32(sourceRange.Columns.Count);
+                if (rowCount < 2 || columnCount < 2) return false;
+
+                seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != rowCount - 1)
+                    return false;
+
+                string expectedCategories = NormalizeChartFormulaP4T1(
+                    BuildSheetRangeAddressP4T1(ws, firstRow, firstColumn + 1, 1, columnCount - 1));
+
+                for (int i = 1; i <= rowCount - 1; i++)
+                {
+                    ReleaseCom(series);
+                    series = seriesCollection.Item(i) as Xl.Series;
+                    if (series == null) return false;
+
+                    string formula = NormalizeChartFormulaP4T1(Convert.ToString(series.Formula));
+                    string expectedName = NormalizeChartFormulaP4T1(
+                        Convert.ToString(ws.Name) + "!" +
+                        ExcelColumnNameP1T3(firstColumn) +
+                        (firstRow + i).ToString(CultureInfo.InvariantCulture));
+                    string expectedValues = NormalizeChartFormulaP4T1(
+                        BuildSheetRangeAddressP4T1(ws, firstRow + i, firstColumn + 1, 1, columnCount - 1));
+
+                    if (!formula.Contains(expectedName) ||
+                        !formula.Contains(expectedCategories) ||
+                        !formula.Contains(expectedValues))
+                        return false;
+                }
+
+                return true;
             }
             catch
             {
@@ -11779,6 +11868,101 @@ namespace MosTrainer.Excel
             {
                 ReleaseCom(filterSheet); ReleaseCom(filterRange); ReleaseCom(filterName); ReleaseCom(names);
                 ReleaseCom(cell); ReleaseCom(data); ReleaseCom(tableRange); ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        // Project 12 Task 3
+        public bool TableRowContainingTextDeletedPreserveUsedRange(
+            string sheetName,
+            string tableName,
+            string searchText,
+            int expectedDataRowCount,
+            string expectedTableRange,
+            string expectedUsedRange,
+            IList<string> expectedFirstColumnValues)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(tableName) ||
+                string.IsNullOrWhiteSpace(searchText) || expectedDataRowCount <= 0 ||
+                string.IsNullOrWhiteSpace(expectedTableRange) || string.IsNullOrWhiteSpace(expectedUsedRange) ||
+                expectedFirstColumnValues == null || expectedFirstColumnValues.Count != expectedDataRowCount)
+                return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range tableRange = null;
+            Xl.Range data = null;
+            Xl.Range usedRange = null;
+            Xl.Range cell = null;
+
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+
+                tables = ws.ListObjects;
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(table);
+                    table = tables.Item[i];
+                    if (table != null && string.Equals(table.Name, tableName, StringComparison.OrdinalIgnoreCase))
+                        break;
+                    table = null;
+                }
+
+                if (table == null) return false;
+                tableRange = table.Range;
+                data = table.DataBodyRange;
+                if (tableRange == null || data == null || Convert.ToInt32(data.Rows.Count) != expectedDataRowCount)
+                    return false;
+
+                string actualTableRange = Convert.ToString(
+                    tableRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                if (!string.Equals(
+                        NormalizeRangeAddress(actualTableRange),
+                        NormalizeRangeAddress(expectedTableRange),
+                        StringComparison.OrdinalIgnoreCase) ||
+                    RangeContainsTextP3T3(data, searchText))
+                    return false;
+
+                for (int row = 1; row <= expectedDataRowCount; row++)
+                {
+                    ReleaseCom(cell);
+                    cell = data.Cells[row, 1] as Xl.Range;
+                    if (cell == null || !string.Equals(
+                            NormalizeText(Convert.ToString(cell.Value2)),
+                            NormalizeText(expectedFirstColumnValues[row - 1]),
+                            StringComparison.OrdinalIgnoreCase))
+                        return false;
+                }
+
+                usedRange = ws.UsedRange;
+                if (usedRange == null) return false;
+                string actualUsedRange = Convert.ToString(
+                    usedRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+
+                return string.Equals(
+                    NormalizeRangeAddress(actualUsedRange),
+                    NormalizeRangeAddress(expectedUsedRange),
+                    StringComparison.OrdinalIgnoreCase);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(
+                    "TableRowContainingTextDeletedPreserveUsedRange",
+                    "P12 T03 grading failed.", ex, "Excel2019_P12", "T03");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(cell);
+                ReleaseCom(usedRange);
+                ReleaseCom(data);
+                ReleaseCom(tableRange);
+                ReleaseCom(table);
+                ReleaseCom(tables);
+                ReleaseCom(ws);
             }
         }
 

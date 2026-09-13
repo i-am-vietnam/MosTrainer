@@ -16,6 +16,7 @@ namespace MosTrainer.Core.Services
                 "FontBoldEquals", "HorizontalAlignmentEquals", "TableExists", "ChartExists",
                 "NamedRangeExists", "PrintAreaEquals", "AutoFilterByHeaderEquals",
                 "IfFormulaByHeaders", "MultiLevelSortByHeaders", "EmailFormulaFromHeader",
+                "EmailFunctionFormulaFromHeader",
                 "TableBandedRows", "ChartSheetExists", "NoConditionalFormatting",
                 "ImportedCsvAtCell", "ImportCsvAtCell", "ImportTextFileAtCell",
                 "ColumnWidthEquals", "ColumnWidthExactly", "ColumnSparklinesByRange",
@@ -59,7 +60,8 @@ namespace MosTrainer.Core.Services
                 "ChartStyleAndPaletteEquals", "WorkbookPersonalInformationRemoved",
                 "ClusteredColumnChartFromRanges", "IfFormulaByHeadersStrict",
                 "NamedRangeRefersToRange", "TableColumnFormulaMultipliesNamedRange",
-                "TableRowContainingTextDeletedPreserveOutside", "RangeAlignmentIndentEquals",
+                "TableRowContainingTextDeletedPreserveOutside",
+                "TableRowContainingTextDeletedPreserveUsedRange", "RangeAlignmentIndentEquals",
                 "SparklinesByRangeAndType", "TableTotalRowSumsByHeaders",
                 "CountBlankFormulaByHeaders", "TableMultiLevelSortStateEquals",
                 "ChartQuickLayoutEquals", "InvoiceStockBlockDeletedShiftUp",
@@ -143,6 +145,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P10(task);
                 case "Excel2019_P11":
                     return CheckExcel2019P11(task);
+                case "Excel2019_P12":
+                    return CheckExcel2019P12(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -193,6 +197,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P11(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P12(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -253,7 +261,11 @@ namespace MosTrainer.Core.Services
                 case "MultiLevelSortByHeaders":return Result(_excel.MultiLevelSortByHeaders(task.SheetName,task.SortHeaders,task.SortOrders));
                 //Project 1 task 5
                 case "EmailFormulaFromHeader":
-                    return Result(_excel.EmailFormulaFromHeader(task.SheetName,task.TargetHeader,task.SourceHeader,task.Domain));
+                    return Result(_excel.EmailFormulaFromHeader(
+                        task.SheetName, task.TargetHeader, task.SourceHeader, task.Domain, false));
+                case "EmailFunctionFormulaFromHeader":
+                    return Result(_excel.EmailFormulaFromHeader(
+                        task.SheetName, task.TargetHeader, task.SourceHeader, task.Domain, true));
                 //Project 1 task 6
                 case "TableBandedRows":
                     return Result(_excel.TableBandedRows(task.SheetName));
@@ -405,7 +417,9 @@ namespace MosTrainer.Core.Services
                     return Result(_excel.ChartSwitchedRowColumn(
                         task.SheetName,
                         task.ChartTitle,
-                        string.IsNullOrWhiteSpace(task.Range) ? task.DataRange : task.Range));
+                        task.ChartName,
+                        string.IsNullOrWhiteSpace(task.Range) ? task.DataRange : task.Range,
+                        task.ExpectedChartType));
                 //Project 4 task 2
                 case "RangeFormattingMatches":
                 case "FormattingCopiedFromRange":
@@ -626,6 +640,12 @@ namespace MosTrainer.Core.Services
                 // Project 8 task 2
                 case "TableRowContainingTextDeletedPreserveOutside":
                     return Result(_excel.TableRowContainingTextDeletedPreserveOutside(
+                        task.SheetName, task.TableName, task.ExpectedText,
+                        task.ExpectedRowCount, task.Range, task.SourceRange,
+                        task.ExpectedTexts));
+
+                case "TableRowContainingTextDeletedPreserveUsedRange":
+                    return Result(_excel.TableRowContainingTextDeletedPreserveUsedRange(
                         task.SheetName, task.TableName, task.ExpectedText,
                         task.ExpectedRowCount, task.Range, task.SourceRange,
                         task.ExpectedTexts));

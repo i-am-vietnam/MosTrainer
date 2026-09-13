@@ -1,20 +1,77 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P12_T01_TITLE",
+    "instructionKey": "P12_T01_INST",
+    "assertionType": "NamedRangeContentsCleared",
+    "namedRange": "kadry",
+    "sheetName": "Kadry",
+    "range": "A7:F10"
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P12_T02_TITLE",
+    "instructionKey": "P12_T02_INST",
+    "assertionType": "RangeNumberFormatDecimalPlacesEquals",
+    "sheetName": "Elmenshawy",
+    "range": "B3:E11",
+    "decimalPlaces": 2
   },
   {
-  "taskId": "T06",
+    "taskId": "T03",
+    "titleKey": "P12_T03_TITLE",
+    "instructionKey": "P12_T03_INST",
+    "assertionType": "TableRowContainingTextDeletedPreserveUsedRange",
+    "sheetName": "Elmenshawy",
+    "tableName": "Table1",
+    "expectedText": "Kadry Elmensawy",
+    "expectedRowCount": 8,
+    "range": "A2:F10",
+    "sourceRange": "A1:AO11",
+    "expectedTexts": [
+      "Contoso Pharmaceuticals",
+      "Humongous Insurance",
+      "Trey Research",
+      "Alpine Ski House",
+      "Blue Yonder Airlines",
+      "Margie's Travel",
+      "Graphic Design Institute",
+      "School of Fine Art"
+    ]
+  },
+  {
+    "taskId": "T04",
+    "titleKey": "P12_T04_TITLE",
+    "instructionKey": "P12_T04_INST",
+    "assertionType": "AverageFormulaByHeaders",
+    "sheetName": "Elmenshawy",
+    "targetHeader": "Monthly Average",
+    "sourceHeaders": [
+      "January",
+      "February",
+      "March",
+      "April"
+    ]
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P12_T05_TITLE",
+    "instructionKey": "P12_T05_INST",
+    "assertionType": "EmailFunctionFormulaFromHeader",
+    "sheetName": "El3ameed",
+    "targetHeader": "Email Address",
+    "sourceHeader": "First Name",
+    "domain": "@wood.com"
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P12_T06_TITLE",
+    "instructionKey": "P12_T06_INST",
+    "assertionType": "ChartSwitchedRowColumn",
+    "sheetName": "Elmenshawy",
+    "chartTitle": "Account Balances",
+    "chartName": "Chart 10",
+    "range": "A2:E6",
+    "expectedChartType": 51
   }
 ]

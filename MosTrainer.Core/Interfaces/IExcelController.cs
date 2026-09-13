@@ -36,7 +36,7 @@ namespace MosTrainer.Core.Interfaces
         bool MultiLevelSortByHeaders(string sheetName, IList<string> sortHeaders, IList<string> sortOrders);
 
         // Excel 2019 - Project 1 Task 5
-        bool EmailFormulaFromHeader(string sheetName, string targetHeader, string sourceHeader, string domain);
+        bool EmailFormulaFromHeader(string sheetName, string targetHeader, string sourceHeader, string domain, bool requireFunction);
         // Excel 2019 - Project 1 Task 6
         bool TableBandedRows(string sheetName);
 
@@ -81,7 +81,7 @@ namespace MosTrainer.Core.Interfaces
         // Excel 2019 - Project 3 Task 8
         bool MaxFormulaFromHeader(string sheetName, string targetCellAddress, string sourceHeader);
         // Excel 2019 - Project 4 Task 1
-        bool ChartSwitchedRowColumn(string sheetName, string chartTitle, string sourceRange);
+        bool ChartSwitchedRowColumn(string sheetName, string chartTitle, string chartName, string sourceRange, int expectedChartType);
 
         // Excel 2019 - Project 4 Task 2
         bool RangeFormattingMatches(string sourceSheetName, string sourceRange, string targetSheetName, string targetRange);
@@ -141,6 +141,7 @@ namespace MosTrainer.Core.Interfaces
         bool TableColumnFormulaMultipliesNamedRange(string sheetName, string tableName, string targetHeader, string sourceHeader, string namedRange, string namedRangeAddress);
         // Excel 2019 - Project 8 Task 2
         bool TableRowContainingTextDeletedPreserveOutside(string sheetName, string tableName, string searchText, int expectedDataRowCount, string expectedTableRange, string preservedFilterRange, IList<string> expectedFirstColumnValues);
+        bool TableRowContainingTextDeletedPreserveUsedRange(string sheetName, string tableName, string searchText, int expectedDataRowCount, string expectedTableRange, string expectedUsedRange, IList<string> expectedFirstColumnValues);
         // Excel 2019 - Project 8 Task 3
         bool RangeAlignmentIndentEquals(string sheetName, string rangeAddress, string expectedAlignment, int expectedIndent);
         // Excel 2019 - Project 8 Task 4

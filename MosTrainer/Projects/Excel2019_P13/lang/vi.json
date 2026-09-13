@@ -1,0 +1,14 @@
+﻿{
+  "P13_T01_TITLE": "Nhiệm vụ 1",
+  "P13_T01_INST": "Trên trang tính \"El3ameed\", bắt đầu tại ô A2, nhập dữ liệu từ tệp All Data.text trong thư mục Document. Sử dụng hàng đầu tiên của nguồn dữ liệu làm tiêu đề.",
+  "P13_T02_TITLE": "Nhiệm vụ 2",
+  "P13_T02_INST": "Trên trang tính \"Elmenshawy\", điều chỉnh độ rộng các cột B:G chính xác thành 11.",
+  "P13_T03_TITLE": "Nhiệm vụ 3",
+  "P13_T03_INST": "Trên trang tính \"Kadry\", trong các ô G4:G24, chèn Column sparklines để so sánh giá trị kỳ trước, kỳ hiện tại và kỳ tiếp theo cho từng tiết học.",
+  "P13_T04_TITLE": "Nhiệm vụ 4",
+  "P13_T04_INST": "Trên trang tính \"School\", chuyển bảng thành một vùng ô. Giữ nguyên định dạng.",
+  "P13_T05_TITLE": "Nhiệm vụ 5",
+  "P13_T05_INST": "Từ trang tính \"School 22\", di chuyển biểu đồ sang một trang tính biểu đồ mới có tên \"School chart\".",
+  "P13_T06_TITLE": "Nhiệm vụ 6",
+  "P13_T06_INST": "Trên trang tính \"Elmenshawy\", sửa đổi biểu đồ để hiển thị \"Hours\" làm tiêu đề trục dọc chính."
+}
