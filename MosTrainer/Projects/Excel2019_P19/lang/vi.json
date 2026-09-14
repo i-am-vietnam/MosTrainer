@@ -1,0 +1,12 @@
+﻿{
+  "P19_T01_TITLE": "Nhiệm vụ 1",
+  "P19_T01_INST": "Trên trang tính \"El3ameed\", trong các ô F4:F11, sử dụng định dạng có điều kiện để áp dụng định dạng Yellow Fill with Dark Yellow Text cho các ô chứa giá trị lớn hơn \"$5,000,000\".",
+  "P19_T02_TITLE": "Nhiệm vụ 2",
+  "P19_T02_INST": "Trên trang tính \"Kadry\", thực hiện sắp xếp nhiều mức. Sắp xếp dữ liệu trong bảng theo \"Product\" (A đến Z), sau đó theo \"Total Sales\" (Lớn nhất đến nhỏ nhất).",
+  "P19_T03_TITLE": "Nhiệm vụ 3",
+  "P19_T03_INST": "Trên trang tính \"El3ameed\", trong cột \"Quarter 2\", nhập một công thức nhân giá trị trong cột \"Quarter 1\" với vùng được đặt tên \"Q2_Increase\". Sử dụng tên vùng trong công thức thay vì tham chiếu ô hoặc giá trị.",
+  "P19_T04_TITLE": "Nhiệm vụ 4",
+  "P19_T04_INST": "Trên trang tính \"Elmenshawy\", tại ô C13, sử dụng một hàm để hiển thị giá trị doanh số cao nhất từ cột \"Total Sales\".",
+  "P19_T05_TITLE": "Nhiệm vụ 5",
+  "P19_T05_INST": "Trên trang tính biểu đồ \"Elking\", hoán đổi dữ liệu trên các trục."
+}

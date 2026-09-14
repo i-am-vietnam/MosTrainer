@@ -1,20 +1,66 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P18_T01_TITLE",
+    "instructionKey": "P18_T01_INST",
+    "assertionType": "FreezePanesEquals",
+    "sheetName": "Elmenshawy",
+    "freezeRows": 2,
+    "freezeColumns": 0
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P18_T02_TITLE",
+    "instructionKey": "P18_T02_INST",
+    "assertionType": "RangeAlignmentIndentEquals",
+    "sheetName": "Elmenshawy",
+    "range": "A1",
+    "expectedFormat": "LeftOrGeneral",
+    "expectedValue": "0"
   },
   {
-  "taskId": "T06",
+    "taskId": "T03",
+    "titleKey": "P18_T03_TITLE",
+    "instructionKey": "P18_T03_INST",
+    "assertionType": "RangeIconSetEquals",
+    "sheetName": "Elmenshawy",
+    "range": "E3:E54",
+    "expectedText": "3 Traffic Lights (Unrimmed)"
+  },
+  {
+    "taskId": "T04",
+    "titleKey": "P18_T04_TITLE",
+    "instructionKey": "P18_T04_INST",
+    "assertionType": "TableStyleEquals",
+    "sheetName": "Elmenshawy",
+    "tableName": "Table1",
+    "expectedText": "White, Table Style Medium 1"
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P18_T05_TITLE",
+    "instructionKey": "P18_T05_INST",
+    "assertionType": "TableColumnFormulaMultipliesNamedRange",
+    "sheetName": "Elmenshawy",
+    "tableName": "Table1",
+    "targetHeader": "Total Value",
+    "sourceHeader": "Value",
+    "namedRange": "Kadry",
+    "sourceRange": "I1"
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P18_T06_TITLE",
+    "instructionKey": "P18_T06_INST",
+    "assertionType": "ChartExColorPaletteEquals",
+    "sheetName": "El3ameed",
+    "chartName": "Chart 2",
+    "expectedValue": "11",
+    "expectedFormat": "treemap",
+    "targetRanges": [
+      "A3:A10",
+      "B2",
+      "B3:B10"
+    ]
   }
 ]

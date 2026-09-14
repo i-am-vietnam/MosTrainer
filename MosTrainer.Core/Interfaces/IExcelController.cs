@@ -115,6 +115,7 @@ namespace MosTrainer.Core.Interfaces
         bool CellStylesApplied(string sheetName, IList<string> primaryRanges, string primaryStyleName, IList<string> secondaryRanges, string secondaryStyleName);
         // Excel 2019 - Project 6 Task 1
         bool ChartColorPaletteEquals(string sheetName, string chartName, string chartTitle, int expectedChartColor, int expectedChartType, IList<string> sourceRanges);
+        bool ChartExColorPaletteEquals(string sheetName, string chartName, int expectedColorStyleId, string expectedLayoutId, IList<string> sourceRanges);
         // Excel 2019 - Project 6 Task 3
         bool RangeFormattingMatchesSourceCell(string sheetName, string sourceCellAddress, string targetRangeAddress, IList<string> expectedTargetTexts);
         // Excel 2019 - Project 6 Task 4

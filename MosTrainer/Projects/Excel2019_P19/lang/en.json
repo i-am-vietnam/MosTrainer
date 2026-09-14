@@ -1,0 +1,12 @@
+{
+  "P19_T01_TITLE": "Task 1",
+  "P19_T01_INST": "On the \"El3ameed\" worksheet, in cells F4:F11, use conditional formatting to apply the Yellow Fill with Dark Yellow Text format to cells that contain value greater than \"$5,000,000\".",
+  "P19_T02_TITLE": "Task 2",
+  "P19_T02_INST": "On the \"Kadry\" worksheet, perform a multi level sort. Sort the table data by \"Product\"( A to Z) and then by \"Total Sales\" (Largest to smallest)..",
+  "P19_T03_TITLE": "Task 3",
+  "P19_T03_INST": "On the \"El3ameed\" worksheet, in the \"Quarter 2\" column, enter a formula that multiplies the value in the \"Quarter 1\" column by the \"Q2_Increase\" named range. Use the range names in the formula instead of a cell reference or value.",
+  "P19_T04_TITLE": "Task 4",
+  "P19_T04_INST": "On the \"Elmenshawy\" worksheet, in cell C13, use a function to display the highest sales amount from the \"Total Sales\" column.",
+  "P19_T05_TITLE": "Task 5",
+  "P19_T05_INST": "On the \"Elking\" chart sheet, swap the data over the axis."
+}

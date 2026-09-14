@@ -74,7 +74,8 @@ namespace MosTrainer.Core.Services
                 "CellHyperlinkWithScreenTipEquals", "CellsDeletedShiftUp",
                 "IfFormulaByHeadersInRanges", "ChartSheetTitleAboveValueLabelsOutsideEndBySource",
                 "TableCreatedWithHeadersAndStyle", "TableRowContainingTextDeletedByValues",
-                "ClusteredColumnChartByHeadersRightOfData", "LeftFormulaByHeadersInRanges"
+                "ClusteredColumnChartByHeadersRightOfData", "LeftFormulaByHeadersInRanges",
+                "ChartExColorPaletteEquals"
             };
 
         private readonly IExcelController _excel;
@@ -160,6 +161,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P16(task);
                 case "Excel2019_P17":
                     return CheckExcel2019P17(task);
+                case "Excel2019_P18":
+                    return CheckExcel2019P18(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -234,6 +237,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P17(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P18(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -600,6 +607,13 @@ namespace MosTrainer.Core.Services
                         task.ChartTitle,
                         ToInt(task.ExpectedValue),
                         ToInt(task.ExpectedFormat),
+                        task.TargetRanges));
+                case "ChartExColorPaletteEquals":
+                    return Result(_excel.ChartExColorPaletteEquals(
+                        task.SheetName,
+                        task.ChartName,
+                        ToInt(task.ExpectedValue),
+                        task.ExpectedFormat,
                         task.TargetRanges));
 
                 // Project 6 task 3

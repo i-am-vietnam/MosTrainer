@@ -10907,6 +10907,176 @@ namespace MosTrainer.Excel
             }
         }
 
+        public bool ChartExColorPaletteEquals(
+            string sheetName,
+            string chartName,
+            int expectedColorStyleId,
+            string expectedLayoutId,
+            IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(chartName) ||
+                expectedColorStyleId <= 0 || string.IsNullOrWhiteSpace(expectedLayoutId) ||
+                sourceRanges == null || sourceRanges.Count == 0) return false;
+
+            Xl.Workbook workbook = null;
+            string tempPath = "";
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                if (workbook == null) return false;
+                tempPath = Path.Combine(Path.GetTempPath(), "MosTrainer_P18T6_" + Guid.NewGuid().ToString("N") + ".xlsx");
+                workbook.SaveCopyAs(tempPath);
+                return XlsxChartExColorPaletteEqualsP18(
+                    tempPath, sheetName, chartName, expectedColorStyleId, expectedLayoutId, sourceRanges);
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ChartExColorPaletteEquals", "P18 T06 grading failed.", ex, "Excel2019_P18", "T06");
+                return false;
+            }
+            finally
+            {
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(tempPath) && File.Exists(tempPath)) File.Delete(tempPath);
+                }
+                catch (Exception ex)
+                {
+                    AppLogger.Warning("ChartExColorPaletteEquals", "Temporary grading copy could not be deleted: " + ex.Message,
+                        "Excel2019_P18", "T06");
+                }
+                // workbook belongs to the active session and must not be released here.
+            }
+        }
+
+        private bool XlsxChartExColorPaletteEqualsP18(
+            string xlsxPath,
+            string sheetName,
+            string chartName,
+            int expectedColorStyleId,
+            string expectedLayoutId,
+            IList<string> sourceRanges)
+        {
+            using (FileStream stream = new FileStream(xlsxPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (ZipArchive zip = new ZipArchive(stream, ZipArchiveMode.Read))
+            {
+                string sheetPart = FindWorksheetPartPathP2T7Xml(zip, sheetName);
+                XDocument sheetDocument = ReadZipDocumentP18(zip, sheetPart);
+                if (sheetDocument == null) return false;
+                XElement drawingReference = sheetDocument.Descendants()
+                    .FirstOrDefault(element => string.Equals(element.Name.LocalName, "drawing", StringComparison.OrdinalIgnoreCase));
+                string drawingRid = GetAttributeValueP2T7Xml(drawingReference, "id");
+                string drawingPart = ResolveRelationshipTargetP18(zip, sheetPart, drawingRid, "/drawing");
+                XDocument drawingDocument = ReadZipDocumentP18(zip, drawingPart);
+                if (drawingDocument == null) return false;
+
+                XElement chartNameElement = drawingDocument.Descendants()
+                    .FirstOrDefault(element => string.Equals(element.Name.LocalName, "cNvPr", StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(GetAttributeValueP2T7Xml(element, "name"), chartName, StringComparison.OrdinalIgnoreCase));
+                if (chartNameElement == null) return false;
+                XElement anchor = chartNameElement.Ancestors()
+                    .FirstOrDefault(element => element.Name.LocalName.EndsWith("Anchor", StringComparison.OrdinalIgnoreCase));
+                if (anchor == null) return false;
+                XElement chartReference = anchor.Descendants()
+                    .FirstOrDefault(element => string.Equals(element.Name.LocalName, "chart", StringComparison.OrdinalIgnoreCase) &&
+                        !string.IsNullOrWhiteSpace(GetAttributeValueP2T7Xml(element, "id")));
+                string chartRid = GetAttributeValueP2T7Xml(chartReference, "id");
+                string chartPart = ResolveRelationshipTargetP18(zip, drawingPart, chartRid, "/chartEx");
+                XDocument chartDocument = ReadZipDocumentP18(zip, chartPart);
+                if (chartDocument == null) return false;
+
+                bool layoutMatches = chartDocument.Descendants()
+                    .Where(element => string.Equals(element.Name.LocalName, "series", StringComparison.OrdinalIgnoreCase))
+                    .Any(element => string.Equals(GetAttributeValueP2T7Xml(element, "layoutId"),
+                        expectedLayoutId.Trim(), StringComparison.OrdinalIgnoreCase));
+                if (!layoutMatches) return false;
+
+                HashSet<string> referencedNames = new HashSet<string>(
+                    chartDocument.Descendants()
+                        .Where(element => string.Equals(element.Name.LocalName, "f", StringComparison.OrdinalIgnoreCase))
+                        .Select(element => (element.Value ?? "").Trim())
+                        .Where(value => !string.IsNullOrWhiteSpace(value)),
+                    StringComparer.OrdinalIgnoreCase);
+                if (referencedNames.Count == 0) return false;
+
+                XDocument workbookDocument = ReadZipDocumentP18(zip, "xl/workbook.xml");
+                if (workbookDocument == null) return false;
+                Dictionary<string, string> definedNames = workbookDocument.Descendants()
+                    .Where(element => string.Equals(element.Name.LocalName, "definedName", StringComparison.OrdinalIgnoreCase))
+                    .Where(element => !string.IsNullOrWhiteSpace(GetAttributeValueP2T7Xml(element, "name")))
+                    .GroupBy(element => GetAttributeValueP2T7Xml(element, "name"), StringComparer.OrdinalIgnoreCase)
+                    .ToDictionary(group => group.Key, group => group.First().Value, StringComparer.OrdinalIgnoreCase);
+                HashSet<string> actualRanges = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (string reference in referencedNames)
+                {
+                    string effectiveReference;
+                    if (!definedNames.TryGetValue(reference, out effectiveReference)) effectiveReference = reference;
+                    string normalized = NormalizeChartExSourceP18(effectiveReference, sheetName);
+                    if (string.IsNullOrWhiteSpace(normalized)) return false;
+                    actualRanges.Add(normalized);
+                }
+
+                HashSet<string> expectedRanges = new HashSet<string>(
+                    sourceRanges.Select(NormalizeRangeAddress).Where(value => !string.IsNullOrWhiteSpace(value)),
+                    StringComparer.OrdinalIgnoreCase);
+                if (actualRanges.Count != expectedRanges.Count || !actualRanges.SetEquals(expectedRanges)) return false;
+
+                string colorsPart = ResolveRelationshipTargetP18(zip, chartPart, "", "/chartColorStyle");
+                XDocument colorsDocument = ReadZipDocumentP18(zip, colorsPart);
+                if (colorsDocument == null || colorsDocument.Root == null) return false;
+                int actualColorStyleId;
+                return int.TryParse(GetAttributeValueP2T7Xml(colorsDocument.Root, "id"),
+                    NumberStyles.Integer, CultureInfo.InvariantCulture, out actualColorStyleId) &&
+                    actualColorStyleId == expectedColorStyleId;
+            }
+        }
+
+        private XDocument ReadZipDocumentP18(ZipArchive zip, string partPath)
+        {
+            if (zip == null || string.IsNullOrWhiteSpace(partPath)) return null;
+            ZipArchiveEntry entry = zip.GetEntry(partPath.Replace('\\', '/'));
+            if (entry == null) return null;
+            string xml = ReadZipEntryTextP2T7Xml(entry);
+            return string.IsNullOrWhiteSpace(xml) ? null : XDocument.Parse(xml);
+        }
+
+        private string ResolveRelationshipTargetP18(
+            ZipArchive zip,
+            string sourcePart,
+            string relationshipId,
+            string requiredTypeSuffix)
+        {
+            if (zip == null || string.IsNullOrWhiteSpace(sourcePart)) return "";
+            string directory = Path.GetDirectoryName(sourcePart).Replace('\\', '/');
+            string relsPart = directory + "/_rels/" + Path.GetFileName(sourcePart) + ".rels";
+            XDocument relationships = ReadZipDocumentP18(zip, relsPart);
+            if (relationships == null) return "";
+            XElement relationship = relationships.Descendants()
+                .FirstOrDefault(element =>
+                    string.Equals(element.Name.LocalName, "Relationship", StringComparison.OrdinalIgnoreCase) &&
+                    (string.IsNullOrWhiteSpace(relationshipId) ||
+                        string.Equals(GetAttributeValueP2T7Xml(element, "Id"), relationshipId, StringComparison.Ordinal)) &&
+                    (string.IsNullOrWhiteSpace(requiredTypeSuffix) ||
+                        GetAttributeValueP2T7Xml(element, "Type").EndsWith(requiredTypeSuffix, StringComparison.OrdinalIgnoreCase)));
+            if (relationship == null) return "";
+            string target = GetAttributeValueP2T7Xml(relationship, "Target");
+            if (string.IsNullOrWhiteSpace(target)) return "";
+            Uri resolved = new Uri(new Uri("http://package/" + sourcePart), target);
+            return Uri.UnescapeDataString(resolved.AbsolutePath).TrimStart('/');
+        }
+
+        private string NormalizeChartExSourceP18(string formula, string expectedSheetName)
+        {
+            if (string.IsNullOrWhiteSpace(formula)) return "";
+            string text = formula.Trim().TrimStart('=').Replace("$", "").Replace("'", "");
+            int separator = text.LastIndexOf('!');
+            if (separator <= 0 || separator >= text.Length - 1) return "";
+            string sheet = text.Substring(0, separator).Trim();
+            if (!string.Equals(NormalizeText(sheet), NormalizeText(expectedSheetName), StringComparison.OrdinalIgnoreCase)) return "";
+            return NormalizeRangeAddress(text.Substring(separator + 1));
+        }
+
         // Project 6 Task 3
         public bool RangeFormattingMatchesSourceCell(
             string sheetName,
@@ -12043,11 +12213,14 @@ namespace MosTrainer.Excel
                         return false;
 
                     double sourceValue;
-                    double actualValue;
-                    if (!TryToDouble(sourceCell.Value2, out sourceValue) || !TryToDouble(targetCell.Value2, out actualValue)) return false;
-                    double expectedValue = sourceValue * namedValue;
-                    double tolerance = Math.Max(0.000001d, Math.Abs(expectedValue) * 0.000000001d);
-                    if (Math.Abs(actualValue - expectedValue) > tolerance) return false;
+                    if (TryToDouble(sourceCell.Value2, out sourceValue))
+                    {
+                        double actualValue;
+                        if (!TryToDouble(targetCell.Value2, out actualValue)) return false;
+                        double expectedValue = sourceValue * namedValue;
+                        double tolerance = Math.Max(0.000001d, Math.Abs(expectedValue) * 0.000000001d);
+                        if (Math.Abs(actualValue - expectedValue) > tolerance) return false;
+                    }
                 }
 
                 return rowCount > 0;
@@ -12258,7 +12431,11 @@ namespace MosTrainer.Excel
             Xl.Range cell = null;
             try
             {
-                int expectedAlignmentValue = ParseHorizontalAlignment(expectedAlignment);
+                string alignmentToken = Regex.Replace(expectedAlignment ?? "", @"[\s\-/]+", "").ToUpperInvariant();
+                bool allowTextGeneralAsLeft = alignmentToken == "LEFTORGENERAL";
+                int expectedAlignmentValue = allowTextGeneralAsLeft
+                    ? (int)Xl.XlHAlign.xlHAlignLeft
+                    : ParseHorizontalAlignment(expectedAlignment);
                 if (expectedAlignmentValue == 0) return false;
                 ws = GetWorksheet(sheetName);
                 if (ws == null) return false;
@@ -12269,8 +12446,12 @@ namespace MosTrainer.Excel
                 {
                     ReleaseCom(cell);
                     cell = range.Cells[i] as Xl.Range;
-                    if (cell == null || Convert.ToInt32(cell.HorizontalAlignment) != expectedAlignmentValue ||
-                        Convert.ToInt32(cell.IndentLevel) != expectedIndent) return false;
+                    if (cell == null || Convert.ToInt32(cell.IndentLevel) != expectedIndent) return false;
+                    int actualAlignment = Convert.ToInt32(cell.HorizontalAlignment);
+                    bool alignmentMatches = actualAlignment == expectedAlignmentValue;
+                    if (allowTextGeneralAsLeft && actualAlignment == (int)Xl.XlHAlign.xlHAlignGeneral)
+                        alignmentMatches = !string.IsNullOrWhiteSpace(Convert.ToString(cell.Value2));
+                    if (!alignmentMatches) return false;
                 }
                 return count > 0;
             }
