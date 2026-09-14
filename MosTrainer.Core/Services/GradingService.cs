@@ -74,7 +74,7 @@ namespace MosTrainer.Core.Services
                 "CellHyperlinkWithScreenTipEquals", "CellsDeletedShiftUp",
                 "IfFormulaByHeadersInRanges", "ChartSheetTitleAboveValueLabelsOutsideEndBySource",
                 "TableCreatedWithHeadersAndStyle", "TableRowContainingTextDeletedByValues",
-                "ClusteredColumnChartByHeadersRightOfData"
+                "ClusteredColumnChartByHeadersRightOfData", "LeftFormulaByHeadersInRanges"
             };
 
         private readonly IExcelController _excel;
@@ -158,6 +158,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P15(task);
                 case "Excel2019_P16":
                     return CheckExcel2019P16(task);
+                case "Excel2019_P17":
+                    return CheckExcel2019P17(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -228,6 +230,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P16(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P17(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -343,9 +349,13 @@ namespace MosTrainer.Core.Services
 
                 //Project 2 task 6
                 case "ChartAltTextEquals":
-                case "ChartAltTextDescriptionEquals":
                     return Result(_excel.ChartAltTextEquals(
                         task.SheetName,
+                        task.ExpectedText));
+                case "ChartAltTextDescriptionEquals":
+                    return Result(_excel.ChartAltTextDescriptionEquals(
+                        task.SheetName,
+                        task.ChartName,
                         task.ExpectedText));
                 //Project 2 task 7
                 case "RangeIconSetEquals":
@@ -511,6 +521,14 @@ namespace MosTrainer.Core.Services
                         task.SheetName,
                         task.TargetHeader,
                         task.SourceHeader,
+                        task.CharacterCount <= 0 ? 2 : task.CharacterCount));
+                case "LeftFormulaByHeadersInRanges":
+                    return Result(_excel.LeftFormulaByHeadersInRanges(
+                        task.SheetName,
+                        task.TargetHeader,
+                        task.SourceHeader,
+                        task.Range,
+                        task.SourceRange,
                         task.CharacterCount <= 0 ? 2 : task.CharacterCount));
 
                 //Project 4 task 7

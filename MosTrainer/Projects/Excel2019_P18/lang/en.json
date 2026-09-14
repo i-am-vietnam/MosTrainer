@@ -1,0 +1,14 @@
+{
+  "P18_T01_TITLE": "Task 1",
+  "P18_T01_INST": "On the \"Elmenshawy\" worksheet, freeze rows 1 and 2 so the title and column heading always remain visible while scrolling.",
+  "P18_T02_TITLE": "Task 2",
+  "P18_T02_INST": "On the \"Elmenshawy\" worksheet, left-align the text in cell A1.",
+  "P18_T03_TITLE": "Task 3",
+  "P18_T03_INST": "On the \"Elmenshawy\" worksheet, in the \"Quantity\" table column, use conditional formatting to apply the 3 Traffic Lights (Unrimmed) format to the values.",
+  "P18_T04_TITLE": "Task 4",
+  "P18_T04_INST": "On the \"Elmenshawy\" worksheet, apply the White, Table Style Medium 1 style to the table.",
+  "P18_T05_TITLE": "Task 5",
+  "P18_T05_INST": "On the \"Elmenshawy\" worksheet, in the \"Total Value\" column, enter a formula that multiplies the value in the value column by the Kadry named range. Use the range names in the formula instead of a cell reference or value.",
+  "P18_T06_TITLE": "Task 6",
+  "P18_T06_INST": "On the \"El3ameed\" worksheet, apply the Colorful Palette2 color to the chart."
+}

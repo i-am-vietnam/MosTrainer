@@ -1,18 +1,53 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P17_T01_TITLE",
+    "instructionKey": "P17_T01_INST",
+    "assertionType": "PrintAreaEquals",
+    "sheetName": "El3ameed",
+    "range": "A4:G20"
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P17_T02_TITLE",
+    "instructionKey": "P17_T02_INST",
+    "assertionType": "AutoFilterByHeaderEquals",
+    "sheetName": "Elmenshawy",
+    "columnHeader": "Type",
+    "expectedText": "MP"
+  },
+  {
+    "taskId": "T03",
+    "titleKey": "P17_T03_TITLE",
+    "instructionKey": "P17_T03_INST",
+    "assertionType": "IfFormulaByHeaders",
+    "sheetName": "Kadry",
+    "targetHeader": "Discount",
+    "criteriaHeader": "Years as Member",
+    "operator": ">",
+    "threshold": 4,
+    "trueText": "Yes",
+    "falseText": "No"
+  },
+  {
+    "taskId": "T04",
+    "titleKey": "P17_T04_TITLE",
+    "instructionKey": "P17_T04_INST",
+    "assertionType": "LeftFormulaByHeadersInRanges",
+    "sheetName": "Kadry",
+    "targetHeader": "Type",
+    "sourceHeader": "Policy Number",
+    "range": "F5:F18",
+    "sourceRange": "B5:B18",
+    "characterCount": 2
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P17_T05_TITLE",
+    "instructionKey": "P17_T05_INST",
+    "assertionType": "ChartAltTextDescriptionEquals",
+    "sheetName": "Rental Summary",
+    "chartName": "Chart 20",
+    "expectedText": "Renewal data"
   }
-
 ]

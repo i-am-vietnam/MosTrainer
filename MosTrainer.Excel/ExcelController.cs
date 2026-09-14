@@ -737,6 +737,7 @@ namespace MosTrainer.Excel
                             row,
                             criteriaColumn,
                             criteriaHeader,
+                            compareOperator,
                             threshold,
                             trueText,
                             falseText);
@@ -854,6 +855,7 @@ namespace MosTrainer.Excel
             int row,
             int criteriaColumn,
             string criteriaHeader,
+            string compareOperator,
             double threshold,
             string trueText,
             string falseText)
@@ -893,7 +895,37 @@ namespace MosTrainer.Excel
             if (!hasCriteriaReference)
                 return false;
 
+            if (!IfComparisonMatchesP1T3(f1, expectedCellRef, structuredHeaderRef, compareOperator, threshold) &&
+                !IfComparisonMatchesP1T3(f2, expectedCellRef, structuredHeaderRef, compareOperator, threshold))
+                return false;
+
             return true;
+        }
+
+        private bool IfComparisonMatchesP1T3(string formula, string expectedCellRef, string structuredHeaderRef, string compareOperator, double threshold)
+        {
+            if (string.IsNullOrWhiteSpace(formula)) return false;
+            int ifStart = formula.IndexOf("IF(", StringComparison.Ordinal);
+            if (ifStart < 0) return false;
+            int comma = formula.IndexOf(',', ifStart + 3);
+            if (comma < 0) return false;
+
+            string condition = formula.Substring(ifStart + 3, comma - ifStart - 3);
+            Match match = Regex.Match(condition, @"(?<op>>=|<=|<>|>|<|=)");
+            if (!match.Success || match.NextMatch().Success) return false;
+            if (!string.Equals(match.Groups["op"].Value, compareOperator == null ? "" : compareOperator.Trim(), StringComparison.Ordinal))
+                return false;
+
+            string left = condition.Substring(0, match.Index);
+            string right = condition.Substring(match.Index + match.Length).Trim('(', ')');
+            if (!left.Contains(expectedCellRef) && !left.Contains(structuredHeaderRef)) return false;
+
+            bool percent = right.EndsWith("%", StringComparison.Ordinal);
+            if (percent) right = right.Substring(0, right.Length - 1);
+            double parsed;
+            if (!double.TryParse(right, NumberStyles.Float, CultureInfo.InvariantCulture, out parsed)) return false;
+            if (percent) parsed /= 100.0;
+            return Math.Abs(parsed - threshold) < 0.000001;
         }
 
         private string GetCellStringP1T3(Xl.Range cell)
@@ -3738,6 +3770,37 @@ namespace MosTrainer.Excel
             finally
             {
                 ReleaseCom(ws);
+            }
+        }
+
+        public bool ChartAltTextDescriptionEquals(string sheetName, string chartName, string expectedDescription)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(chartName) ||
+                string.IsNullOrWhiteSpace(expectedDescription)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Shapes shapes = null;
+            Xl.Shape shape = null;
+            try
+            {
+                ws = GetWorksheetExactOrNormalizedP2T2T3(sheetName);
+                if (ws == null) return false;
+                shapes = ws.Shapes;
+                shape = shapes.Item(chartName);
+                if (shape == null || shape.Type != Office.MsoShapeType.msoChart) return false;
+                return string.Equals(
+                    NormalizeTextP4T6(shape.AlternativeText),
+                    NormalizeTextP4T6(expectedDescription),
+                    StringComparison.Ordinal);
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(shape); ReleaseCom(shapes); ReleaseCom(ws);
             }
         }
 
@@ -9229,6 +9292,81 @@ namespace MosTrainer.Excel
                 ReleaseCom(targetCell);
                 ReleaseCom(usedRange);
                 ReleaseCom(ws);
+            }
+        }
+
+        public bool LeftFormulaByHeadersInRanges(
+            string sheetName,
+            string targetHeader,
+            string sourceHeader,
+            string targetRangeAddress,
+            string sourceRangeAddress,
+            int characterCount)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(targetHeader) ||
+                string.IsNullOrWhiteSpace(sourceHeader) || string.IsNullOrWhiteSpace(targetRangeAddress) ||
+                string.IsNullOrWhiteSpace(sourceRangeAddress) || characterCount <= 0) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range targets = null;
+            Xl.Range sources = null;
+            Xl.Range targetHeaderCell = null;
+            Xl.Range sourceHeaderCell = null;
+            Xl.Range targetCell = null;
+            Xl.Range sourceCell = null;
+            try
+            {
+                ws = GetWorksheetExactOrNormalizedP2T2T3(sheetName);
+                if (ws == null) return false;
+                targets = ws.Range[targetRangeAddress];
+                sources = ws.Range[sourceRangeAddress];
+                if (targets == null || sources == null || Convert.ToInt32(targets.Columns.Count) != 1 ||
+                    Convert.ToInt32(sources.Columns.Count) != 1 ||
+                    Convert.ToInt32(targets.Rows.Count) != Convert.ToInt32(sources.Rows.Count) ||
+                    Convert.ToInt32(targets.Row) != Convert.ToInt32(sources.Row)) return false;
+
+                int firstRow = Convert.ToInt32(targets.Row);
+                int targetColumn = Convert.ToInt32(targets.Column);
+                int sourceColumn = Convert.ToInt32(sources.Column);
+                if (firstRow <= 1) return false;
+                targetHeaderCell = ws.Cells[firstRow - 1, targetColumn] as Xl.Range;
+                sourceHeaderCell = ws.Cells[firstRow - 1, sourceColumn] as Xl.Range;
+                if (targetHeaderCell == null || sourceHeaderCell == null ||
+                    !HeaderEqualsP4T6(GetCellTextP1T3(targetHeaderCell), targetHeader) ||
+                    !HeaderEqualsP4T6(GetCellTextP1T3(sourceHeaderCell), sourceHeader)) return false;
+
+                int count = Convert.ToInt32(targets.Rows.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(targetCell); ReleaseCom(sourceCell);
+                    targetCell = targets.Cells[i, 1] as Xl.Range;
+                    sourceCell = sources.Cells[i, 1] as Xl.Range;
+                    if (targetCell == null || sourceCell == null || !CellHasFormulaP1T3(targetCell)) return false;
+
+                    string sourceText = GetCellTextP1T3(sourceCell);
+                    string expectedText = sourceText.Length <= characterCount ? sourceText : sourceText.Substring(0, characterCount);
+                    if (!string.Equals(NormalizeTextP4T6(GetCellTextP1T3(targetCell)), NormalizeTextP4T6(expectedText), StringComparison.OrdinalIgnoreCase))
+                        return false;
+
+                    string formula = NormalizeFormulaP4T6(Convert.ToString(targetCell.Formula));
+                    string sourceReference = ExcelColumnNameP1T3(sourceColumn) + (firstRow + i - 1).ToString(CultureInfo.InvariantCulture);
+                    string normalizedSheet = NormalizeFormulaP4T6(sheetName);
+                    string pattern = @"^=LEFT\((?:" + Regex.Escape(normalizedSheet) + @"!)?" + Regex.Escape(sourceReference) + "," +
+                        characterCount.ToString(CultureInfo.InvariantCulture) + @"\)$";
+                    if (!Regex.IsMatch(formula, pattern, RegexOptions.CultureInvariant)) return false;
+                }
+
+                return count > 0;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(sourceCell); ReleaseCom(targetCell); ReleaseCom(sourceHeaderCell); ReleaseCom(targetHeaderCell);
+                ReleaseCom(sources); ReleaseCom(targets); ReleaseCom(ws);
             }
         }
 

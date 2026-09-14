@@ -1,0 +1,14 @@
+﻿{
+  "P18_T01_TITLE": "Nhiệm vụ 1",
+  "P18_T01_INST": "Trên trang tính \"Elmenshawy\", cố định hàng 1 và 2 để tiêu đề và tiêu đề cột luôn hiển thị khi cuộn.",
+  "P18_T02_TITLE": "Nhiệm vụ 2",
+  "P18_T02_INST": "Trên trang tính \"Elmenshawy\", căn trái văn bản trong ô A1.",
+  "P18_T03_TITLE": "Nhiệm vụ 3",
+  "P18_T03_INST": "Trên trang tính \"Elmenshawy\", trong cột bảng \"Quantity\", sử dụng định dạng có điều kiện để áp dụng định dạng 3 Traffic Lights (Unrimmed) cho các giá trị.",
+  "P18_T04_TITLE": "Nhiệm vụ 4",
+  "P18_T04_INST": "Trên trang tính \"Elmenshawy\", áp dụng kiểu White, Table Style Medium 1 cho bảng.",
+  "P18_T05_TITLE": "Nhiệm vụ 5",
+  "P18_T05_INST": "Trên trang tính \"Elmenshawy\", trong cột \"Total Value\", nhập một công thức nhân giá trị trong cột value với vùng được đặt tên Kadry. Sử dụng tên vùng trong công thức thay vì tham chiếu ô hoặc giá trị.",
+  "P18_T06_TITLE": "Nhiệm vụ 6",
+  "P18_T06_INST": "Trên trang tính \"El3ameed\", áp dụng màu Colorful Palette2 cho biểu đồ."
+}

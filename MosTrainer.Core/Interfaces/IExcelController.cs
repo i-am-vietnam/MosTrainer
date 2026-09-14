@@ -95,6 +95,8 @@ namespace MosTrainer.Core.Interfaces
 
         // Excel 2019 - Project 4 Task 6
         bool LeftFormulaByHeaders(string sheetName, string targetHeader, string sourceHeader, int characterCount);
+        bool LeftFormulaByHeadersInRanges(string sheetName, string targetHeader, string sourceHeader, string targetRangeAddress, string sourceRangeAddress, int characterCount);
+        bool ChartAltTextDescriptionEquals(string sheetName, string chartName, string expectedDescription);
         // Excel 2019 - Project 4 Task 7
         bool LastFirstNameFormulaAtCell(string sheetName, string targetCellAddress, string lastNameHeader, string firstNameHeader, string separator);
         // Excel 2019 - Project 4 Task 8
