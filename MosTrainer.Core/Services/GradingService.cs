@@ -75,7 +75,7 @@ namespace MosTrainer.Core.Services
                 "IfFormulaByHeadersInRanges", "ChartSheetTitleAboveValueLabelsOutsideEndBySource",
                 "TableCreatedWithHeadersAndStyle", "TableRowContainingTextDeletedByValues",
                 "ClusteredColumnChartByHeadersRightOfData", "LeftFormulaByHeadersInRanges",
-                "ChartExColorPaletteEquals"
+                "ChartExColorPaletteEquals", "RangeFormulaMultipliesNamedRange"
             };
 
         private readonly IExcelController _excel;
@@ -163,6 +163,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P17(task);
                 case "Excel2019_P18":
                     return CheckExcel2019P18(task);
+                case "Excel2019_P19":
+                    return CheckExcel2019P19(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -241,6 +243,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P18(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P19(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -696,6 +702,12 @@ namespace MosTrainer.Core.Services
                     return Result(_excel.TableColumnFormulaMultipliesNamedRange(
                         task.SheetName, task.TableName, task.TargetHeader,
                         task.SourceHeader, task.NamedRange, task.SourceRange));
+
+                case "RangeFormulaMultipliesNamedRange":
+                    return Result(_excel.RangeFormulaMultipliesNamedRange(
+                        task.SheetName, task.Range, task.SourceRange,
+                        task.SourceHeader, task.TargetHeader, task.NamedRange,
+                        task.Cell));
 
                 // Project 8 task 2
                 case "TableRowContainingTextDeletedPreserveOutside":

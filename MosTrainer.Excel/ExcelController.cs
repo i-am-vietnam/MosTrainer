@@ -13822,6 +13822,115 @@ namespace MosTrainer.Excel
                 normalized.EndsWith("[@[" + normalizedHeader + "]]", StringComparison.OrdinalIgnoreCase);
         }
 
+        public bool RangeFormulaMultipliesNamedRange(
+            string sheetName,
+            string targetRangeAddress,
+            string sourceRangeAddress,
+            string sourceHeader,
+            string targetHeader,
+            string namedRange,
+            string namedRangeAddress)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(targetRangeAddress) ||
+                string.IsNullOrWhiteSpace(sourceRangeAddress) || string.IsNullOrWhiteSpace(sourceHeader) ||
+                string.IsNullOrWhiteSpace(targetHeader) || string.IsNullOrWhiteSpace(namedRange) ||
+                string.IsNullOrWhiteSpace(namedRangeAddress)) return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Worksheet ws = null;
+            Xl.Range targets = null;
+            Xl.Range sources = null;
+            Xl.Range targetHeaderCell = null;
+            Xl.Range sourceHeaderCell = null;
+            Xl.Range targetCell = null;
+            Xl.Range sourceCell = null;
+            Xl.Names names = null;
+            Xl.Name name = null;
+            Xl.Range namedCell = null;
+            Xl.Worksheet namedSheet = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                ws = GetWorksheet(sheetName);
+                if (workbook == null || ws == null) return false;
+
+                targets = ws.Range[targetRangeAddress];
+                sources = ws.Range[sourceRangeAddress];
+                if (targets == null || sources == null ||
+                    Convert.ToInt32(targets.Columns.Count) != 1 || Convert.ToInt32(sources.Columns.Count) != 1 ||
+                    Convert.ToInt32(targets.Rows.Count) != Convert.ToInt32(sources.Rows.Count) ||
+                    Convert.ToInt32(targets.Row) != Convert.ToInt32(sources.Row)) return false;
+
+                int firstRow = Convert.ToInt32(targets.Row);
+                int targetColumn = Convert.ToInt32(targets.Column);
+                int sourceColumn = Convert.ToInt32(sources.Column);
+                if (firstRow <= 1) return false;
+                targetHeaderCell = ws.Cells[firstRow - 1, targetColumn] as Xl.Range;
+                sourceHeaderCell = ws.Cells[firstRow - 1, sourceColumn] as Xl.Range;
+                if (targetHeaderCell == null || sourceHeaderCell == null ||
+                    !string.Equals(NormalizeText(Convert.ToString(targetHeaderCell.Value2)), NormalizeText(targetHeader), StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(NormalizeText(Convert.ToString(sourceHeaderCell.Value2)), NormalizeText(sourceHeader), StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                names = workbook.Names;
+                for (int i = 1; i <= Convert.ToInt32(names.Count); i++)
+                {
+                    ReleaseCom(name);
+                    name = names.Item(i, Type.Missing, Type.Missing);
+                    if (name != null && string.Equals(Convert.ToString(name.Name), namedRange, StringComparison.OrdinalIgnoreCase)) break;
+                    name = null;
+                }
+                if (name == null) return false;
+                try { namedCell = name.RefersToRange; } catch { namedCell = null; }
+                if (namedCell == null || Convert.ToInt32(namedCell.Cells.Count) != 1) return false;
+                namedSheet = namedCell.Worksheet;
+                string actualNamedAddress = Convert.ToString(
+                    namedCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                if (namedSheet == null || !string.Equals(namedSheet.Name, sheetName, StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(NormalizeRangeAddress(actualNamedAddress), NormalizeRangeAddress(namedRangeAddress), StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                double namedValue;
+                if (!TryToDouble(namedCell.Value2, out namedValue)) return false;
+
+                int rowCount = Convert.ToInt32(targets.Rows.Count);
+                for (int row = 1; row <= rowCount; row++)
+                {
+                    ReleaseCom(targetCell);
+                    ReleaseCom(sourceCell);
+                    targetCell = targets.Cells[row, 1] as Xl.Range;
+                    sourceCell = sources.Cells[row, 1] as Xl.Range;
+                    if (targetCell == null || sourceCell == null || !Convert.ToBoolean(targetCell.HasFormula)) return false;
+
+                    string sourceAddress = Convert.ToString(
+                        sourceCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!FormulaMultipliesNamedRangeP08(
+                        Convert.ToString(targetCell.Formula), sourceHeader, sourceAddress, namedRange)) return false;
+
+                    double sourceValue;
+                    double actualValue;
+                    if (!TryToDouble(sourceCell.Value2, out sourceValue) || !TryToDouble(targetCell.Value2, out actualValue)) return false;
+                    double expectedValue = sourceValue * namedValue;
+                    double tolerance = Math.Max(0.000001d, Math.Abs(expectedValue) * 0.000000001d);
+                    if (Math.Abs(actualValue - expectedValue) > tolerance) return false;
+                }
+
+                return rowCount > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("RangeFormulaMultipliesNamedRange", "P19 T03 grading failed.", ex, "Excel2019_P19", "T03");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(namedSheet); ReleaseCom(namedCell); ReleaseCom(name); ReleaseCom(names);
+                ReleaseCom(sourceCell); ReleaseCom(targetCell); ReleaseCom(sourceHeaderCell); ReleaseCom(targetHeaderCell);
+                ReleaseCom(sources); ReleaseCom(targets); ReleaseCom(ws);
+            }
+        }
+
         // Project 14 Task 1
         public bool CellsDeletedShiftUp(
             string sheetName,

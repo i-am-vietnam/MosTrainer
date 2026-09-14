@@ -1,0 +1,14 @@
+{
+  "P20_T01_TITLE": "Task 1",
+  "P20_T01_INST": "Copy the formatting of the title and subtitle of the \"El3ameed\" worksheet and apply it to the title and subtitle of the \"Elmenshawy\" worksheet .",
+  "P20_T02_TITLE": "Task 2",
+  "P20_T02_INST": "On the \"El3ameed\" worksheet, name the table \"El3ameed\".",
+  "P20_T03_TITLE": "Task 3",
+  "P20_T03_INST": "On the \"El3ameed\" worksheet, cofigure the table style options to automatically shade every other table row.",
+  "P20_T04_TITLE": "Task 4",
+  "P20_T04_INST": "On the \"Maximum\" worksheet, in cell C27, enter a formula that sums the values in the ranges \"Kadry1\", \"Kadry2\" and \"Kadry3\". Use the range names in the formula instead of a cell reference or value.",
+  "P20_T05_TITLE": "Task 5",
+  "P20_T05_INST": "On the \"Kadry\" worksheet, in cell D34, use a function to determine how many students do not have an \"Exam3\" result.",
+  "P20_T06_TITLE": "Task 6",
+  "P20_T06_INST": "On the \"Kadry\" chart sheet, remove the legend and display only the values as data labels above each column."
+}

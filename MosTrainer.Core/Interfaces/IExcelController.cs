@@ -142,6 +142,7 @@ namespace MosTrainer.Core.Interfaces
         bool NamedRangeRefersToRange(string name, string sheetName, string rangeAddress);
         // Excel 2019 - Project 8 Task 1
         bool TableColumnFormulaMultipliesNamedRange(string sheetName, string tableName, string targetHeader, string sourceHeader, string namedRange, string namedRangeAddress);
+        bool RangeFormulaMultipliesNamedRange(string sheetName, string targetRangeAddress, string sourceRangeAddress, string sourceHeader, string targetHeader, string namedRange, string namedRangeAddress);
         // Excel 2019 - Project 8 Task 2
         bool TableRowContainingTextDeletedPreserveOutside(string sheetName, string tableName, string searchText, int expectedDataRowCount, string expectedTableRange, string preservedFilterRange, IList<string> expectedFirstColumnValues);
         bool TableRowContainingTextDeletedPreserveUsedRange(string sheetName, string tableName, string searchText, int expectedDataRowCount, string expectedTableRange, string expectedUsedRange, IList<string> expectedFirstColumnValues);

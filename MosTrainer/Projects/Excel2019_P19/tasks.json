@@ -1,17 +1,70 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P19_T01_TITLE",
+    "instructionKey": "P19_T01_INST",
+    "assertionType": "RangeGreaterThanConditionalFormattingEquals",
+    "sheetName": "El3ameed",
+    "range": "F4:F11",
+    "threshold": 5000000,
+    "expectedFormat": "Yellow Fill with Dark Yellow Text"
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P19_T02_TITLE",
+    "instructionKey": "P19_T02_INST",
+    "assertionType": "TableMultiLevelSortStateEquals",
+    "sheetName": "Kadry",
+    "tableName": "Table1",
+    "range": "A3:F11",
+    "sortHeaders": [
+      "Product",
+      "Total Sales"
+    ],
+    "sortOrders": [
+      "Ascending",
+      "Descending"
+    ]
+  },
+  {
+    "taskId": "T03",
+    "titleKey": "P19_T03_TITLE",
+    "instructionKey": "P19_T03_INST",
+    "assertionType": "RangeFormulaMultipliesNamedRange",
+    "sheetName": "El3ameed",
+    "range": "C4:C11",
+    "sourceRange": "B4:B11",
+    "sourceHeader": "Quarter 1",
+    "targetHeader": "Quarter 2",
+    "namedRange": "Q2_Increase",
+    "cell": "B15"
+  },
+  {
+    "taskId": "T04",
+    "titleKey": "P19_T04_TITLE",
+    "instructionKey": "P19_T04_INST",
+    "assertionType": "CellFormulaEqualsNormalized",
+    "sheetName": "Elmenshawy",
+    "cell": "C13",
+    "expectedFormula": "=MAX(H4:H11)"
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P19_T05_TITLE",
+    "instructionKey": "P19_T05_INST",
+    "assertionType": "ChartSheetSwitchedRowColumn",
+    "sheetName": "Elking",
+    "sourceSheetName": "Elmenshawy",
+    "expectedChartType": 51,
+    "targetRanges": [
+      "A4", "B3:D3", "B4:D4",
+      "A5", "B3:D3", "B5:D5",
+      "A6", "B3:D3", "B6:D6",
+      "A7", "B3:D3", "B7:D7",
+      "A8", "B3:D3", "B8:D8",
+      "A9", "B3:D3", "B9:D9",
+      "A10", "B3:D3", "B10:D10",
+      "A11", "B3:D3", "B11:D11"
+    ]
   }
 ]
