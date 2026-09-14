@@ -142,6 +142,10 @@ namespace MosTrainer.Core.Interfaces
         // Excel 2019 - Project 8 Task 2
         bool TableRowContainingTextDeletedPreserveOutside(string sheetName, string tableName, string searchText, int expectedDataRowCount, string expectedTableRange, string preservedFilterRange, IList<string> expectedFirstColumnValues);
         bool TableRowContainingTextDeletedPreserveUsedRange(string sheetName, string tableName, string searchText, int expectedDataRowCount, string expectedTableRange, string expectedUsedRange, IList<string> expectedFirstColumnValues);
+        // Excel 2019 - Project 15 Tasks 3-5
+        bool TableCreatedWithHeadersAndStyle(string sheetName, string originalRangeAddress, string expectedStyleName, IList<string> expectedHeaders, string removableRowText, IList<string> expectedFirstColumnValues);
+        bool TableRowContainingTextDeletedByValues(string sheetName, string expectedTableRange, string searchText, string expectedStyleName, IList<string> expectedHeaders, IList<string> expectedFirstColumnValues);
+        bool ClusteredColumnChartByHeadersRightOfData(string sheetName, string categoryHeader, string valueHeader, int expectedChartType);
         // Excel 2019 - Project 8 Task 3
         bool RangeAlignmentIndentEquals(string sheetName, string rangeAddress, string expectedAlignment, int expectedIndent);
         // Excel 2019 - Project 8 Task 4

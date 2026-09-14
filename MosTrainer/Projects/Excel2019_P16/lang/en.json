@@ -1,0 +1,14 @@
+{
+  "P16_T01_TITLE": "Task 1",
+  "P16_T01_INST": "On the \"Kadry\" worksheet, change the horizontal alignment of the \"Brand\" names to Left(Indent). Set the indent to 1.",
+  "P16_T02_TITLE": "Task 2",
+  "P16_T02_INST": "On the \"Kadry\" worksheet, in cells J4:J12, insert Win/Loss sparklines to compare the January through June value.",
+  "P16_T03_TITLE": "Task 3",
+  "P16_T03_INST": "On the \"Kadry\" worksheet, add a Total Row to the table. Configure the Total Row to display the number of new policies for each month and for the 6-month total.",
+  "P16_T04_TITLE": "Task 4",
+  "P16_T04_INST": "On the \"Kadry\" worksheet,in the \"Inactive\" column, use a function to count the number of months with no new policire, by Brand.",
+  "P16_T05_TITLE": "Task 5",
+  "P16_T05_INST": "On the \"El3ameed\" worksheet, in the \"Email Address\" column, use a function to construct email address for each person using the first name and \"@MOS2019\".",
+  "P16_T06_TITLE": "Task 6",
+  "P16_T06_INST": "On the \"Kadry\" worksheet, change the elements displayed on the chart by changing the chart layout to Layout 3."
+}

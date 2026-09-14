@@ -72,7 +72,9 @@ namespace MosTrainer.Core.Services
                 "RangeFormulaMultipliesFixedCell", "SpecificChartMovedToChartSheet",
                 "ChartExpandedToIncludeRange", "IfNumericFormulaByHeadersStrict",
                 "CellHyperlinkWithScreenTipEquals", "CellsDeletedShiftUp",
-                "IfFormulaByHeadersInRanges", "ChartSheetTitleAboveValueLabelsOutsideEndBySource"
+                "IfFormulaByHeadersInRanges", "ChartSheetTitleAboveValueLabelsOutsideEndBySource",
+                "TableCreatedWithHeadersAndStyle", "TableRowContainingTextDeletedByValues",
+                "ClusteredColumnChartByHeadersRightOfData"
             };
 
         private readonly IExcelController _excel;
@@ -152,6 +154,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P13(task);
                 case "Excel2019_P14":
                     return CheckExcel2019P14(task);
+                case "Excel2019_P15":
+                    return CheckExcel2019P15(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -214,6 +218,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P14(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P15(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -663,6 +671,22 @@ namespace MosTrainer.Core.Services
                         task.SheetName, task.TableName, task.ExpectedText,
                         task.ExpectedRowCount, task.Range, task.SourceRange,
                         task.ExpectedTexts));
+
+                // Project 15 tasks 3-5
+                case "TableCreatedWithHeadersAndStyle":
+                    return Result(_excel.TableCreatedWithHeadersAndStyle(
+                        task.SheetName, task.Range, task.ExpectedFormat,
+                        task.SourceHeaders, task.ExpectedText, task.ExpectedTexts));
+
+                case "TableRowContainingTextDeletedByValues":
+                    return Result(_excel.TableRowContainingTextDeletedByValues(
+                        task.SheetName, task.Range, task.ExpectedText,
+                        task.ExpectedFormat, task.SourceHeaders, task.ExpectedTexts));
+
+                case "ClusteredColumnChartByHeadersRightOfData":
+                    return Result(_excel.ClusteredColumnChartByHeadersRightOfData(
+                        task.SheetName, task.ColumnHeader, task.TargetHeader,
+                        task.ExpectedChartType));
 
                 // Project 8 task 3
                 case "RangeAlignmentIndentEquals":

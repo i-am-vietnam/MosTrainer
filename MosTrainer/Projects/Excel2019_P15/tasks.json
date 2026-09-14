@@ -1,20 +1,120 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P15_T01_TITLE",
+    "instructionKey": "P15_T01_INST",
+    "assertionType": "RangeWrapTextEquals",
+    "sheetName": "Elmenshawy",
+    "range": "A4:I4",
+    "expectedValue": "true"
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P15_T02_TITLE",
+    "instructionKey": "P15_T02_INST",
+    "assertionType": "NamedRangeRefersToRange",
+    "sheetName": "Elmenshawy",
+    "range": "A4:I22",
+    "namedRange": "Elmenshawy"
   },
   {
-  "taskId": "T06",
+    "taskId": "T03",
+    "titleKey": "P15_T03_TITLE",
+    "instructionKey": "P15_T03_INST",
+    "assertionType": "TableCreatedWithHeadersAndStyle",
+    "sheetName": "Kadry",
+    "range": "A1:F19",
+    "expectedFormat": "TableStyleLight1",
+    "sourceHeaders": [
+      "Program",
+      "Category",
+      "Students Enrolled",
+      "Tutors Available",
+      "Average Cost per Student",
+      "Total"
+    ],
+    "expectedText": "Kadry Elmenshawy",
+    "expectedTexts": [
+      "Accounting & Finance|Business|15|2|3800|57000",
+      "Aerospace & Aviation Engineering|Other|13|1|10000|130000",
+      "Kadry Elmenshawy|Other|4|2|4000|16000",
+      "Beauty Therapy Treatment|Health & Beauty|11|1|3750|41250",
+      "Business Diploma|Business|13|3|8000|104000",
+      "Cyber Security Apprentice|Business|14|1|7500|105000",
+      "Digital Marketing Apprentice|IT|4|2|4300|17200",
+      "Electrician|Other|8|2|3000|24000",
+      "Engineering|Other|5|3|4500|22500",
+      "Graphic Design|IT|8|1|7500|60000",
+      "Health and Social Care|Health & Beauty|8|2|3200|25600",
+      "Hospitality & Event Management|Business|13|1|5000|65000",
+      "Music Diploma|Other|10|1|6500|65000",
+      "Performing Arts|Other|7|1|3500|24500",
+      "Plumbing|Other|11|2|2000|22000",
+      "Software & Web Development|IT|9|2|6450|58050",
+      "Sport Science|Health & Beauty|12|2|4250|51000",
+      "Theatrical Makeup|Other|5|1|3000|15000"
+    ]
+  },
+  {
+    "taskId": "T04",
+    "titleKey": "P15_T04_TITLE",
+    "instructionKey": "P15_T04_INST",
+    "assertionType": "TableRowContainingTextDeletedByValues",
+    "sheetName": "Kadry",
+    "range": "A1:F18",
+    "expectedFormat": "TableStyleLight1",
+    "sourceHeaders": [
+      "Program",
+      "Category",
+      "Students Enrolled",
+      "Tutors Available",
+      "Average Cost per Student",
+      "Total"
+    ],
+    "expectedText": "Kadry Elmenshawy",
+    "expectedTexts": [
+      "Accounting & Finance|Business|15|2|3800|57000",
+      "Aerospace & Aviation Engineering|Other|13|1|10000|130000",
+      "Beauty Therapy Treatment|Health & Beauty|11|1|3750|41250",
+      "Business Diploma|Business|13|3|8000|104000",
+      "Cyber Security Apprentice|Business|14|1|7500|105000",
+      "Digital Marketing Apprentice|IT|4|2|4300|17200",
+      "Electrician|Other|8|2|3000|24000",
+      "Engineering|Other|5|3|4500|22500",
+      "Graphic Design|IT|8|1|7500|60000",
+      "Health and Social Care|Health & Beauty|8|2|3200|25600",
+      "Hospitality & Event Management|Business|13|1|5000|65000",
+      "Music Diploma|Other|10|1|6500|65000",
+      "Performing Arts|Other|7|1|3500|24500",
+      "Plumbing|Other|11|2|2000|22000",
+      "Software & Web Development|IT|9|2|6450|58050",
+      "Sport Science|Health & Beauty|12|2|4250|51000",
+      "Theatrical Makeup|Other|5|1|3000|15000"
+    ]
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P15_T05_TITLE",
+    "instructionKey": "P15_T05_INST",
+    "assertionType": "ClusteredColumnChartByHeadersRightOfData",
+    "sheetName": "Kadry",
+    "columnHeader": "Program",
+    "targetHeader": "Average Cost per Student",
+    "expectedChartType": 51
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P15_T06_TITLE",
+    "instructionKey": "P15_T06_INST",
+    "assertionType": "ChartStyleAndPaletteEquals",
+    "sheetName": "El3ameed",
+    "chartName": "Chart 6",
+    "expectedFormat": "7",
+    "expectedValue": "19",
+    "expectedChartType": 5,
+    "targetRanges": [
+      "A4:A7",
+      "B4:B7"
+    ]
   }
 ]

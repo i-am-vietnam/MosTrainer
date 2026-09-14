@@ -11245,11 +11245,15 @@ namespace MosTrainer.Excel
                     if (chartObject == null || !string.Equals(chartObject.Name, chartName, StringComparison.OrdinalIgnoreCase))
                         continue;
                     chart = chartObject.Chart;
-                    if (chart == null || !Convert.ToBoolean(chart.HasTitle)) return false;
-                    title = chart.ChartTitle;
-                    if (title == null || !string.Equals(NormalizeText(Convert.ToString(title.Text)), NormalizeText(chartTitle), StringComparison.OrdinalIgnoreCase))
-                        return false;
-                    if (Convert.ToInt32(chart.ChartStyle) != expectedChartStyle ||
+                    if (chart == null) return false;
+                    if (!string.IsNullOrWhiteSpace(chartTitle))
+                    {
+                        if (!Convert.ToBoolean(chart.HasTitle)) return false;
+                        title = chart.ChartTitle;
+                        if (title == null || !string.Equals(NormalizeText(Convert.ToString(title.Text)), NormalizeText(chartTitle), StringComparison.OrdinalIgnoreCase))
+                            return false;
+                    }
+                    if (!ChartStyleEqualsP07(Convert.ToInt32(chart.ChartStyle), expectedChartStyle) ||
                         Convert.ToInt32(chart.ChartColor) != expectedChartColor ||
                         Convert.ToInt32(chart.ChartType) != expectedChartType)
                         return false;
@@ -11270,6 +11274,21 @@ namespace MosTrainer.Excel
                 ReleaseCom(charts);
                 ReleaseCom(ws);
             }
+        }
+
+        private bool ChartStyleEqualsP07(int actualStyle, int expectedStyle)
+        {
+            return NormalizeChartStyleGalleryIndexP07(actualStyle) ==
+                   NormalizeChartStyleGalleryIndexP07(expectedStyle);
+        }
+
+        private int NormalizeChartStyleGalleryIndexP07(int style)
+        {
+            // Depending on the Excel build/chart style family, the visible gallery
+            // Style 1-48 is exposed as 1-48, 201-248, or 251-298.
+            if (style >= 201 && style <= 248) return style - 200;
+            if (style >= 251 && style <= 298) return style - 250;
+            return style;
         }
 
         // Project 7 Task 4
@@ -13635,6 +13654,292 @@ namespace MosTrainer.Excel
                 ReleaseCom(label); ReleaseCom(labels); ReleaseCom(points); ReleaseCom(series);
                 ReleaseCom(seriesCollection); ReleaseCom(title); ReleaseCom(chart); ReleaseCom(charts);
             }
+        }
+
+        // Project 15 Task 3
+        public bool TableCreatedWithHeadersAndStyle(
+            string sheetName,
+            string originalRangeAddress,
+            string expectedStyleName,
+            IList<string> expectedHeaders,
+            string removableRowText,
+            IList<string> expectedFirstColumnValues)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(originalRangeAddress) ||
+                expectedHeaders == null || expectedHeaders.Count == 0 ||
+                expectedFirstColumnValues == null || expectedFirstColumnValues.Count == 0) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range originalRange = null;
+            Xl.Range tableRange = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                originalRange = ws.Range[originalRangeAddress];
+                tables = ws.ListObjects;
+                if (originalRange == null || tables == null) return false;
+
+                int expectedRow = Convert.ToInt32(originalRange.Row);
+                int expectedColumn = Convert.ToInt32(originalRange.Column);
+                int expectedColumnCount = Convert.ToInt32(originalRange.Columns.Count);
+
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(tableRange);
+                    ReleaseCom(table);
+                    tableRange = null;
+                    table = tables.Item[i];
+                    if (table == null) continue;
+                    tableRange = table.Range;
+                    if (tableRange == null || Convert.ToInt32(tableRange.Row) != expectedRow ||
+                        Convert.ToInt32(tableRange.Column) != expectedColumn ||
+                        Convert.ToInt32(tableRange.Columns.Count) != expectedColumnCount ||
+                        !Convert.ToBoolean(table.ShowHeaders) ||
+                        !ListObjectTableStyleEqualsP2T8(table, expectedStyleName) ||
+                        !TableHeadersEqualP15(table, expectedHeaders)) continue;
+
+                    List<string> actualValues = GetTableRowSignaturesP15(table);
+                    if (StringListsEqualP15(actualValues, expectedFirstColumnValues) &&
+                        Convert.ToInt32(tableRange.Rows.Count) == expectedFirstColumnValues.Count + 1)
+                        return true;
+
+                    List<string> afterDelete = new List<string>();
+                    bool removed = false;
+                    foreach (string value in expectedFirstColumnValues)
+                    {
+                        if (!removed && RowSignatureHasFirstValueP15(value, removableRowText))
+                        {
+                            removed = true;
+                            continue;
+                        }
+                        afterDelete.Add(value);
+                    }
+
+                    if (removed && StringListsEqualP15(actualValues, afterDelete) &&
+                        Convert.ToInt32(tableRange.Rows.Count) == afterDelete.Count + 1)
+                        return true;
+                }
+
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("TableCreatedWithHeadersAndStyle", "P15 T03 grading failed.", ex, "Excel2019_P15", "T03");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(tableRange); ReleaseCom(originalRange); ReleaseCom(table);
+                ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        // Project 15 Task 4
+        public bool TableRowContainingTextDeletedByValues(
+            string sheetName,
+            string expectedTableRange,
+            string searchText,
+            string expectedStyleName,
+            IList<string> expectedHeaders,
+            IList<string> expectedFirstColumnValues)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(expectedTableRange) ||
+                expectedHeaders == null || expectedFirstColumnValues == null) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range range = null;
+            Xl.Range dataRange = null;
+            Xl.Range cell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                if (tables == null) return false;
+
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(dataRange); ReleaseCom(range); ReleaseCom(table);
+                    dataRange = null; range = null; table = tables.Item[i];
+                    if (table == null) continue;
+                    range = table.Range;
+                    if (range == null || !string.Equals(NormalizeRangeAddress(Convert.ToString(range.Address)), NormalizeRangeAddress(expectedTableRange), StringComparison.OrdinalIgnoreCase) ||
+                        !Convert.ToBoolean(table.ShowHeaders) ||
+                        !ListObjectTableStyleEqualsP2T8(table, expectedStyleName) ||
+                        !TableHeadersEqualP15(table, expectedHeaders) ||
+                        !StringListsEqualP15(GetTableRowSignaturesP15(table), expectedFirstColumnValues)) continue;
+
+                    dataRange = table.DataBodyRange;
+                    if (dataRange == null || Convert.ToInt32(dataRange.Rows.Count) != expectedFirstColumnValues.Count) continue;
+                    int rows = Convert.ToInt32(dataRange.Rows.Count);
+                    int columns = Convert.ToInt32(dataRange.Columns.Count);
+                    bool foundDeletedText = false;
+                    for (int r = 1; r <= rows && !foundDeletedText; r++)
+                    {
+                        bool rowHasContent = false;
+                        for (int c = 1; c <= columns; c++)
+                        {
+                            ReleaseCom(cell);
+                            cell = dataRange.Cells[r, c] as Xl.Range;
+                            string text = GetCellTextP1T3(cell);
+                            if (!string.IsNullOrWhiteSpace(text)) rowHasContent = true;
+                            if (string.Equals(NormalizeText(text), NormalizeText(searchText), StringComparison.OrdinalIgnoreCase))
+                                foundDeletedText = true;
+                        }
+                        if (!rowHasContent) return false;
+                    }
+                    if (!foundDeletedText) return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("TableRowContainingTextDeletedByValues", "P15 T04 grading failed.", ex, "Excel2019_P15", "T04");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(cell); ReleaseCom(dataRange); ReleaseCom(range); ReleaseCom(table);
+                ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        // Project 15 Task 5
+        public bool ClusteredColumnChartByHeadersRightOfData(string sheetName, string categoryHeader, string valueHeader, int expectedChartType)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(categoryHeader) || string.IsNullOrWhiteSpace(valueHeader)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range categoryHeaderRange = null, valueHeaderRange = null, categoryDataRange = null, valueDataRange = null, tableRange = null;
+            Xl.Range rightHeaderCell = null;
+            Xl.ChartObjects charts = null;
+            Xl.ChartObject chartObject = null;
+            Xl.Chart chart = null;
+            Xl.SeriesCollection seriesCollection = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                int headerRow, categoryColumn, valueColumn, lastDataRow;
+                if (!TryFindTwoColumnDataRangesP4T5(ws, categoryHeader, valueHeader,
+                    out headerRow, out categoryColumn, out valueColumn, out lastDataRow,
+                    out categoryHeaderRange, out valueHeaderRange, out categoryDataRange,
+                    out valueDataRange, out tableRange)) return false;
+
+                int rightColumn = Math.Max(categoryColumn, valueColumn);
+                for (int c = rightColumn + 1; c <= rightColumn + 20; c++)
+                {
+                    Xl.Range headerCell = null;
+                    try
+                    {
+                        headerCell = ws.Cells[headerRow, c] as Xl.Range;
+                        if (headerCell == null || string.IsNullOrWhiteSpace(GetCellTextP1T3(headerCell))) break;
+                        rightColumn = c;
+                    }
+                    finally { ReleaseCom(headerCell); }
+                }
+                rightHeaderCell = ws.Cells[headerRow, rightColumn] as Xl.Range;
+                if (rightHeaderCell == null) return false;
+                double dataRight = Convert.ToDouble(rightHeaderCell.Left) + Convert.ToDouble(rightHeaderCell.Width);
+
+                charts = ws.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (charts == null) return false;
+                for (int i = 1; i <= Convert.ToInt32(charts.Count); i++)
+                {
+                    ReleaseCom(seriesCollection); ReleaseCom(chart); ReleaseCom(chartObject);
+                    seriesCollection = null; chart = null; chartObject = charts.Item(i) as Xl.ChartObject;
+                    if (chartObject == null || Convert.ToDouble(chartObject.Left) + 2.0 < dataRight) continue;
+                    chart = chartObject.Chart;
+                    if (chart == null || Convert.ToInt32(chart.ChartType) != expectedChartType) continue;
+                    seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                    if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != 1) continue;
+                    if (ChartUsesCategoryAndValueRangesP4T5(chart, categoryDataRange, valueDataRange,
+                        categoryHeaderRange, valueHeaderRange, categoryHeader, valueHeader)) return true;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ClusteredColumnChartByHeadersRightOfData", "P15 T05 grading failed.", ex, "Excel2019_P15", "T05");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(seriesCollection); ReleaseCom(chart); ReleaseCom(chartObject); ReleaseCom(charts);
+                ReleaseCom(rightHeaderCell); ReleaseCom(tableRange); ReleaseCom(valueDataRange);
+                ReleaseCom(categoryDataRange); ReleaseCom(valueHeaderRange); ReleaseCom(categoryHeaderRange); ReleaseCom(ws);
+            }
+        }
+
+        private bool TableHeadersEqualP15(Xl.ListObject table, IList<string> expectedHeaders)
+        {
+            if (table == null || expectedHeaders == null) return false;
+            Xl.ListColumns columns = null;
+            Xl.ListColumn column = null;
+            try
+            {
+                columns = table.ListColumns;
+                if (columns == null || Convert.ToInt32(columns.Count) != expectedHeaders.Count) return false;
+                for (int i = 1; i <= expectedHeaders.Count; i++)
+                {
+                    ReleaseCom(column);
+                    column = columns.Item[i];
+                    if (column == null || !HeaderEqualsP4T5(Convert.ToString(column.Name), expectedHeaders[i - 1])) return false;
+                }
+                return true;
+            }
+            finally { ReleaseCom(column); ReleaseCom(columns); }
+        }
+
+        private List<string> GetTableRowSignaturesP15(Xl.ListObject table)
+        {
+            List<string> values = new List<string>();
+            if (table == null) return values;
+            Xl.Range dataRange = null;
+            Xl.Range cell = null;
+            try
+            {
+                dataRange = table.DataBodyRange;
+                if (dataRange == null) return values;
+                int rows = Convert.ToInt32(dataRange.Rows.Count);
+                int columns = Convert.ToInt32(dataRange.Columns.Count);
+                for (int r = 1; r <= rows; r++)
+                {
+                    List<string> parts = new List<string>();
+                    for (int c = 1; c <= columns; c++)
+                    {
+                        ReleaseCom(cell);
+                        cell = dataRange.Cells[r, c] as Xl.Range;
+                        object value = cell == null ? null : cell.Value2;
+                        parts.Add(Convert.ToString(value, CultureInfo.InvariantCulture));
+                    }
+                    values.Add(string.Join("|", parts));
+                }
+                return values;
+            }
+            finally { ReleaseCom(cell); ReleaseCom(dataRange); }
+        }
+
+        private bool StringListsEqualP15(IList<string> actual, IList<string> expected)
+        {
+            if (actual == null || expected == null || actual.Count != expected.Count) return false;
+            for (int i = 0; i < actual.Count; i++)
+                if (!string.Equals(NormalizeText(actual[i]), NormalizeText(expected[i]), StringComparison.OrdinalIgnoreCase)) return false;
+            return true;
+        }
+
+        private bool RowSignatureHasFirstValueP15(string rowSignature, string expectedFirstValue)
+        {
+            string firstValue = (rowSignature ?? "").Split('|')[0];
+            return string.Equals(NormalizeText(firstValue), NormalizeText(expectedFirstValue), StringComparison.OrdinalIgnoreCase);
         }
 
         public string GetCellDisplayText(string address)

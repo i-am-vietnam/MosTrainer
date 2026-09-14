@@ -1,14 +1,14 @@
 {
-  "P15_T01_TITLE": "Task 1",
-  "P15_T01_INST": "On the \"Elmenshawy\" worksheet, configure A4:I4 to automatically wrap the text.",
-  "P15_T02_TITLE": "Task 2",
-  "P15_T02_INST": "On the \"Elmenshawy\" worksheet, name the range A4:I22 \"Elmenshawy\".",
-  "P15_T03_TITLE": "Task 3",
-  "P15_T03_INST": "On the \"Kadry\" worksheet, convert cells A1:F19 to a table with headers. Apply the Green, Table Style Light 12 style",
-  "P15_T04_TITLE": "Task 4",
-  "P15_T04_INST": "On the \"Kadry\" worksheet, remove the table row that contains \"Kadry Elmenshawy\" data. Do not change any content outside the table",
-  "P15_T05_TITLE": "Task 5",
-  "P15_T05_INST": "On the \"Kadry\" worksheet, create a Clustered Column chart that display the \"Program\" name and the \"Average\" data. Place the chart to the right of the table. The exact size and position of the chart do not matter.",
-  "P15_T06_TITLE": "Task 6",
-  "P15_T06_INST": "On the \"El3ameed\" worksheet, apply the Style 7 chart style and the Monochromatic Palette 6 color to the chart."
+    "P15_T01_TITLE": "Task 1",
+    "P15_T01_INST": "On the \"Elmenshawy\" worksheet, configure A4:I4 to automatically wrap the text.",
+    "P15_T02_TITLE": "Task 2",
+    "P15_T02_INST": "On the \"Elmenshawy\" worksheet, name the range A4:I22 \"Elmenshawy\".",
+    "P15_T03_TITLE": "Task 3",
+    "P15_T03_INST": "On the \"Kadry\" worksheet, convert cells A1:F19 to a table with headers. Apply the White, Table Style Light 1 style",
+    "P15_T04_TITLE": "Task 4",
+    "P15_T04_INST": "On the \"Kadry\" worksheet, remove the table row that contains \"Kadry Elmenshawy\" data. Do not change any content outside the table",
+    "P15_T05_TITLE": "Task 5",
+    "P15_T05_INST": "On the \"Kadry\" worksheet, create a Clustered Column chart that display the \"Program\" name and the \"Average\" data. Place the chart to the right of the table. The exact size and position of the chart do not matter.",
+    "P15_T06_TITLE": "Task 6",
+    "P15_T06_INST": "On the \"El3ameed\" worksheet, apply the Style 7 chart style and the Monochromatic Palette 6 color to the chart."
 }

@@ -1,0 +1,14 @@
+﻿{
+  "P16_T01_TITLE": "Nhiệm vụ 1",
+  "P16_T01_INST": "Trên trang tính \"Kadry\", thay đổi căn chỉnh ngang của các tên \"Brand\" thành Left (Indent). Đặt mức thụt lề là 1.",
+  "P16_T02_TITLE": "Nhiệm vụ 2",
+  "P16_T02_INST": "Trên trang tính \"Kadry\", trong các ô J4:J12, chèn Win/Loss sparklines để so sánh các giá trị từ January đến June.",
+  "P16_T03_TITLE": "Nhiệm vụ 3",
+  "P16_T03_INST": "Trên trang tính \"Kadry\", thêm Total Row vào bảng. Cấu hình Total Row để hiển thị số chính sách mới cho từng tháng và cho tổng 6 tháng.",
+  "P16_T04_TITLE": "Nhiệm vụ 4",
+  "P16_T04_INST": "Trên trang tính \"Kadry\", trong cột \"Inactive\", sử dụng một hàm để đếm số tháng không có chính sách mới, theo từng Brand.",
+  "P16_T05_TITLE": "Nhiệm vụ 5",
+  "P16_T05_INST": "Trên trang tính \"El3ameed\", trong cột \"Email Address\", sử dụng một hàm để tạo địa chỉ email cho mỗi người bằng tên và \"@MOS2019\".",
+  "P16_T06_TITLE": "Nhiệm vụ 6",
+  "P16_T06_INST": "Trên trang tính \"Kadry\", thay đổi các thành phần hiển thị trên biểu đồ bằng cách thay đổi bố cục biểu đồ thành Layout 3."
+}
