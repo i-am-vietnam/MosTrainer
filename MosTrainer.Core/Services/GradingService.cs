@@ -156,6 +156,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P14(task);
                 case "Excel2019_P15":
                     return CheckExcel2019P15(task);
+                case "Excel2019_P16":
+                    return CheckExcel2019P16(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -222,6 +224,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P15(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P16(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -721,7 +727,7 @@ namespace MosTrainer.Core.Services
                 case "ChartQuickLayoutEquals":
                     return Result(_excel.ChartQuickLayoutEquals(
                         task.SheetName, task.ChartName, ToInt(task.ExpectedValue),
-                        task.ExpectedChartType, task.SourceRange, task.Range,
+                        task.ExpectedChartType, task.Range, task.SourceRange,
                         task.DataRange));
 
                 // Project 9 task 1

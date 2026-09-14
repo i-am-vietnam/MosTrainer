@@ -1,0 +1,12 @@
+﻿{
+  "P17_T01_TITLE": "Nhiệm vụ 1",
+  "P17_T01_INST": "Trên trang tính \"El3ameed\", thiết lập để các ô A4:G20 được in.",
+  "P17_T02_TITLE": "Nhiệm vụ 2",
+  "P17_T02_INST": "Trên trang tính \"Elmenshawy\", lọc dữ liệu trong bảng để chỉ hiển thị các hợp đồng có \"Type\" là \"MP\".",
+  "P17_T03_TITLE": "Nhiệm vụ 3",
+  "P17_T03_INST": "Trên trang tính \"Kadry\", trong cột \"Discount\", sử dụng một hàm để hiển thị \"Yes\" nếu \"Years as Member\" lớn hơn 4. Nếu không, hiển thị \"No\".",
+  "P17_T04_TITLE": "Nhiệm vụ 4",
+  "P17_T04_INST": "Trên trang tính \"Kadry\", trong cột \"Type\", sử dụng một hàm để hiển thị 2 ký tự đầu tiên của \"Policy Number\" từ cột B.",
+  "P17_T05_TITLE": "Nhiệm vụ 5",
+  "P17_T05_INST": "Trên trang tính \"Rental Summary\", thêm mô tả văn bản thay thế \"Renewal data\" cho biểu đồ."
+}

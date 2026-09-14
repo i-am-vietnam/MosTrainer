@@ -1,20 +1,79 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P16_T01_TITLE",
+    "instructionKey": "P16_T01_INST",
+    "assertionType": "RangeAlignmentIndentEquals",
+    "sheetName": "Kadry",
+    "range": "A4:A12",
+    "expectedFormat": "Left",
+    "expectedValue": "1"
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P16_T02_TITLE",
+    "instructionKey": "P16_T02_INST",
+    "assertionType": "SparklinesByRangeAndType",
+    "sheetName": "Kadry",
+    "locationRange": "J4:J12",
+    "dataRange": "B4:G12",
+    "expectedFormat": "WinLoss"
   },
   {
-  "taskId": "T06",
+    "taskId": "T03",
+    "titleKey": "P16_T03_TITLE",
+    "instructionKey": "P16_T03_INST",
+    "assertionType": "TableTotalRowSumsByHeaders",
+    "sheetName": "Kadry",
+    "tableName": "Table1",
+    "sourceHeaders": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "Total"
+    ]
+  },
+  {
+    "taskId": "T04",
+    "titleKey": "P16_T04_TITLE",
+    "instructionKey": "P16_T04_INST",
+    "assertionType": "CountBlankFormulaByHeaders",
+    "sheetName": "Kadry",
+    "tableName": "Table1",
+    "targetHeader": "Inactive",
+    "sourceHeaders": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June"
+    ]
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P16_T05_TITLE",
+    "instructionKey": "P16_T05_INST",
+    "assertionType": "EmailFunctionFormulaFromHeader",
+    "sheetName": "El3ameed",
+    "targetHeader": "Email Address",
+    "sourceHeader": "First Name",
+    "domain": "@MOS2019"
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P16_T06_TITLE",
+    "instructionKey": "P16_T06_INST",
+    "assertionType": "ChartQuickLayoutEquals",
+    "sheetName": "Kadry",
+    "chartName": "Chart 7",
+    "expectedValue": "3",
+    "expectedChartType": 51,
+    "sourceRange": "A4:A12",
+    "range": "B3:G3",
+    "dataRange": "B4:G12"
   }
 ]

@@ -1,0 +1,12 @@
+{
+  "P17_T01_TITLE": "Task 1",
+  "P17_T01_INST": "On the \"El3ameed\" worksheet so that cells A4:G20 will be printed",
+  "P17_T02_TITLE": "Task 2",
+  "P17_T02_INST": "On the \"Elmenshawy\" worksheet, filter the table data to display only the polices with a \"Type\" of \"MP\"",
+  "P17_T03_TITLE": "Task 3",
+  "P17_T03_INST": "On the \"Kadry\" worksheet, in the \"Discount\" column, use a function to display \"Yes\" if the \"Years as Member\" is greater than 4. Otherwise, display \"No\".",
+  "P17_T04_TITLE": "Task 4",
+  "P17_T04_INST": "On the \"Kadry\" worksheet, in the \"Type\" column, use a function to display the first 2 characters of the \"Policy Number\" from column B.",
+  "P17_T05_TITLE": "Task 5",
+  "P17_T05_INST": "On the \"Rental Summary\" worksheet, add the alt text description \"Renewal data\" to the chart"
+}

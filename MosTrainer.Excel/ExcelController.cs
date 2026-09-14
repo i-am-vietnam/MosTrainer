@@ -1200,6 +1200,14 @@ namespace MosTrainer.Excel
                     return result;
                 }
 
+                range = FindRangeStartingAtHeaderRowP1T5(ws, usedRange, requiredHeaders);
+                if (range != null)
+                {
+                    Xl.Range result = range;
+                    range = null;
+                    return result;
+                }
+
                 return null;
             }
             catch
@@ -3255,6 +3263,60 @@ namespace MosTrainer.Excel
                 ReleaseCom(filter);
                 ReleaseCom(filters);
                 ReleaseCom(autoFilter);
+            }
+        }
+
+        private Xl.Range FindRangeStartingAtHeaderRowP1T5(Xl.Worksheet ws, Xl.Range usedRange, IList<string> requiredHeaders)
+        {
+            if (ws == null || usedRange == null || requiredHeaders == null || requiredHeaders.Count == 0) return null;
+
+            Xl.Range cell = null;
+            Xl.Range start = null;
+            Xl.Range end = null;
+            try
+            {
+                int firstRow = Convert.ToInt32(usedRange.Row);
+                int firstColumn = Convert.ToInt32(usedRange.Column);
+                int rowCount = Convert.ToInt32(usedRange.Rows.Count);
+                int columnCount = Convert.ToInt32(usedRange.Columns.Count);
+                int lastRow = firstRow + rowCount - 1;
+                int lastColumn = firstColumn + columnCount - 1;
+
+                for (int row = firstRow; row <= lastRow; row++)
+                {
+                    bool allFound = true;
+                    foreach (string requiredHeader in requiredHeaders)
+                    {
+                        bool found = false;
+                        for (int column = firstColumn; column <= lastColumn; column++)
+                        {
+                            ReleaseCom(cell);
+                            cell = ws.Cells[row, column] as Xl.Range;
+                            if (cell != null && HeaderEqualsP4T5(GetCellTextP1T3(cell), requiredHeader))
+                            {
+                                found = true;
+                                break;
+                            }
+                        }
+                        if (!found)
+                        {
+                            allFound = false;
+                            break;
+                        }
+                    }
+
+                    if (!allFound) continue;
+                    start = ws.Cells[row, firstColumn] as Xl.Range;
+                    end = ws.Cells[lastRow, lastColumn] as Xl.Range;
+                    if (start == null || end == null) return null;
+                    return ws.Range[start, end];
+                }
+
+                return null;
+            }
+            finally
+            {
+                ReleaseCom(end); ReleaseCom(start); ReleaseCom(cell);
             }
         }
 
@@ -12410,6 +12472,7 @@ namespace MosTrainer.Excel
             Xl.Legend legend = null;
             Xl.Axis categoryAxis = null;
             Xl.Axis valueAxis = null;
+            Xl.ChartGroup chartGroup = null;
             Xl.SeriesCollection seriesCollection = null;
             Xl.Series series = null;
             Xl.Range names = null;
@@ -12442,15 +12505,27 @@ namespace MosTrainer.Excel
                 if (categoryAxis == null || valueAxis == null || Convert.ToBoolean(categoryAxis.HasTitle) ||
                     Convert.ToBoolean(valueAxis.HasTitle) || Convert.ToBoolean(categoryAxis.HasMajorGridlines) ||
                     !Convert.ToBoolean(valueAxis.HasMajorGridlines)) return false;
+                chartGroup = chart.ChartGroups(1) as Xl.ChartGroup;
+                if (chartGroup == null || Convert.ToInt32(chartGroup.GapWidth) != 75 ||
+                    Convert.ToInt32(chartGroup.Overlap) != -25) return false;
 
                 names = ws.Range[seriesNameRange];
                 categories = ws.Range[categoryRange];
                 values = ws.Range[valuesRange];
-                if (names == null || categories == null || values == null ||
-                    Convert.ToInt32(names.Columns.Count) != 1 || Convert.ToInt32(values.Rows.Count) != Convert.ToInt32(names.Rows.Count))
-                    return false;
+                if (names == null || categories == null || values == null) return false;
+                int nameRows = Convert.ToInt32(names.Rows.Count);
+                int nameColumns = Convert.ToInt32(names.Columns.Count);
+                int valueRows = Convert.ToInt32(values.Rows.Count);
+                int valueColumns = Convert.ToInt32(values.Columns.Count);
+                int categoryRows = Convert.ToInt32(categories.Rows.Count);
+                int categoryColumns = Convert.ToInt32(categories.Columns.Count);
+                bool seriesByColumns = nameRows == 1 && nameColumns == valueColumns &&
+                    categoryColumns == 1 && categoryRows == valueRows;
+                bool seriesByRows = nameColumns == 1 && nameRows == valueRows &&
+                    categoryRows == 1 && categoryColumns == valueColumns;
+                if (!seriesByColumns && !seriesByRows) return false;
                 seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
-                int seriesCount = Convert.ToInt32(names.Rows.Count);
+                int seriesCount = seriesByColumns ? nameColumns : nameRows;
                 if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != seriesCount) return false;
                 string expectedCategory = NormalizeChartReferenceP06(sheetName + "!" +
                     Convert.ToString(categories.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]));
@@ -12460,8 +12535,8 @@ namespace MosTrainer.Excel
                     valueRow = null; nameCell = null;
                     series = seriesCollection.Item(i);
                     if (series == null || Convert.ToBoolean(series.HasDataLabels)) return false;
-                    nameCell = names.Cells[i, 1] as Xl.Range;
-                    valueRow = values.Rows[i] as Xl.Range;
+                    nameCell = seriesByColumns ? names.Cells[1, i] as Xl.Range : names.Cells[i, 1] as Xl.Range;
+                    valueRow = seriesByColumns ? values.Columns[i] as Xl.Range : values.Rows[i] as Xl.Range;
                     if (nameCell == null || valueRow == null) return false;
                     string formula = NormalizeChartReferenceP06(Convert.ToString(series.Formula));
                     string expectedName = NormalizeChartReferenceP06(sheetName + "!" +
@@ -12481,7 +12556,7 @@ namespace MosTrainer.Excel
             finally
             {
                 ReleaseCom(valueRow); ReleaseCom(nameCell); ReleaseCom(values); ReleaseCom(categories); ReleaseCom(names);
-                ReleaseCom(series); ReleaseCom(seriesCollection); ReleaseCom(valueAxis); ReleaseCom(categoryAxis);
+                ReleaseCom(series); ReleaseCom(seriesCollection); ReleaseCom(chartGroup); ReleaseCom(valueAxis); ReleaseCom(categoryAxis);
                 ReleaseCom(legend); ReleaseCom(chart); ReleaseCom(chartObject); ReleaseCom(charts); ReleaseCom(ws);
             }
         }
