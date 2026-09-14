@@ -180,6 +180,10 @@ namespace MosTrainer.Core.Interfaces
         bool IfNumericFormulaByHeadersStrict(string sheetName, string tableName, string targetHeader, string criteriaHeader, string compareOperator, double threshold, string trueValue, string falseValue);
         // Excel 2019 - Project 10 Task 8
         bool CellHyperlinkWithScreenTipEquals(string sheetName, string cellAddress, string expectedAddress, string expectedScreenTip, string expectedDisplayText);
+        // Excel 2019 - Project 14
+        bool CellsDeletedShiftUp(string sheetName, string deletedRangeAddress, string sourceRangeAddress, IList<string> markerAddresses, IList<string> expectedMarkerValues);
+        bool IfFormulaByHeadersInRanges(string sheetName, string targetHeader, string criteriaHeader, string targetRangeAddress, string criteriaRangeAddress, string compareOperator, double threshold, string trueText, string falseText);
+        bool ChartSheetTitleAboveValueLabelsOutsideEndBySource(string chartSheetName, string sourceSheetName, int expectedChartType, IList<string> sourceRanges);
         string GetCellDisplayText(string address);
     }
 }

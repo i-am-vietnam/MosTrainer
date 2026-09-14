@@ -1,20 +1,80 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
+    "taskId": "T01",
+    "titleKey": "P14_T01_TITLE",
+    "instructionKey": "P14_T01_INST",
+    "assertionType": "CellsDeletedShiftUp",
+    "sheetName": "El3ameed",
+    "range": "D9:E9",
+    "sourceRange": "D10:E26",
+    "targetRanges": [
+      "D9", "E9", "D10", "E10", "D11", "E11", "D12", "E12",
+      "A9", "B9", "A10", "B10", "A11", "B11", "A12", "B12",
+      "F8", "F21", "F22", "F23"
+    ],
+    "expectedTexts": [
+      "Quantity", "Unit Price", "10", "24", "100", "24", "30", "300",
+      "SKU", "Product Name", "TGU", "T-Shirt Green (Unisex)",
+      "HGU", "Hoodie Green (Unisex)", "TWU", "T-Shirt White (Unisex)",
+      "9000", "11640", "931.2", "12571.2"
+    ]
   },
-
   {
-  "taskId": "T04",
+    "taskId": "T02",
+    "titleKey": "P14_T02_TITLE",
+    "instructionKey": "P14_T02_INST",
+    "assertionType": "CellStyleEquals",
+    "sheetName": "El3ameed",
+    "cell": "A5",
+    "expectedFormat": "Title",
+    "expectedText": "Customer Name Customer Email Customer Telephone"
   },
   {
-  "taskId": "T05",
+    "taskId": "T03",
+    "titleKey": "P14_T03_TITLE",
+    "instructionKey": "P14_T03_INST",
+    "assertionType": "AutoFilterByHeaderEquals",
+    "sheetName": "Elmenshawy",
+    "columnHeader": "Product Quote",
+    "expectedText": "Kadry Ski House"
   },
   {
-  "taskId": "T06",
+    "taskId": "T04",
+    "titleKey": "P14_T04_TITLE",
+    "instructionKey": "P14_T04_INST",
+    "assertionType": "RangeFormulaMultipliesFixedCell",
+    "sheetName": "Kadry",
+    "range": "E4:E24",
+    "sourceRange": "B4:B24",
+    "cell": "G2"
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P14_T05_TITLE",
+    "instructionKey": "P14_T05_INST",
+    "assertionType": "IfFormulaByHeadersInRanges",
+    "sheetName": "Kadry",
+    "range": "D4:D24",
+    "sourceRange": "C4:C24",
+    "targetHeader": "Inventory",
+    "criteriaHeader": "Level %",
+    "operator": "<",
+    "threshold": 0.15,
+    "trueText": "Low",
+    "falseText": ""
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P14_T06_TITLE",
+    "instructionKey": "P14_T06_INST",
+    "assertionType": "ChartSheetTitleAboveValueLabelsOutsideEndBySource",
+    "sheetName": "T-Shirt",
+    "sourceSheetName": "Table 2",
+    "expectedChartType": 57,
+    "targetRanges": [
+      "E2",
+      "D3:D23",
+      "E3:E23"
+    ]
   }
 ]

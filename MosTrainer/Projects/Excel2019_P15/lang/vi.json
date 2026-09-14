@@ -1,0 +1,14 @@
+﻿{
+  "P15_T01_TITLE": "Nhiệm vụ 1",
+  "P15_T01_INST": "Trên trang tính \"Elmenshawy\", thiết lập A4:I4 để văn bản tự động xuống dòng.",
+  "P15_T02_TITLE": "Nhiệm vụ 2",
+  "P15_T02_INST": "Trên trang tính \"Elmenshawy\", đặt tên cho vùng A4:I22 là \"Elmenshawy\".",
+  "P15_T03_TITLE": "Nhiệm vụ 3",
+  "P15_T03_INST": "Trên trang tính \"Kadry\", chuyển các ô A1:F19 thành một bảng có tiêu đề. Áp dụng kiểu Green, Table Style Light 12.",
+  "P15_T04_TITLE": "Nhiệm vụ 4",
+  "P15_T04_INST": "Trên trang tính \"Kadry\", xóa hàng trong bảng chứa dữ liệu \"Kadry Elmenshawy\". Không thay đổi bất kỳ nội dung nào bên ngoài bảng.",
+  "P15_T05_TITLE": "Nhiệm vụ 5",
+  "P15_T05_INST": "Trên trang tính \"Kadry\", tạo biểu đồ Clustered Column hiển thị tên \"Program\" và dữ liệu \"Average\". Đặt biểu đồ ở bên phải bảng. Kích thước và vị trí chính xác của biểu đồ không quan trọng.",
+  "P15_T06_TITLE": "Nhiệm vụ 6",
+  "P15_T06_INST": "Trên trang tính \"El3ameed\", áp dụng kiểu biểu đồ Style 7 và màu Monochromatic Palette 6 cho biểu đồ."
+}

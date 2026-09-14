@@ -634,7 +634,7 @@ namespace MosTrainer.Excel
                 int fieldIndex = FindHeaderColumnIndexInFilterRange(filterRange, columnHeader);
                 if (fieldIndex <= 0) return false;
 
-                bool criteriaOk = AutoFilterCriteriaContainsExpected(ws, fieldIndex, expectedText);
+                bool criteriaOk = AutoFilterCriteriaContainsExpected(ws, filterRange, fieldIndex, expectedText);
                 if (!criteriaOk) return false;
 
                 return AutoFilterVisibleRowsMatch(filterRange, fieldIndex, expectedText);
@@ -3191,41 +3191,55 @@ namespace MosTrainer.Excel
             return 0;
         }
 
-        private bool AutoFilterCriteriaContainsExpected(Xl.Worksheet ws, int fieldIndex, string expectedText)
+        private bool AutoFilterCriteriaContainsExpected(Xl.Worksheet ws, Xl.Range filterRange, int fieldIndex, string expectedText)
         {
-            if (ws == null || fieldIndex <= 0 || string.IsNullOrWhiteSpace(expectedText))
+            if (ws == null || filterRange == null || fieldIndex <= 0 || string.IsNullOrWhiteSpace(expectedText))
                 return false;
 
             Xl.AutoFilter autoFilter = null;
             Xl.Filters filters = null;
             Xl.Filter filter = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range tableRange = null;
 
             try
             {
-                autoFilter = ws.AutoFilter;
-                if (autoFilter == null) return false;
+                try { autoFilter = ws.AutoFilter; } catch { autoFilter = null; }
+                if (autoFilter != null)
+                {
+                    filters = autoFilter.Filters;
+                    if (filters != null && fieldIndex <= filters.Count)
+                    {
+                        filter = filters.Item[fieldIndex];
+                        if (FilterCriteriaContainsExpectedP14(filter, expectedText)) return true;
+                    }
+                }
 
-                filters = autoFilter.Filters;
-                if (filters == null || fieldIndex > filters.Count) return false;
+                ReleaseCom(filter); filter = null;
+                ReleaseCom(filters); filters = null;
+                ReleaseCom(autoFilter); autoFilter = null;
 
-                filter = filters.Item[fieldIndex];
-                if (filter == null) return false;
+                tables = ws.ListObjects;
+                int tableCount = tables == null ? 0 : Convert.ToInt32(tables.Count);
+                string expectedRange = NormalizeRangeAddress(Convert.ToString(
+                    filterRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]));
+                for (int i = 1; i <= tableCount; i++)
+                {
+                    ReleaseCom(tableRange); ReleaseCom(table);
+                    tableRange = null; table = tables.Item[i];
+                    if (table == null) continue;
+                    tableRange = table.Range;
+                    string actualRange = tableRange == null ? "" : NormalizeRangeAddress(Convert.ToString(
+                        tableRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]));
+                    if (!string.Equals(actualRange, expectedRange, StringComparison.OrdinalIgnoreCase)) continue;
 
-                bool isOn = false;
-                try { isOn = filter.On; } catch { isOn = false; }
-                if (!isOn) return false;
-
-                object criteria1 = null;
-                object criteria2 = null;
-
-                try { criteria1 = filter.Criteria1; } catch { }
-                try { criteria2 = filter.Criteria2; } catch { }
-
-                if (CriteriaObjectContainsExpected(criteria1, expectedText))
-                    return true;
-
-                if (CriteriaObjectContainsExpected(criteria2, expectedText))
-                    return true;
+                    autoFilter = table.AutoFilter;
+                    filters = autoFilter == null ? null : autoFilter.Filters;
+                    if (filters == null || fieldIndex > filters.Count) return false;
+                    filter = filters.Item[fieldIndex];
+                    return FilterCriteriaContainsExpectedP14(filter, expectedText);
+                }
 
                 return false;
             }
@@ -3235,10 +3249,28 @@ namespace MosTrainer.Excel
             }
             finally
             {
+                ReleaseCom(tableRange);
+                ReleaseCom(table);
+                ReleaseCom(tables);
                 ReleaseCom(filter);
                 ReleaseCom(filters);
                 ReleaseCom(autoFilter);
             }
+        }
+
+        private bool FilterCriteriaContainsExpectedP14(Xl.Filter filter, string expectedText)
+        {
+            if (filter == null) return false;
+            bool isOn;
+            try { isOn = filter.On; } catch { isOn = false; }
+            if (!isOn) return false;
+
+            object criteria1 = null;
+            object criteria2 = null;
+            try { criteria1 = filter.Criteria1; } catch { }
+            try { criteria2 = filter.Criteria2; } catch { }
+            return CriteriaObjectContainsExpected(criteria1, expectedText) ||
+                CriteriaObjectContainsExpected(criteria2, expectedText);
         }
         //Project 2 Task 4
         public bool FreezePanesEquals(string sheetName, int expectedFreezeRows, int expectedFreezeColumns)
@@ -9680,6 +9712,8 @@ namespace MosTrainer.Excel
                     cell = null;
 
                     row = (Xl.Range)rows[rowIndex];
+                    if (!RangeRowContainsDataP14(row))
+                        continue;
                     entireRow = row.EntireRow;
 
                     bool hidden = false;
@@ -9730,6 +9764,31 @@ namespace MosTrainer.Excel
                 ReleaseCom(entireRow);
                 ReleaseCom(row);
                 ReleaseCom(rows);
+            }
+        }
+
+        private bool RangeRowContainsDataP14(Xl.Range row)
+        {
+            if (row == null) return false;
+            Xl.Range cells = null;
+            Xl.Range cell = null;
+            try
+            {
+                cells = row.Cells;
+                int count = Convert.ToInt32(cells.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(cell);
+                    cell = cells[i] as Xl.Range;
+                    if (cell != null && !string.IsNullOrWhiteSpace(Convert.ToString(cell.Value2)))
+                        return true;
+                }
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(cell);
+                ReleaseCom(cells);
             }
         }
 
@@ -13348,6 +13407,234 @@ namespace MosTrainer.Excel
             string normalizedHeader = NormalizeFormula(header);
             return normalized.EndsWith("[@" + normalizedHeader + "]", StringComparison.OrdinalIgnoreCase) ||
                 normalized.EndsWith("[@[" + normalizedHeader + "]]", StringComparison.OrdinalIgnoreCase);
+        }
+
+        // Project 14 Task 1
+        public bool CellsDeletedShiftUp(
+            string sheetName,
+            string deletedRangeAddress,
+            string sourceRangeAddress,
+            IList<string> markerAddresses,
+            IList<string> expectedMarkerValues)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(deletedRangeAddress) ||
+                string.IsNullOrWhiteSpace(sourceRangeAddress) || markerAddresses == null ||
+                expectedMarkerValues == null || markerAddresses.Count == 0 ||
+                markerAddresses.Count != expectedMarkerValues.Count) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range deletedRange = null;
+            Xl.Range sourceRange = null;
+            Xl.Range cell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                deletedRange = ws.Range[deletedRangeAddress];
+                sourceRange = ws.Range[sourceRangeAddress];
+                if (deletedRange == null || sourceRange == null) return false;
+
+                int deletedRows = Convert.ToInt32(deletedRange.Rows.Count);
+                int deletedColumns = Convert.ToInt32(deletedRange.Columns.Count);
+                int sourceRows = Convert.ToInt32(sourceRange.Rows.Count);
+                if (deletedRows <= 0 || sourceRows < deletedRows ||
+                    Convert.ToInt32(sourceRange.Columns.Count) != deletedColumns ||
+                    Convert.ToInt32(sourceRange.Row) != Convert.ToInt32(deletedRange.Row) + deletedRows ||
+                    Convert.ToInt32(sourceRange.Column) != Convert.ToInt32(deletedRange.Column)) return false;
+
+                for (int i = 0; i < markerAddresses.Count; i++)
+                {
+                    ReleaseCom(cell);
+                    cell = ws.Range[markerAddresses[i]];
+                    if (cell == null || !CellValueMatchesExpectedP14(cell.Value2, expectedMarkerValues[i]))
+                        return false;
+                }
+
+                int firstVacatedRow = Convert.ToInt32(sourceRange.Row) + sourceRows - deletedRows;
+                int firstColumn = Convert.ToInt32(sourceRange.Column);
+                for (int rowOffset = 0; rowOffset < deletedRows; rowOffset++)
+                {
+                    for (int columnOffset = 0; columnOffset < deletedColumns; columnOffset++)
+                    {
+                        ReleaseCom(cell);
+                        cell = ws.Cells[firstVacatedRow + rowOffset, firstColumn + columnOffset] as Xl.Range;
+                        if (cell == null || !CellValueMatchesExpectedP14(cell.Value2, "")) return false;
+                    }
+                }
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("CellsDeletedShiftUp", "P14 T01 grading failed.", ex, "Excel2019_P14", "T01");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(cell); ReleaseCom(sourceRange); ReleaseCom(deletedRange); ReleaseCom(ws);
+            }
+        }
+
+        private bool CellValueMatchesExpectedP14(object value, string expected)
+        {
+            string expectedText = expected ?? "";
+            if (value == null) return expectedText.Length == 0;
+
+            double actualNumber;
+            double expectedNumber;
+            if (TryToDouble(value, out actualNumber) && TryToDouble(expectedText, out expectedNumber))
+                return Math.Abs(actualNumber - expectedNumber) <= 0.000001d;
+
+            return string.Equals(Convert.ToString(value), expectedText, StringComparison.Ordinal);
+        }
+
+        // Project 14 Task 5
+        public bool IfFormulaByHeadersInRanges(
+            string sheetName,
+            string targetHeader,
+            string criteriaHeader,
+            string targetRangeAddress,
+            string criteriaRangeAddress,
+            string compareOperator,
+            double threshold,
+            string trueText,
+            string falseText)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(targetHeader) ||
+                string.IsNullOrWhiteSpace(criteriaHeader) || string.IsNullOrWhiteSpace(targetRangeAddress) ||
+                string.IsNullOrWhiteSpace(criteriaRangeAddress) || compareOperator != "<" ||
+                string.IsNullOrWhiteSpace(trueText)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range targets = null;
+            Xl.Range criteria = null;
+            Xl.Range targetHeaderCell = null;
+            Xl.Range criteriaHeaderCell = null;
+            Xl.Range targetCell = null;
+            Xl.Range criteriaCell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                targets = ws.Range[targetRangeAddress];
+                criteria = ws.Range[criteriaRangeAddress];
+                if (targets == null || criteria == null ||
+                    Convert.ToInt32(targets.Columns.Count) != 1 || Convert.ToInt32(criteria.Columns.Count) != 1 ||
+                    Convert.ToInt32(targets.Cells.Count) != Convert.ToInt32(criteria.Cells.Count) ||
+                    Convert.ToInt32(targets.Row) != Convert.ToInt32(criteria.Row)) return false;
+
+                int firstRow = Convert.ToInt32(targets.Row);
+                if (firstRow <= 1) return false;
+                targetHeaderCell = ws.Cells[firstRow - 1, Convert.ToInt32(targets.Column)] as Xl.Range;
+                criteriaHeaderCell = ws.Cells[firstRow - 1, Convert.ToInt32(criteria.Column)] as Xl.Range;
+                if (targetHeaderCell == null || criteriaHeaderCell == null ||
+                    !string.Equals(NormalizeText(Convert.ToString(targetHeaderCell.Value2)), NormalizeText(targetHeader), StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(NormalizeText(Convert.ToString(criteriaHeaderCell.Value2)), NormalizeText(criteriaHeader), StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                int count = Convert.ToInt32(targets.Cells.Count);
+                for (int i = 1; i <= count; i++)
+                {
+                    ReleaseCom(criteriaCell); ReleaseCom(targetCell);
+                    targetCell = targets.Cells[i] as Xl.Range;
+                    criteriaCell = criteria.Cells[i] as Xl.Range;
+                    if (targetCell == null || criteriaCell == null || !Convert.ToBoolean(targetCell.HasFormula)) return false;
+
+                    double criteriaValue;
+                    if (!TryToDouble(criteriaCell.Value2, out criteriaValue)) return false;
+                    string expectedResult = criteriaValue < threshold ? trueText : falseText;
+                    if (!string.Equals(Convert.ToString(targetCell.Value2), expectedResult, StringComparison.Ordinal)) return false;
+
+                    string criteriaAddress = Convert.ToString(criteriaCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!FormulaMatchesStrictIfP07(Convert.ToString(targetCell.Formula), criteriaAddress, criteriaHeader, threshold, trueText, falseText))
+                        return false;
+                }
+
+                return count > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("IfFormulaByHeadersInRanges", "P14 T05 grading failed.", ex, "Excel2019_P14", "T05");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(criteriaCell); ReleaseCom(targetCell);
+                ReleaseCom(criteriaHeaderCell); ReleaseCom(targetHeaderCell);
+                ReleaseCom(criteria); ReleaseCom(targets); ReleaseCom(ws);
+            }
+        }
+
+        // Project 14 Task 6
+        public bool ChartSheetTitleAboveValueLabelsOutsideEndBySource(
+            string chartSheetName,
+            string sourceSheetName,
+            int expectedChartType,
+            IList<string> sourceRanges)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(chartSheetName) || string.IsNullOrWhiteSpace(sourceSheetName) ||
+                sourceRanges == null || sourceRanges.Count != 3) return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Sheets charts = null;
+            Xl.Chart chart = null;
+            Xl.ChartTitle title = null;
+            Xl.SeriesCollection seriesCollection = null;
+            Xl.Series series = null;
+            Xl.Points points = null;
+            Xl.DataLabels labels = null;
+            Xl.DataLabel label = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                charts = workbook.Charts;
+                for (int i = 1; i <= Convert.ToInt32(charts.Count); i++)
+                {
+                    ReleaseCom(chart);
+                    chart = charts.Item[i] as Xl.Chart;
+                    if (chart != null && string.Equals(chart.Name, chartSheetName, StringComparison.OrdinalIgnoreCase)) break;
+                    chart = null;
+                }
+                if (chart == null || Convert.ToInt32(chart.ChartType) != expectedChartType ||
+                    !Convert.ToBoolean(chart.HasTitle)) return false;
+                title = chart.ChartTitle;
+                if (title == null || !Convert.ToBoolean(title.IncludeInLayout) ||
+                    Convert.ToDouble(title.Top) >= Convert.ToDouble(chart.PlotArea.Top)) return false;
+
+                seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != 1) return false;
+                series = seriesCollection.Item(1);
+                if (series == null || !SeriesFormulaMatchesRangesP09(Convert.ToString(series.Formula), sourceSheetName, sourceRanges) ||
+                    !Convert.ToBoolean(series.HasDataLabels)) return false;
+
+                points = series.Points(Type.Missing) as Xl.Points;
+                labels = series.DataLabels(Type.Missing) as Xl.DataLabels;
+                if (points == null || labels == null ||
+                    Convert.ToInt32(labels.Count) != Convert.ToInt32(points.Count)) return false;
+                for (int i = 1; i <= Convert.ToInt32(labels.Count); i++)
+                {
+                    ReleaseCom(label);
+                    label = labels.Item(i) as Xl.DataLabel;
+                    if (label == null || Convert.ToInt32(label.Position) != (int)Xl.XlDataLabelPosition.xlLabelPositionOutsideEnd ||
+                        !Convert.ToBoolean(label.ShowValue) || Convert.ToBoolean(label.ShowCategoryName) ||
+                        Convert.ToBoolean(label.ShowSeriesName)) return false;
+                }
+
+                return Convert.ToInt32(labels.Count) > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ChartSheetTitleAboveValueLabelsOutsideEndBySource", "P14 T06 grading failed.", ex, "Excel2019_P14", "T06");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(label); ReleaseCom(labels); ReleaseCom(points); ReleaseCom(series);
+                ReleaseCom(seriesCollection); ReleaseCom(title); ReleaseCom(chart); ReleaseCom(charts);
+            }
         }
 
         public string GetCellDisplayText(string address)

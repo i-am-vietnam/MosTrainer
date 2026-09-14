@@ -71,7 +71,8 @@ namespace MosTrainer.Core.Services
                 "CellStyleEquals", "ChartSheetSwitchedRowColumn",
                 "RangeFormulaMultipliesFixedCell", "SpecificChartMovedToChartSheet",
                 "ChartExpandedToIncludeRange", "IfNumericFormulaByHeadersStrict",
-                "CellHyperlinkWithScreenTipEquals"
+                "CellHyperlinkWithScreenTipEquals", "CellsDeletedShiftUp",
+                "IfFormulaByHeadersInRanges", "ChartSheetTitleAboveValueLabelsOutsideEndBySource"
             };
 
         private readonly IExcelController _excel;
@@ -149,6 +150,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P12(task);
                 case "Excel2019_P13":
                     return CheckExcel2019P13(task);
+                case "Excel2019_P14":
+                    return CheckExcel2019P14(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -207,6 +210,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P13(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P14(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -770,6 +777,25 @@ namespace MosTrainer.Core.Services
                     return Result(_excel.CellHyperlinkWithScreenTipEquals(
                         task.SheetName, task.Cell, task.ExpectedValue,
                         task.ExpectedFormat, task.ExpectedText));
+
+                // Project 14 task 1
+                case "CellsDeletedShiftUp":
+                    return Result(_excel.CellsDeletedShiftUp(
+                        task.SheetName, task.Range, task.SourceRange,
+                        task.TargetRanges, task.ExpectedTexts));
+
+                // Project 14 task 5
+                case "IfFormulaByHeadersInRanges":
+                    return Result(_excel.IfFormulaByHeadersInRanges(
+                        task.SheetName, task.TargetHeader, task.CriteriaHeader,
+                        task.Range, task.SourceRange, task.Operator, task.Threshold,
+                        task.TrueText, task.FalseText));
+
+                // Project 14 task 6
+                case "ChartSheetTitleAboveValueLabelsOutsideEndBySource":
+                    return Result(_excel.ChartSheetTitleAboveValueLabelsOutsideEndBySource(
+                        task.SheetName, task.SourceSheetName,
+                        task.ExpectedChartType, task.TargetRanges));
 
 
                 default:
