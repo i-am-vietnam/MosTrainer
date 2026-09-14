@@ -147,6 +147,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P11(task);
                 case "Excel2019_P12":
                     return CheckExcel2019P12(task);
+                case "Excel2019_P13":
+                    return CheckExcel2019P13(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -201,6 +203,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P12(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P13(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -450,7 +456,8 @@ namespace MosTrainer.Core.Services
                     return Result(_excel.WorksheetTableConvertedToRange(
                         task.SheetName,
                         string.IsNullOrWhiteSpace(task.Range) ? "A4:J30" : task.Range,
-                        task.TableName));
+                        task.TableName,
+                        task.SourceHeaders));
                 //Project 4 task 5
                 case "ReportClusteredColumnChartCreated":
                 case "ClusteredColumnChartByHeaders":

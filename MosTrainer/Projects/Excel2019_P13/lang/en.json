@@ -1,6 +1,6 @@
 {
   "P13_T01_TITLE": "Task 1",
-  "P13_T01_INST": "On the \"El3ameed\" worksheet, beginning at cell A2, import the data from the All Data.text file in the Document folder. Use the first of the data soaurce as headers.",
+  "P13_T01_INST": "On the \"El3ameed\" worksheet, beginning at cell A2, import the data from the All Data.txt file in the Document folder. Use the first of the data soaurce as headers.",
   "P13_T02_TITLE": "Task 2",
   "P13_T02_INST": "On the \"Elmenshawy\" worksheet, adjust the width of columns B:G to exactly 11.",
   "P13_T03_TITLE": "Task 3",

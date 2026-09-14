@@ -1,20 +1,70 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
-  },
-
-  {
-  "taskId": "T04",
+    "taskId": "T01",
+    "titleKey": "P13_T01_TITLE",
+    "instructionKey": "P13_T01_INST",
+    "assertionType": "ImportTextFileAtCell",
+    "sheetName": "El3ameed",
+    "cell": "A2",
+    "sourceFileName": "All Data.txt",
+    "firstRowAsHeaders": true
   },
   {
-  "taskId": "T05",
+    "taskId": "T02",
+    "titleKey": "P13_T02_TITLE",
+    "instructionKey": "P13_T02_INST",
+    "assertionType": "ColumnWidthEquals",
+    "sheetName": "Elmenshawy",
+    "range": "B:G",
+    "expectedWidth": 11
   },
   {
-  "taskId": "T06",
+    "taskId": "T03",
+    "titleKey": "P13_T03_TITLE",
+    "instructionKey": "P13_T03_INST",
+    "assertionType": "SparklinesByRangeAndType",
+    "sheetName": "Kadry",
+    "locationRange": "G4:G24",
+    "dataRange": "D4:F24",
+    "expectedFormat": "Column"
+  },
+  {
+    "taskId": "T04",
+    "titleKey": "P13_T04_TITLE",
+    "instructionKey": "P13_T04_INST",
+    "assertionType": "WorksheetTableConvertedToRange",
+    "sheetName": "School",
+    "tableName": "Table4",
+    "range": "A3:F24",
+    "sourceHeaders": [
+      "Title",
+      "Section",
+      "Days",
+      "Hours",
+      "Location",
+      "Instructor"
+    ]
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P13_T05_TITLE",
+    "instructionKey": "P13_T05_INST",
+    "assertionType": "ChartMovedToChartSheet",
+    "sourceSheetName": "School 22",
+    "sheetName": "School chart",
+    "expectedFormat": "5",
+    "targetRanges": [
+      "A4:A7",
+      "B3",
+      "B4:B7"
+    ]
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P13_T06_TITLE",
+    "instructionKey": "P13_T06_INST",
+    "assertionType": "ChartPrimaryVerticalAxisTitleEquals",
+    "sheetName": "Elmenshawy",
+    "expectedText": "Hours"
   }
 ]

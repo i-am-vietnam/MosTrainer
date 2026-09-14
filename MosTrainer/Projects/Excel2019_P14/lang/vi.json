@@ -1,0 +1,14 @@
+﻿{
+  "P14_T01_TITLE": "Nhiệm vụ 1",
+  "P14_T01_INST": "Trên trang tính \"El3ameed\", di chuyển các ô D10:E26 lên trên để sửa căn chỉnh bằng cách xóa các ô D9:E9.",
+  "P14_T02_TITLE": "Nhiệm vụ 2",
+  "P14_T02_INST": "Trên trang tính \"El3ameed\", áp dụng kiểu Title cho ô A5.",
+  "P14_T03_TITLE": "Nhiệm vụ 3",
+  "P14_T03_INST": "Trên trang tính \"Elmenshawy\", lọc dữ liệu trong bảng để chỉ hiển thị các đơn hàng từ \"Kadry Ski House\".",
+  "P14_T04_TITLE": "Nhiệm vụ 4",
+  "P14_T04_INST": "Trên trang tính \"Kadry\", trong cột \"Tax\", nhập một công thức nhân giá trị trong cột \"Unit Price\" với ô G2.",
+  "P14_T05_TITLE": "Nhiệm vụ 5",
+  "P14_T05_INST": "Trên trang tính \"Kadry\", trong cột \"Inventory\", sử dụng một hàm để hiển thị \"Low\" nếu \"Level %\" dưới 15%. Nếu không, để trống \"Inventory\".",
+  "P14_T06_TITLE": "Nhiệm vụ 6",
+  "P14_T06_INST": "Trên trang tính biểu đồ \"T-Shirt\", chèn tiêu đề biểu đồ phía trên biểu đồ, ở phía trên vùng vẽ. Hiển thị các giá trị phần trăm dưới dạng nhãn dữ liệu ở bên phải của mỗi thanh dữ liệu."
+}

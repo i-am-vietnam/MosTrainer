@@ -89,7 +89,7 @@ namespace MosTrainer.Core.Interfaces
         bool ChartSheetLegendRemovedValueLabelsAbove(string chartSheetName);
 
         // Excel 2019 - Project 4 Task 4
-        bool WorksheetTableConvertedToRange(string sheetName, string rangeAddress, string tableName);
+        bool WorksheetTableConvertedToRange(string sheetName, string rangeAddress, string tableName, IList<string> expectedHeaders);
         // Excel 2019 - Project 4 Task 5
         bool ReportClusteredColumnChartCreated(string sheetName, string categoryHeader, string valueHeader);
 

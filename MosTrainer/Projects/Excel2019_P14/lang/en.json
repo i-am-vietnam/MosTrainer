@@ -1,0 +1,14 @@
+{
+  "P14_T01_TITLE": "Task 1",
+  "P14_T01_INST": "On the \"El3ameed\" worksheet, move the cells D10:E26 up to correct the alignment by deleting cells D9:E9.",
+  "P14_T02_TITLE": "Task 2",
+  "P14_T02_INST": "On the \"El3ameed\" worksheet, apply the Title style to cell A5.",
+  "P14_T03_TITLE": "Task 3",
+  "P14_T03_INST": "On the \"Elmenshawy\" worksheet, filter the table data to display only the orders from \"Kadry Ski House\".",
+  "P14_T04_TITLE": "Task 4",
+  "P14_T04_INST": "On the \"Kadry\" worksheet, in the \"Tax\" column, enter a formula that multiplies the value in the \"Unit Price\" column by cell G2.",
+  "P14_T05_TITLE": "Task 5",
+  "P14_T05_INST": "On the \"Kadry\" worksheet, in the \"Inventory\" column, use a function to display \"Low\" if the \"Level %\" is below 15%. Otherwise, leave the \"Inventory\" blank.",
+  "P14_T06_TITLE": "Task 6",
+  "P14_T06_INST": "On the \"T-Shirt\" chart sheet, insert a chart title above the chart. At the top of the plot area. Display the percentage values as data labels to the right of each data bar."
+}

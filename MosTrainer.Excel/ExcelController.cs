@@ -7847,7 +7847,11 @@ namespace MosTrainer.Excel
 
 
         //Project 4 Task 4
-        public bool WorksheetTableConvertedToRange(string sheetName, string rangeAddress, string tableName)
+        public bool WorksheetTableConvertedToRange(
+            string sheetName,
+            string rangeAddress,
+            string tableName,
+            IList<string> expectedHeaders)
         {
             if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
 
@@ -7866,7 +7870,7 @@ namespace MosTrainer.Excel
                 if (targetRange == null) return false;
 
                 // Sau Convert to Range, dữ liệu và header vẫn phải còn.
-                if (!RangeContainsNewCarSalesHeadersP4T4(targetRange))
+                if (!RangeContainsExpectedHeadersP4T4(targetRange, expectedHeaders))
                     return false;
 
                 if (!RangeHasDataRowsP4T4(targetRange))
@@ -7994,33 +7998,29 @@ namespace MosTrainer.Excel
             }
         }
 
-        private bool RangeContainsNewCarSalesHeadersP4T4(Xl.Range range)
+        private bool RangeContainsExpectedHeadersP4T4(Xl.Range range, IList<string> configuredHeaders)
         {
             if (range == null) return false;
 
-            string[] expectedHeaders = new string[]
+            IList<string> expectedHeaders = configuredHeaders;
+            if (expectedHeaders == null || expectedHeaders.Count == 0)
             {
-        "Make",
-        "Model",
-        "Body",
-        "Year",
-        "Color",
-        "Mileage",
-        "Price",
-        "Quantity Instock",
-        "Total",
-        "Inspected"
-            };
+                expectedHeaders = new string[]
+                {
+                    "Make", "Model", "Body", "Year", "Color", "Mileage", "Price",
+                    "Quantity Instock", "Total", "Inspected"
+                };
+            }
 
             Xl.Range cell = null;
 
             try
             {
                 int columnCount = Convert.ToInt32(range.Columns.Count);
-                if (columnCount < expectedHeaders.Length)
+                if (columnCount < expectedHeaders.Count)
                     return false;
 
-                for (int c = 1; c <= expectedHeaders.Length; c++)
+                for (int c = 1; c <= expectedHeaders.Count; c++)
                 {
                     ReleaseCom(cell);
                     cell = null;
@@ -10879,8 +10879,7 @@ namespace MosTrainer.Excel
             IList<string> sourceRanges)
         {
             if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
-            if (string.IsNullOrWhiteSpace(sourceSheetName) || string.IsNullOrWhiteSpace(chartSheetName) ||
-                string.IsNullOrWhiteSpace(chartTitle))
+            if (string.IsNullOrWhiteSpace(sourceSheetName) || string.IsNullOrWhiteSpace(chartSheetName))
                 return false;
 
             Xl.Workbook workbook = null;
@@ -10920,12 +10919,15 @@ namespace MosTrainer.Excel
                         continue;
                     }
 
-                    if (!Convert.ToBoolean(chartSheet.HasTitle)) return false;
-                    title = chartSheet.ChartTitle;
-                    if (title == null || !string.Equals(
-                        NormalizeText(Convert.ToString(title.Text)), NormalizeText(chartTitle),
-                        StringComparison.OrdinalIgnoreCase))
-                        return false;
+                    if (!string.IsNullOrWhiteSpace(chartTitle))
+                    {
+                        if (!Convert.ToBoolean(chartSheet.HasTitle)) return false;
+                        title = chartSheet.ChartTitle;
+                        if (title == null || !string.Equals(
+                            NormalizeText(Convert.ToString(title.Text)), NormalizeText(chartTitle),
+                            StringComparison.OrdinalIgnoreCase))
+                            return false;
+                    }
 
                     if (expectedChartType != 0 && Convert.ToInt32(chartSheet.ChartType) != expectedChartType)
                         return false;
