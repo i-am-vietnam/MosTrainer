@@ -192,6 +192,10 @@ namespace MosTrainer.Core.Interfaces
         bool CellsDeletedShiftUp(string sheetName, string deletedRangeAddress, string sourceRangeAddress, IList<string> markerAddresses, IList<string> expectedMarkerValues);
         bool IfFormulaByHeadersInRanges(string sheetName, string targetHeader, string criteriaHeader, string targetRangeAddress, string criteriaRangeAddress, string compareOperator, double threshold, string trueText, string falseText);
         bool ChartSheetTitleAboveValueLabelsOutsideEndBySource(string chartSheetName, string sourceSheetName, int expectedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 20
+        bool RangeFormattingMatchesAndPreservesText(string sourceSheetName, string sourceRange, string targetSheetName, string targetRange, IList<string> expectedTargetTexts);
+        bool TableNameOnRangeEquals(string sheetName, string rangeAddress, string expectedTableName);
+        bool ChartSheetLegendRemovedValueLabelsAboveBySource(string chartSheetName, string sourceSheetName, int expectedChartType, IList<string> sourceRanges, string expectedTitle);
         string GetCellDisplayText(string address);
     }
 }

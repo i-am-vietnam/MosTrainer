@@ -1,20 +1,69 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
+    "taskId": "T01",
+    "titleKey": "P20_T01_TITLE",
+    "instructionKey": "P20_T01_INST",
+    "assertionType": "TitleSubtitleFormattingCopiedPreserveText",
+    "sourceSheetName": "El3ameed",
+    "sourceRange": "A1:A2",
+    "sheetName": "Elmenshawy",
+    "range": "A1:A2",
+    "expectedTexts": [
+      "Bellows College",
+      "CS101 Microsoft Office Applications"
+    ]
   },
-
   {
-  "taskId": "T04",
+    "taskId": "T02",
+    "titleKey": "P20_T02_TITLE",
+    "instructionKey": "P20_T02_INST",
+    "assertionType": "TableNameOnRangeEquals",
+    "sheetName": "El3ameed",
+    "range": "A3:M33",
+    "tableName": "El3ameed"
   },
   {
-  "taskId": "T05",
+    "taskId": "T03",
+    "titleKey": "P20_T03_TITLE",
+    "instructionKey": "P20_T03_INST",
+    "assertionType": "TableBandedRows",
+    "sheetName": "El3ameed"
   },
-  "taskId": "T06",
-
+  {
+    "taskId": "T04",
+    "titleKey": "P20_T04_TITLE",
+    "instructionKey": "P20_T04_INST",
+    "assertionType": "NamedRangesSumFormula",
+    "sheetName": "Maximum",
+    "cell": "C27",
+    "rangeNames": [
+      "Kadry1",
+      "Kadry2",
+      "Kadry3"
+    ]
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P20_T05_TITLE",
+    "instructionKey": "P20_T05_INST",
+    "assertionType": "CellFormulaEqualsNormalized",
+    "sheetName": "Kadry",
+    "cell": "D34",
+    "expectedFormula": "=COUNTBLANK(H4:H33)"
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P20_T06_TITLE",
+    "instructionKey": "P20_T06_INST",
+    "assertionType": "ChartSheetLegendRemovedValueLabelsAboveBySource",
+    "sheetName": "Kadry 22",
+    "sourceSheetName": "Elmenshawy",
+    "expectedChartType": 51,
+    "expectedText": "Kadry 22",
+    "targetRanges": [
+      "C3",
+      "B4:B33",
+      "C4:C33"
+    ]
   }
 ]

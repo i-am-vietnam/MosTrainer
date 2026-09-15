@@ -1,0 +1,14 @@
+﻿{
+  "P21_T01_TITLE": "Nhiệm vụ 1",
+  "P21_T01_INST": "Trên trang tính \"Elmenshawy\", từ văn bản hiện có trong ô A2, chèn một siêu liên kết đến \"http://www.Mos2019.com\" với Screen Tip hiển thị \"Company Website\".",
+  "P21_T02_TITLE": "Nhiệm vụ 2",
+  "P21_T02_INST": "Trên trang tính \"El3ameed\", trong cột \"Bonus\", sử dụng một hàm để hiển thị \"500\" nếu cột \"Books Sold\" lớn hơn 10,000. Nếu không, hiển thị \"100\".",
+  "P21_T03_TITLE": "Nhiệm vụ 3",
+  "P21_T03_INST": "Xóa các thuộc tính ẩn và thông tin cá nhân khỏi sổ làm việc. Không xóa bất kỳ nội dung nào khác.",
+  "P21_T04_TITLE": "Nhiệm vụ 4",
+  "P21_T04_INST": "Trên trang tính \"El3ameed\", hiển thị các công thức thay vì các giá trị.",
+  "P21_T05_TITLE": "Nhiệm vụ 5",
+  "P21_T05_INST": "Trên trang tính \"Kadry\", trong cột \"City Code\", sửa đổi công thức để hiển thị các chữ cái ở dạng chữ hoa.",
+  "P21_T06_TITLE": "Nhiệm vụ 6",
+  "P21_T06_INST": "Trên trang tính \"Elmenshawy\", mở rộng biểu đồ để bao gồm dữ liệu \"Current Year\"."
+}

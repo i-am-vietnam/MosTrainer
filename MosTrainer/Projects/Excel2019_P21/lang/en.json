@@ -1,0 +1,14 @@
+{
+  "P21_T01_TITLE": "Task 1",
+  "P21_T01_INST": "On the \"Elmenshawy\" worksheet, from the existing text in cell A2, insert a hyperlink to \"http://www.Mos2019.com\" with a Screen Tip that displays \"Company Website\".",
+  "P21_T02_TITLE": "Task 2",
+  "P21_T02_INST": "On the \"El3ameed\" worksheet, in the \"Bonus\" column, use a function to display \"500\" if the \"Books Sold\" column is greater than 10,000. Otherwise, display \"100\".",
+  "P21_T03_TITLE": "Task 3",
+  "P21_T03_INST": "Remove hidden properties and personal information from the workbook. Do not remove any other content..",
+  "P21_T04_TITLE": "Task 4",
+  "P21_T04_INST": "On the \"El3ameed\" worksheet, display the formulas instead of the values.",
+  "P21_T05_TITLE": "Task 5",
+  "P21_T05_INST": "On the \"Kadry\" worksheet, in the \"City Code\" column, modify the formula to display the letters in uppercase.",
+  "P21_T06_TITLE": "Task 6",
+  "P21_T06_INST": "On the \"Elmenshawy\" worksheet, expand the chart to include the \"Current Year\" data."
+}

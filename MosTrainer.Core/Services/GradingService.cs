@@ -75,7 +75,9 @@ namespace MosTrainer.Core.Services
                 "IfFormulaByHeadersInRanges", "ChartSheetTitleAboveValueLabelsOutsideEndBySource",
                 "TableCreatedWithHeadersAndStyle", "TableRowContainingTextDeletedByValues",
                 "ClusteredColumnChartByHeadersRightOfData", "LeftFormulaByHeadersInRanges",
-                "ChartExColorPaletteEquals", "RangeFormulaMultipliesNamedRange"
+                "ChartExColorPaletteEquals", "RangeFormulaMultipliesNamedRange",
+                "TitleSubtitleFormattingCopiedPreserveText", "TableNameOnRangeEquals",
+                "ChartSheetLegendRemovedValueLabelsAboveBySource"
             };
 
         private readonly IExcelController _excel;
@@ -165,6 +167,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P18(task);
                 case "Excel2019_P19":
                     return CheckExcel2019P19(task);
+                case "Excel2019_P20":
+                    return CheckExcel2019P20(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -250,6 +254,10 @@ namespace MosTrainer.Core.Services
         {
             return CheckByAssertion(task);
         }
+        private (bool pass, string message) CheckExcel2019P20(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
         private (bool pass, string message) CheckByAssertion(TaskDefinition task)
         {
             string type = (task.AssertionType ?? "").Trim();
@@ -288,6 +296,10 @@ namespace MosTrainer.Core.Services
 
                 case "TableExists":
                     return Result(_excel.TableExists(task.SheetName, task.TableName));
+
+                case "TableNameOnRangeEquals":
+                    return Result(_excel.TableNameOnRangeEquals(
+                        task.SheetName, task.Range, task.TableName));
 
                 case "ChartExists":
                     return Result(_excel.ChartExists(task.SheetName));
@@ -481,6 +493,13 @@ namespace MosTrainer.Core.Services
                         string.IsNullOrWhiteSpace(task.SourceRange) ? task.Range : task.SourceRange,
                         task.SheetName,
                         GetAddress(task)));
+                case "TitleSubtitleFormattingCopiedPreserveText":
+                    return Result(_excel.RangeFormattingMatchesAndPreservesText(
+                        task.SourceSheetName,
+                        string.IsNullOrWhiteSpace(task.SourceRange) ? task.Range : task.SourceRange,
+                        task.SheetName,
+                        GetAddress(task),
+                        task.ExpectedTexts));
 
                 //Project 4 task 3
                 case "ChartSheetLegendRemovedValueLabelsAbove":
@@ -490,6 +509,10 @@ namespace MosTrainer.Core.Services
                 case "NoLegendValueLabelsAbove":
                     return Result(_excel.ChartSheetLegendRemovedValueLabelsAbove(
                         task.SheetName));
+                case "ChartSheetLegendRemovedValueLabelsAboveBySource":
+                    return Result(_excel.ChartSheetLegendRemovedValueLabelsAboveBySource(
+                        task.SheetName, task.SourceSheetName,
+                        task.ExpectedChartType, task.TargetRanges, task.ExpectedText));
 
                 //Project 4 task 4
                 case "WorksheetTableConvertedToRange":

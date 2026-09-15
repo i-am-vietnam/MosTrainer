@@ -3528,10 +3528,16 @@ namespace MosTrainer.Excel
             if (string.IsNullOrWhiteSpace(normalizedFormula))
                 return false;
 
-            if (!normalizedFormula.Contains("SUM("))
+            Match sumMatch = Regex.Match(normalizedFormula, @"^=SUM\((?<arguments>[^()]*)\)$", RegexOptions.IgnoreCase);
+            if (!sumMatch.Success)
                 return false;
 
-            string formulaWithoutNames = normalizedFormula;
+            string[] arguments = sumMatch.Groups["arguments"].Value
+                .Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries);
+            if (arguments.Length != rangeNames.Count)
+                return false;
+
+            List<string> expectedNames = new List<string>();
 
             for (int i = 0; i < rangeNames.Count; i++)
             {
@@ -3539,21 +3545,19 @@ namespace MosTrainer.Excel
                 if (string.IsNullOrWhiteSpace(name))
                     return false;
 
-                if (!normalizedFormula.Contains(name))
-                    return false;
-
-                formulaWithoutNames = formulaWithoutNames.Replace(name, "");
+                expectedNames.Add(name);
             }
 
-            if (FormulaContainsDirectCellReferenceP2T5(formulaWithoutNames))
-                return false;
+            for (int i = 0; i < arguments.Length; i++)
+            {
+                string argument = NormalizeDefinedNameP2T5(arguments[i]);
+                int matchingIndex = expectedNames.FindIndex(name =>
+                    string.Equals(name, argument, StringComparison.OrdinalIgnoreCase));
+                if (matchingIndex < 0) return false;
+                expectedNames.RemoveAt(matchingIndex);
+            }
 
-            // Sau khi bỏ Total1/Total2/Total3, không được còn số cố định nào.
-            // Như vậy =SUM(Total1,Total2,Total3,100) sẽ FAIL.
-            if (Regex.IsMatch(formulaWithoutNames, @"\d"))
-                return false;
-
-            return true;
+            return expectedNames.Count == 0;
         }
 
         private string NormalizeNamedRangeFormulaP2T5(string formula)
@@ -7339,7 +7343,85 @@ namespace MosTrainer.Excel
             if (string.IsNullOrWhiteSpace(sourceXf)) return false;
             if (string.IsNullOrWhiteSpace(targetXf)) return false;
 
-            return string.Equals(sourceXf, targetXf, StringComparison.OrdinalIgnoreCase);
+            if (string.Equals(sourceXf, targetXf, StringComparison.OrdinalIgnoreCase))
+                return true;
+
+            string sourceResolved = GetResolvedCellXfSignatureP20(zip, sourceStyleId);
+            string targetResolved = GetResolvedCellXfSignatureP20(zip, targetStyleId);
+            return !string.IsNullOrWhiteSpace(sourceResolved) &&
+                string.Equals(sourceResolved, targetResolved, StringComparison.OrdinalIgnoreCase);
+        }
+
+        private string GetResolvedCellXfSignatureP20(ZipArchive zip, string styleId)
+        {
+            int index;
+            if (zip == null || !int.TryParse(styleId, out index)) return "";
+            ZipArchiveEntry entry = zip.GetEntry("xl/styles.xml");
+            if (entry == null) return "";
+
+            XDocument document;
+            using (Stream stream = entry.Open()) document = XDocument.Load(stream);
+            XElement cellXfs = document.Descendants().FirstOrDefault(element => element.Name.LocalName == "cellXfs");
+            if (cellXfs == null) return "";
+            List<XElement> xfs = cellXfs.Elements().Where(element => element.Name.LocalName == "xf").ToList();
+            if (index < 0 || index >= xfs.Count) return "";
+
+            XElement xf = xfs[index];
+            StringBuilder signature = new StringBuilder();
+            AppendResolvedStyleComponentP20(signature, document, "fonts", "font", GetIntAttributeP20(xf, "fontId"));
+            AppendResolvedStyleComponentP20(signature, document, "fills", "fill", GetIntAttributeP20(xf, "fillId"));
+            AppendResolvedStyleComponentP20(signature, document, "borders", "border", GetIntAttributeP20(xf, "borderId"));
+
+            string numberFormatId = Convert.ToString((string)xf.Attribute("numFmtId"));
+            XElement numberFormat = document.Descendants().FirstOrDefault(element =>
+                element.Name.LocalName == "numFmt" && string.Equals(
+                    Convert.ToString((string)element.Attribute("numFmtId")), numberFormatId, StringComparison.OrdinalIgnoreCase));
+            signature.Append("NUMFMT:").Append(numberFormat == null ? numberFormatId :
+                Convert.ToString((string)numberFormat.Attribute("formatCode"))).Append('|');
+
+            foreach (XAttribute attribute in xf.Attributes()
+                .Where(attribute => attribute.Name.LocalName != "fontId" && attribute.Name.LocalName != "fillId" &&
+                    attribute.Name.LocalName != "borderId" && attribute.Name.LocalName != "numFmtId" &&
+                    attribute.Name.LocalName != "xfId" && !attribute.Name.LocalName.StartsWith("apply", StringComparison.OrdinalIgnoreCase))
+                .OrderBy(attribute => attribute.Name.LocalName))
+                signature.Append(attribute.Name.LocalName).Append('=').Append(attribute.Value).Append('|');
+
+            foreach (XElement child in xf.Elements().OrderBy(element => element.Name.LocalName))
+                signature.Append(child.ToString(SaveOptions.DisableFormatting)).Append('|');
+            return signature.ToString();
+        }
+
+        private void AppendResolvedStyleComponentP20(StringBuilder signature, XDocument document, string collectionName, string itemName, int index)
+        {
+            XElement collection = document.Descendants().FirstOrDefault(element => element.Name.LocalName == collectionName);
+            XElement item = collection == null ? null : collection.Elements()
+                .Where(element => element.Name.LocalName == itemName).Skip(index).FirstOrDefault();
+            signature.Append(collectionName).Append(':')
+                .Append(item == null ? "" : NormalizeStyleComponentP20(item, collectionName)).Append('|');
+        }
+
+        private string NormalizeStyleComponentP20(XElement element, string collectionName)
+        {
+            XElement normalized = new XElement(element);
+            if (string.Equals(collectionName, "fonts", StringComparison.OrdinalIgnoreCase))
+            {
+                normalized.Descendants().Where(item => item.Name.LocalName == "family" ||
+                    item.Name.LocalName == "charset" || item.Name.LocalName == "scheme").Remove();
+            }
+            else if (string.Equals(collectionName, "fills", StringComparison.OrdinalIgnoreCase))
+            {
+                XElement pattern = normalized.Descendants().FirstOrDefault(item => item.Name.LocalName == "patternFill");
+                if (pattern != null && string.Equals(Convert.ToString((string)pattern.Attribute("patternType")),
+                    "solid", StringComparison.OrdinalIgnoreCase))
+                    pattern.Elements().Where(item => item.Name.LocalName == "bgColor").Remove();
+            }
+            return normalized.ToString(SaveOptions.DisableFormatting);
+        }
+
+        private int GetIntAttributeP20(XElement element, string attributeName)
+        {
+            int value;
+            return element != null && int.TryParse(Convert.ToString((string)element.Attribute(attributeName)), out value) ? value : 0;
         }
 
         private string GetCellXfXmlP4T2Xml(ZipArchive zip, string styleId)
@@ -14585,6 +14667,161 @@ namespace MosTrainer.Excel
             f = f.ToUpperInvariant();
 
             return f;
+        }
+
+        // Project 20 Task 1
+        public bool RangeFormattingMatchesAndPreservesText(
+            string sourceSheetName,
+            string sourceRangeAddress,
+            string targetSheetName,
+            string targetRangeAddress,
+            IList<string> expectedTargetTexts)
+        {
+            if (expectedTargetTexts == null || expectedTargetTexts.Count != 2 ||
+                !string.Equals(NormalizeRangeAddress(sourceRangeAddress), "A1:A2", StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(NormalizeRangeAddress(targetRangeAddress), "A1:A2", StringComparison.OrdinalIgnoreCase))
+                return false;
+
+            return RangeFormattingMatches(sourceSheetName, sourceRangeAddress, targetSheetName, targetRangeAddress) &&
+                CellTextEquals(targetSheetName, "A1", expectedTargetTexts[0]) &&
+                CellTextEquals(targetSheetName, "A2", expectedTargetTexts[1]);
+        }
+
+        // Project 20 Task 2
+        public bool TableNameOnRangeEquals(string sheetName, string rangeAddress, string expectedTableName)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(rangeAddress) ||
+                string.IsNullOrWhiteSpace(expectedTableName)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range tableRange = null;
+            Xl.Range headerRange = null;
+            Xl.Range dataRange = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                if (tables == null) return false;
+
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(dataRange); ReleaseCom(headerRange); ReleaseCom(tableRange); ReleaseCom(table);
+                    dataRange = null; headerRange = null; tableRange = null; table = null;
+                    table = tables.Item[i];
+                    if (table == null) continue;
+                    tableRange = table.Range;
+                    if (tableRange == null || !string.Equals(
+                        NormalizeRangeAddress(Convert.ToString(tableRange.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing])),
+                        NormalizeRangeAddress(rangeAddress), StringComparison.OrdinalIgnoreCase)) continue;
+
+                    headerRange = table.HeaderRowRange;
+                    dataRange = table.DataBodyRange;
+                    if (headerRange == null || dataRange == null ||
+                        Convert.ToInt32(headerRange.Cells.Count) <= 0 || Convert.ToInt32(dataRange.Rows.Count) <= 0)
+                        return false;
+
+                    return string.Equals(Convert.ToString(table.Name).Trim(), expectedTableName.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                        string.Equals(Convert.ToString(table.DisplayName).Trim(), expectedTableName.Trim(), StringComparison.OrdinalIgnoreCase);
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("TableNameOnRangeEquals", "P20 T02 grading failed.", ex, "Excel2019_P20", "T02");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(dataRange); ReleaseCom(headerRange); ReleaseCom(tableRange);
+                ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        // Project 20 Task 6
+        public bool ChartSheetLegendRemovedValueLabelsAboveBySource(
+            string chartSheetName,
+            string sourceSheetName,
+            int expectedChartType,
+            IList<string> sourceRanges,
+            string expectedTitle)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(chartSheetName) || string.IsNullOrWhiteSpace(sourceSheetName) ||
+                sourceRanges == null || sourceRanges.Count != 3) return false;
+
+            Xl.Workbook workbook = null;
+            Xl.Sheets charts = null;
+            Xl.Chart chart = null;
+            Xl.ChartTitle title = null;
+            Xl.SeriesCollection seriesCollection = null;
+            Xl.Series series = null;
+            Xl.Points points = null;
+            Xl.DataLabels labels = null;
+            Xl.DataLabel label = null;
+            try
+            {
+                workbook = (Xl.Workbook)_session.Workbook;
+                charts = workbook.Charts;
+                for (int i = 1; i <= Convert.ToInt32(charts.Count); i++)
+                {
+                    chart = charts.Item[i] as Xl.Chart;
+                    if (chart != null && string.Equals(chart.Name, chartSheetName, StringComparison.OrdinalIgnoreCase)) break;
+                    ReleaseCom(chart);
+                    chart = null;
+                }
+                if (chart == null || Convert.ToInt32(chart.ChartType) != expectedChartType ||
+                    Convert.ToBoolean(chart.HasLegend)) return false;
+
+                if (!string.IsNullOrWhiteSpace(expectedTitle))
+                {
+                    if (!Convert.ToBoolean(chart.HasTitle)) return false;
+                    title = chart.ChartTitle;
+                    if (title == null || !string.Equals(Convert.ToString(title.Text).Trim(), expectedTitle.Trim(), StringComparison.Ordinal))
+                        return false;
+                }
+
+                seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != 1) return false;
+                series = seriesCollection.Item(1);
+                if (series == null || !SeriesFormulaMatchesRangesP09(
+                    Convert.ToString(series.Formula), sourceSheetName, sourceRanges) ||
+                    !Convert.ToBoolean(series.HasDataLabels)) return false;
+
+                points = series.Points(Type.Missing) as Xl.Points;
+                labels = series.DataLabels(Type.Missing) as Xl.DataLabels;
+                if (points == null || labels == null ||
+                    Convert.ToInt32(labels.Count) != Convert.ToInt32(points.Count) ||
+                    Convert.ToInt32(labels.Count) <= 0) return false;
+
+                for (int i = 1; i <= Convert.ToInt32(labels.Count); i++)
+                {
+                    ReleaseCom(label);
+                    label = labels.Item(i) as Xl.DataLabel;
+                    if (label == null ||
+                        Convert.ToInt32(label.Position) != (int)Xl.XlDataLabelPosition.xlLabelPositionOutsideEnd ||
+                        !Convert.ToBoolean(label.ShowValue) ||
+                        Convert.ToBoolean(label.ShowSeriesName) ||
+                        Convert.ToBoolean(label.ShowCategoryName) ||
+                        Convert.ToBoolean(label.ShowLegendKey) ||
+                        Convert.ToBoolean(label.ShowPercentage) ||
+                        Convert.ToBoolean(label.ShowBubbleSize)) return false;
+                }
+                return true;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("ChartSheetLegendRemovedValueLabelsAboveBySource", "P20 T06 grading failed.", ex, "Excel2019_P20", "T06");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(label); ReleaseCom(labels); ReleaseCom(points); ReleaseCom(series);
+                ReleaseCom(seriesCollection); ReleaseCom(title); ReleaseCom(chart); ReleaseCom(charts);
+            }
         }
 
         private string NormalizeRangeAddress(string address)
