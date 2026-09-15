@@ -77,7 +77,8 @@ namespace MosTrainer.Core.Services
                 "ClusteredColumnChartByHeadersRightOfData", "LeftFormulaByHeadersInRanges",
                 "ChartExColorPaletteEquals", "RangeFormulaMultipliesNamedRange",
                 "TitleSubtitleFormattingCopiedPreserveText", "TableNameOnRangeEquals",
-                "ChartSheetLegendRemovedValueLabelsAboveBySource"
+                "ChartSheetLegendRemovedValueLabelsAboveBySource",
+                "IfNumericFormulaByHeadersInRanges", "TableColumnUpperLeftFormulaByHeaders"
             };
 
         private readonly IExcelController _excel;
@@ -169,6 +170,8 @@ namespace MosTrainer.Core.Services
                     return CheckExcel2019P19(task);
                 case "Excel2019_P20":
                     return CheckExcel2019P20(task);
+                case "Excel2019_P21":
+                    return CheckExcel2019P21(task);
 
                 default:
                     return (false, "Unsupported Excel 2019 project: " + task.ProjectId);
@@ -255,6 +258,10 @@ namespace MosTrainer.Core.Services
             return CheckByAssertion(task);
         }
         private (bool pass, string message) CheckExcel2019P20(TaskDefinition task)
+        {
+            return CheckByAssertion(task);
+        }
+        private (bool pass, string message) CheckExcel2019P21(TaskDefinition task)
         {
             return CheckByAssertion(task);
         }
@@ -512,7 +519,7 @@ namespace MosTrainer.Core.Services
                 case "ChartSheetLegendRemovedValueLabelsAboveBySource":
                     return Result(_excel.ChartSheetLegendRemovedValueLabelsAboveBySource(
                         task.SheetName, task.SourceSheetName,
-                        task.ExpectedChartType, task.TargetRanges, task.ExpectedText));
+                        task.ExpectedChartType, task.TargetRanges));
 
                 //Project 4 task 4
                 case "WorksheetTableConvertedToRange":
@@ -868,6 +875,16 @@ namespace MosTrainer.Core.Services
                         task.SheetName, task.TableName, task.TargetHeader,
                         task.CriteriaHeader, task.Operator, task.Threshold,
                         task.TrueText, task.FalseText));
+                case "IfNumericFormulaByHeadersInRanges":
+                    return Result(_excel.IfNumericFormulaByHeadersInRanges(
+                        task.SheetName, task.TargetHeader, task.CriteriaHeader,
+                        task.Range, task.SourceRange, task.Operator, task.Threshold,
+                        task.TrueText, task.FalseText));
+
+                case "TableColumnUpperLeftFormulaByHeaders":
+                    return Result(_excel.TableColumnUpperLeftFormulaByHeaders(
+                        task.SheetName, task.TableName, task.TargetHeader,
+                        task.SourceHeader, task.CharacterCount));
 
                 // Project 10 task 8
                 case "CellHyperlinkWithScreenTipEquals":

@@ -1,20 +1,70 @@
 [
-  { "taskId": "T01",
-   },
-
-  { "taskId": "T02",
-   },
   {
-  "taskId": "T03",
+    "taskId": "T01",
+    "titleKey": "P21_T01_TITLE",
+    "instructionKey": "P21_T01_INST",
+    "assertionType": "CellHyperlinkWithScreenTipEquals",
+    "sheetName": "Elmenshawy",
+    "cell": "A2",
+    "expectedValue": "http://www.Mos2019.com",
+    "expectedFormat": "Company Website",
+    "expectedText": "Mos2019.com"
   },
-
   {
-  "taskId": "T04",
+    "taskId": "T02",
+    "titleKey": "P21_T02_TITLE",
+    "instructionKey": "P21_T02_INST",
+    "assertionType": "IfNumericFormulaByHeadersInRanges",
+    "sheetName": "El3ameed",
+    "targetHeader": "Bonus",
+    "criteriaHeader": "Books Sold",
+    "range": "I2:I37",
+    "sourceRange": "H2:H37",
+    "operator": ">",
+    "threshold": 10000,
+    "trueText": "500",
+    "falseText": "100"
   },
   {
-  "taskId": "T05",
+    "taskId": "T03",
+    "titleKey": "P21_T03_TITLE",
+    "instructionKey": "P21_T03_INST",
+    "assertionType": "WorkbookPersonalInformationRemoved"
   },
-  "taskId": "T06",
-
+  {
+    "taskId": "T04",
+    "titleKey": "P21_T04_TITLE",
+    "instructionKey": "P21_T04_INST",
+    "assertionType": "WorksheetShowFormulasEquals",
+    "sheetName": "El3ameed",
+    "expectedValue": "true"
+  },
+  {
+    "taskId": "T05",
+    "titleKey": "P21_T05_TITLE",
+    "instructionKey": "P21_T05_INST",
+    "assertionType": "TableColumnUpperLeftFormulaByHeaders",
+    "sheetName": "Kadry",
+    "tableName": "Table1",
+    "targetHeader": "City Code",
+    "sourceHeader": "City",
+    "characterCount": 3
+  },
+  {
+    "taskId": "T06",
+    "titleKey": "P21_T06_TITLE",
+    "instructionKey": "P21_T06_INST",
+    "assertionType": "ChartExpandedToIncludeRange",
+    "sheetName": "Elmenshawy",
+    "chartName": "Chart 1",
+    "expectedChartType": 51,
+    "targetRanges": [
+      "B4",
+      "A5:A11",
+      "B5:B11",
+      "C4",
+      "A5:A11",
+      "C5:C11"
+    ]
   }
 ]

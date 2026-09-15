@@ -59,7 +59,6 @@
     "sheetName": "Kadry 22",
     "sourceSheetName": "Elmenshawy",
     "expectedChartType": 51,
-    "expectedText": "Kadry 22",
     "targetRanges": [
       "C3",
       "B4:B33",

@@ -195,7 +195,10 @@ namespace MosTrainer.Core.Interfaces
         // Excel 2019 - Project 20
         bool RangeFormattingMatchesAndPreservesText(string sourceSheetName, string sourceRange, string targetSheetName, string targetRange, IList<string> expectedTargetTexts);
         bool TableNameOnRangeEquals(string sheetName, string rangeAddress, string expectedTableName);
-        bool ChartSheetLegendRemovedValueLabelsAboveBySource(string chartSheetName, string sourceSheetName, int expectedChartType, IList<string> sourceRanges, string expectedTitle);
+        bool ChartSheetLegendRemovedValueLabelsAboveBySource(string chartSheetName, string sourceSheetName, int expectedChartType, IList<string> sourceRanges);
+        // Excel 2019 - Project 21
+        bool IfNumericFormulaByHeadersInRanges(string sheetName, string targetHeader, string criteriaHeader, string targetRangeAddress, string criteriaRangeAddress, string compareOperator, double threshold, string trueValue, string falseValue);
+        bool TableColumnUpperLeftFormulaByHeaders(string sheetName, string tableName, string targetHeader, string sourceHeader, int characterCount);
         string GetCellDisplayText(string address);
     }
 }

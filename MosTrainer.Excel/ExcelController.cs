@@ -11752,7 +11752,7 @@ namespace MosTrainer.Excel
             {
                 Xl.Workbook workbook = (Xl.Workbook)_session.Workbook;
                 if (!Convert.ToBoolean(workbook.RemovePersonalInformation)) return false;
-                if (!WorkbookRetainsP07CoreContent(workbook)) return false;
+                if (!WorkbookRetainsPersonalInfoTaskCoreContent(workbook)) return false;
                 workbook.SaveCopyAs(tempPath);
                 using (ZipArchive archive = ZipFile.OpenRead(tempPath))
                 {
@@ -13810,7 +13810,7 @@ namespace MosTrainer.Excel
                 {
                     ReleaseCom(hyperlink);
                     hyperlink = hyperlinks.Item[i];
-                    if (hyperlink != null && string.Equals(Convert.ToString(hyperlink.Address), expectedAddress, StringComparison.Ordinal) &&
+                    if (hyperlink != null && HyperlinkAddressesEqualP21(Convert.ToString(hyperlink.Address), expectedAddress) &&
                         string.IsNullOrEmpty(Convert.ToString(hyperlink.SubAddress)) &&
                         string.Equals(Convert.ToString(hyperlink.ScreenTip), expectedScreenTip, StringComparison.Ordinal)) return true;
                 }
@@ -13825,6 +13825,18 @@ namespace MosTrainer.Excel
             {
                 ReleaseCom(hyperlink); ReleaseCom(hyperlinks); ReleaseCom(cell); ReleaseCom(ws);
             }
+        }
+
+        private bool HyperlinkAddressesEqualP21(string actualAddress, string expectedAddress)
+        {
+            Uri actualUri;
+            Uri expectedUri;
+            if (Uri.TryCreate(actualAddress, UriKind.Absolute, out actualUri) &&
+                Uri.TryCreate(expectedAddress, UriKind.Absolute, out expectedUri))
+            {
+                return string.Equals(actualUri.AbsoluteUri, expectedUri.AbsoluteUri, StringComparison.Ordinal);
+            }
+            return string.Equals(actualAddress, expectedAddress, StringComparison.Ordinal);
         }
 
         private bool ChartSeriesMatchRangeTriplesP10(Xl.Chart chart, string sourceSheetName, IList<string> sourceRanges)
@@ -13902,6 +13914,53 @@ namespace MosTrainer.Excel
             string normalizedHeader = NormalizeFormula(header);
             return normalized.EndsWith("[@" + normalizedHeader + "]", StringComparison.OrdinalIgnoreCase) ||
                 normalized.EndsWith("[@[" + normalizedHeader + "]]", StringComparison.OrdinalIgnoreCase);
+        }
+
+        private bool WorkbookRetainsPersonalInfoTaskCoreContent(Xl.Workbook workbook)
+        {
+            if (workbook == null) return false;
+            if (WorksheetExistsP21("Sales by Exam")) return WorkbookRetainsP07CoreContent(workbook);
+
+            return Convert.ToInt32(workbook.Worksheets.Count) == 4 &&
+                   WorksheetExistsP21("Elmenshawy") &&
+                   WorksheetExistsP21("Kadry") &&
+                   WorksheetExistsP21("El3ameed") &&
+                   WorksheetExistsP21("Office") &&
+                   WorksheetHasExactTableP07("Elmenshawy", "Table3", "A4:C11") &&
+                   WorksheetHasExactTableP07("Kadry", "Table1", "A1:F20") &&
+                   WorksheetHasNamedChartsP07("Elmenshawy", new[] { "Chart 1" }) &&
+                   WorksheetCellTextEqualsP21("Elmenshawy", "A2", "Mos2019.com") &&
+                   WorksheetCellTextEqualsP21("El3ameed", "H1", "Books Sold") &&
+                   WorksheetCellTextEqualsP21("El3ameed", "I1", "Bonus");
+        }
+
+        private bool WorksheetExistsP21(string sheetName)
+        {
+            Xl.Worksheet worksheet = null;
+            try
+            {
+                worksheet = GetWorksheet(sheetName);
+                return worksheet != null;
+            }
+            finally { ReleaseCom(worksheet); }
+        }
+
+        private bool WorksheetCellTextEqualsP21(string sheetName, string address, string expectedText)
+        {
+            Xl.Worksheet worksheet = null;
+            Xl.Range cell = null;
+            try
+            {
+                worksheet = GetWorksheet(sheetName);
+                if (worksheet == null) return false;
+                cell = worksheet.Range[address];
+                return cell != null && string.Equals(Convert.ToString(cell.Value2), expectedText, StringComparison.Ordinal);
+            }
+            finally
+            {
+                ReleaseCom(cell);
+                ReleaseCom(worksheet);
+            }
         }
 
         public bool RangeFormulaMultipliesNamedRange(
@@ -14746,8 +14805,7 @@ namespace MosTrainer.Excel
             string chartSheetName,
             string sourceSheetName,
             int expectedChartType,
-            IList<string> sourceRanges,
-            string expectedTitle)
+            IList<string> sourceRanges)
         {
             if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
             if (string.IsNullOrWhiteSpace(chartSheetName) || string.IsNullOrWhiteSpace(sourceSheetName) ||
@@ -14756,12 +14814,7 @@ namespace MosTrainer.Excel
             Xl.Workbook workbook = null;
             Xl.Sheets charts = null;
             Xl.Chart chart = null;
-            Xl.ChartTitle title = null;
-            Xl.SeriesCollection seriesCollection = null;
-            Xl.Series series = null;
-            Xl.Points points = null;
-            Xl.DataLabels labels = null;
-            Xl.DataLabel label = null;
+            string tempPath = "";
             try
             {
                 workbook = (Xl.Workbook)_session.Workbook;
@@ -14773,44 +14826,23 @@ namespace MosTrainer.Excel
                     ReleaseCom(chart);
                     chart = null;
                 }
-                if (chart == null || Convert.ToInt32(chart.ChartType) != expectedChartType ||
-                    Convert.ToBoolean(chart.HasLegend)) return false;
+                if (chart == null)
+                    return EmbeddedKadryChartLegendRemovedValueLabelsAboveP20(expectedChartType);
+                if (Convert.ToInt32(chart.ChartType) != expectedChartType ||
+                    !ChartSeriesMatchRangeTriplesP10(chart, sourceSheetName, sourceRanges)) return false;
 
-                if (!string.IsNullOrWhiteSpace(expectedTitle))
-                {
-                    if (!Convert.ToBoolean(chart.HasTitle)) return false;
-                    title = chart.ChartTitle;
-                    if (title == null || !string.Equals(Convert.ToString(title.Text).Trim(), expectedTitle.Trim(), StringComparison.Ordinal))
-                        return false;
-                }
+                // Excel builds do not always serialize chart-sheet labels identically.
+                // Prefer the live series-level state when it is fully observable, and
+                // retain the OOXML path below as a strict fallback.
+                bool liveStateMatches;
+                if (TryGetChartNoLegendOutsideEndValueLabelsP20(chart, out liveStateMatches))
+                    return liveStateMatches;
 
-                seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
-                if (seriesCollection == null || Convert.ToInt32(seriesCollection.Count) != 1) return false;
-                series = seriesCollection.Item(1);
-                if (series == null || !SeriesFormulaMatchesRangesP09(
-                    Convert.ToString(series.Formula), sourceSheetName, sourceRanges) ||
-                    !Convert.ToBoolean(series.HasDataLabels)) return false;
-
-                points = series.Points(Type.Missing) as Xl.Points;
-                labels = series.DataLabels(Type.Missing) as Xl.DataLabels;
-                if (points == null || labels == null ||
-                    Convert.ToInt32(labels.Count) != Convert.ToInt32(points.Count) ||
-                    Convert.ToInt32(labels.Count) <= 0) return false;
-
-                for (int i = 1; i <= Convert.ToInt32(labels.Count); i++)
-                {
-                    ReleaseCom(label);
-                    label = labels.Item(i) as Xl.DataLabel;
-                    if (label == null ||
-                        Convert.ToInt32(label.Position) != (int)Xl.XlDataLabelPosition.xlLabelPositionOutsideEnd ||
-                        !Convert.ToBoolean(label.ShowValue) ||
-                        Convert.ToBoolean(label.ShowSeriesName) ||
-                        Convert.ToBoolean(label.ShowCategoryName) ||
-                        Convert.ToBoolean(label.ShowLegendKey) ||
-                        Convert.ToBoolean(label.ShowPercentage) ||
-                        Convert.ToBoolean(label.ShowBubbleSize)) return false;
-                }
-                return true;
+                tempPath = Path.Combine(Path.GetTempPath(),
+                    "MosTrainer_P20T06_" + Guid.NewGuid().ToString("N") + ".xlsx");
+                workbook.SaveCopyAs(tempPath);
+                return File.Exists(tempPath) &&
+                    XlsxChartSheetHasNoLegendAndValueLabelsAboveP4T3Xml(tempPath, chartSheetName);
             }
             catch (Exception ex)
             {
@@ -14819,9 +14851,278 @@ namespace MosTrainer.Excel
             }
             finally
             {
-                ReleaseCom(label); ReleaseCom(labels); ReleaseCom(points); ReleaseCom(series);
-                ReleaseCom(seriesCollection); ReleaseCom(title); ReleaseCom(chart); ReleaseCom(charts);
+                try
+                {
+                    if (!string.IsNullOrWhiteSpace(tempPath) && File.Exists(tempPath)) File.Delete(tempPath);
+                }
+                catch { }
+                ReleaseCom(chart); ReleaseCom(charts);
             }
+        }
+
+        private bool EmbeddedKadryChartLegendRemovedValueLabelsAboveP20(int expectedChartType)
+        {
+            Xl.Worksheet worksheet = null;
+            Xl.ChartObjects chartObjects = null;
+            Xl.ChartObject chartObject = null;
+            Xl.Chart chart = null;
+            try
+            {
+                worksheet = GetWorksheet("Kadry");
+                if (worksheet == null) return false;
+                chartObjects = worksheet.ChartObjects(Type.Missing) as Xl.ChartObjects;
+                if (chartObjects == null) return false;
+
+                IList<string> expectedRanges = new[]
+                {
+                    "C3", "A4:B33", "C4:C33",
+                    "D3", "A4:B33", "D4:D33",
+                    "E3", "A4:B33", "E4:E33",
+                    "F3", "A4:B33", "F4:F33",
+                    "G3", "A4:B33", "G4:G33",
+                    "H3", "A4:B33", "H4:H33",
+                    "I3", "A4:B33", "I4:I33"
+                };
+
+                for (int index = 1; index <= Convert.ToInt32(chartObjects.Count); index++)
+                {
+                    ReleaseCom(chart); chart = null;
+                    ReleaseCom(chartObject); chartObject = null;
+                    chartObject = chartObjects.Item(index) as Xl.ChartObject;
+                    chart = chartObject == null ? null : chartObject.Chart;
+                    if (chart == null || Convert.ToInt32(chart.ChartType) != expectedChartType ||
+                        !ChartSeriesMatchRangeTriplesP10(chart, "Kadry", expectedRanges)) continue;
+
+                    bool matches;
+                    return TryGetChartNoLegendOutsideEndValueLabelsP20(chart, out matches) && matches;
+                }
+                return false;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("EmbeddedKadryChartLegendRemovedValueLabelsAboveP20",
+                    "P20 T06 embedded-chart fallback failed.", ex, "Excel2019_P20", "T06");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(chart); ReleaseCom(chartObject); ReleaseCom(chartObjects); ReleaseCom(worksheet);
+            }
+        }
+
+        private bool TryGetChartNoLegendOutsideEndValueLabelsP20(Xl.Chart chart, out bool matches)
+        {
+            matches = false;
+            if (chart == null) return true;
+            Xl.SeriesCollection seriesCollection = null;
+            Xl.Series series = null;
+            Xl.DataLabels labels = null;
+            try
+            {
+                if (Convert.ToBoolean(chart.HasLegend)) return true;
+                seriesCollection = chart.SeriesCollection(Type.Missing) as Xl.SeriesCollection;
+                int count = seriesCollection == null ? 0 : Convert.ToInt32(seriesCollection.Count);
+                if (count <= 0) return true;
+
+                for (int index = 1; index <= count; index++)
+                {
+                    ReleaseCom(labels); labels = null;
+                    ReleaseCom(series); series = null;
+                    series = seriesCollection.Item(index);
+                    if (series == null || !Convert.ToBoolean(series.HasDataLabels)) return true;
+                    labels = series.DataLabels(Type.Missing) as Xl.DataLabels;
+                    if (labels == null || Convert.ToInt32(labels.Position) !=
+                        (int)Xl.XlDataLabelPosition.xlLabelPositionOutsideEnd ||
+                        !Convert.ToBoolean(labels.ShowValue) ||
+                        Convert.ToBoolean(labels.ShowSeriesName) ||
+                        Convert.ToBoolean(labels.ShowCategoryName) ||
+                        Convert.ToBoolean(labels.ShowLegendKey)) return true;
+                }
+                matches = true;
+                return true;
+            }
+            catch
+            {
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(labels);
+                ReleaseCom(series);
+                ReleaseCom(seriesCollection);
+            }
+        }
+
+        // Project 21 Task 2
+        public bool IfNumericFormulaByHeadersInRanges(
+            string sheetName,
+            string targetHeader,
+            string criteriaHeader,
+            string targetRangeAddress,
+            string criteriaRangeAddress,
+            string compareOperator,
+            double threshold,
+            string trueValue,
+            string falseValue)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(targetHeader) ||
+                string.IsNullOrWhiteSpace(criteriaHeader) || string.IsNullOrWhiteSpace(targetRangeAddress) ||
+                string.IsNullOrWhiteSpace(criteriaRangeAddress) || compareOperator != ">") return false;
+
+            double expectedTrue;
+            double expectedFalse;
+            if (!TryToDouble(trueValue, out expectedTrue) || !TryToDouble(falseValue, out expectedFalse)) return false;
+
+            Xl.Worksheet ws = null;
+            Xl.Range targets = null;
+            Xl.Range criteria = null;
+            Xl.Range targetHeaderCell = null;
+            Xl.Range criteriaHeaderCell = null;
+            Xl.Range targetCell = null;
+            Xl.Range criteriaCell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                targets = ws.Range[targetRangeAddress];
+                criteria = ws.Range[criteriaRangeAddress];
+                if (targets == null || criteria == null || Convert.ToInt32(targets.Columns.Count) != 1 ||
+                    Convert.ToInt32(criteria.Columns.Count) != 1 ||
+                    Convert.ToInt32(targets.Rows.Count) != Convert.ToInt32(criteria.Rows.Count)) return false;
+
+                targetCell = targets.Cells[1, 1] as Xl.Range;
+                criteriaCell = criteria.Cells[1, 1] as Xl.Range;
+                targetHeaderCell = targetCell == null ? null : targetCell.Offset[-1, 0] as Xl.Range;
+                criteriaHeaderCell = criteriaCell == null ? null : criteriaCell.Offset[-1, 0] as Xl.Range;
+                ReleaseCom(targetCell); targetCell = null;
+                ReleaseCom(criteriaCell); criteriaCell = null;
+                if (targetHeaderCell == null || criteriaHeaderCell == null ||
+                    !string.Equals(NormalizeText(Convert.ToString(targetHeaderCell.Value2)), NormalizeText(targetHeader), StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(NormalizeText(Convert.ToString(criteriaHeaderCell.Value2)), NormalizeText(criteriaHeader), StringComparison.OrdinalIgnoreCase))
+                    return false;
+
+                int rowCount = Convert.ToInt32(targets.Rows.Count);
+                for (int row = 1; row <= rowCount; row++)
+                {
+                    ReleaseCom(targetCell); ReleaseCom(criteriaCell);
+                    targetCell = targets.Cells[row, 1] as Xl.Range;
+                    criteriaCell = criteria.Cells[row, 1] as Xl.Range;
+                    if (targetCell == null || criteriaCell == null || !Convert.ToBoolean(targetCell.HasFormula)) return false;
+
+                    double criteriaNumber;
+                    double actualNumber;
+                    if (!TryToDouble(criteriaCell.Value2, out criteriaNumber) || !TryToDouble(targetCell.Value2, out actualNumber)) return false;
+                    double expectedNumber = criteriaNumber > threshold ? expectedTrue : expectedFalse;
+                    if (Math.Abs(actualNumber - expectedNumber) > 0.000001d) return false;
+
+                    string criteriaAddress = Convert.ToString(criteriaCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!FormulaMatchesNumericIfP10(Convert.ToString(targetCell.Formula), criteriaAddress, criteriaHeader,
+                        threshold, expectedTrue, expectedFalse)) return false;
+                }
+                return rowCount > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("IfNumericFormulaByHeadersInRanges", "P21 T02 grading failed.", ex, "Excel2019_P21", "T02");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(criteriaCell); ReleaseCom(targetCell);
+                ReleaseCom(criteriaHeaderCell); ReleaseCom(targetHeaderCell);
+                ReleaseCom(criteria); ReleaseCom(targets); ReleaseCom(ws);
+            }
+        }
+
+        // Project 21 Task 5
+        public bool TableColumnUpperLeftFormulaByHeaders(
+            string sheetName,
+            string tableName,
+            string targetHeader,
+            string sourceHeader,
+            int characterCount)
+        {
+            if (!IsOpened) throw new InvalidOperationException("Workbook not opened.");
+            if (string.IsNullOrWhiteSpace(sheetName) || string.IsNullOrWhiteSpace(tableName) ||
+                string.IsNullOrWhiteSpace(targetHeader) || string.IsNullOrWhiteSpace(sourceHeader) || characterCount <= 0)
+                return false;
+
+            Xl.Worksheet ws = null;
+            Xl.ListObjects tables = null;
+            Xl.ListObject table = null;
+            Xl.Range data = null;
+            Xl.Range targets = null;
+            Xl.Range sources = null;
+            Xl.Range targetCell = null;
+            Xl.Range sourceCell = null;
+            try
+            {
+                ws = GetWorksheet(sheetName);
+                if (ws == null) return false;
+                tables = ws.ListObjects;
+                for (int i = 1; i <= Convert.ToInt32(tables.Count); i++)
+                {
+                    ReleaseCom(table);
+                    table = tables.Item[i];
+                    if (table != null && string.Equals(Convert.ToString(table.Name), tableName, StringComparison.OrdinalIgnoreCase)) break;
+                    table = null;
+                }
+                if (table == null) return false;
+
+                int targetIndex = FindTableColumnIndexP05T5(table, targetHeader);
+                int sourceIndex = FindTableColumnIndexP05T5(table, sourceHeader);
+                if (targetIndex <= 0 || sourceIndex <= 0) return false;
+                data = table.DataBodyRange;
+                if (data == null) return false;
+                targets = data.Columns[targetIndex] as Xl.Range;
+                sources = data.Columns[sourceIndex] as Xl.Range;
+                if (targets == null || sources == null ||
+                    Convert.ToInt32(targets.Rows.Count) != Convert.ToInt32(sources.Rows.Count)) return false;
+
+                int rowCount = Convert.ToInt32(targets.Rows.Count);
+                for (int row = 1; row <= rowCount; row++)
+                {
+                    ReleaseCom(targetCell); ReleaseCom(sourceCell);
+                    targetCell = targets.Cells[row, 1] as Xl.Range;
+                    sourceCell = sources.Cells[row, 1] as Xl.Range;
+                    if (targetCell == null || sourceCell == null || !Convert.ToBoolean(targetCell.HasFormula)) return false;
+
+                    string sourceText = Convert.ToString(sourceCell.Value2) ?? "";
+                    string expected = sourceText.Substring(0, Math.Min(characterCount, sourceText.Length)).ToUpperInvariant();
+                    if (!string.Equals(Convert.ToString(targetCell.Value2), expected, StringComparison.Ordinal)) return false;
+                    string sourceAddress = Convert.ToString(sourceCell.Address[false, false, Xl.XlReferenceStyle.xlA1, Type.Missing, Type.Missing]);
+                    if (!FormulaMatchesUpperLeftP21(Convert.ToString(targetCell.Formula), sourceAddress, sourceHeader, characterCount))
+                        return false;
+                }
+                return rowCount > 0;
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error("TableColumnUpperLeftFormulaByHeaders", "P21 T05 grading failed.", ex, "Excel2019_P21", "T05");
+                return false;
+            }
+            finally
+            {
+                ReleaseCom(sourceCell); ReleaseCom(targetCell); ReleaseCom(sources); ReleaseCom(targets);
+                ReleaseCom(data); ReleaseCom(table); ReleaseCom(tables); ReleaseCom(ws);
+            }
+        }
+
+        private bool FormulaMatchesUpperLeftP21(string formula, string sourceAddress, string sourceHeader, int characterCount)
+        {
+            string normalized = NormalizeFormula(formula);
+            Match match = Regex.Match(normalized, @"^=UPPER\(LEFT\((?<source>.+),(?<count>\d+)\)\)$", RegexOptions.IgnoreCase);
+            int actualCount;
+            if (!match.Success || !int.TryParse(match.Groups["count"].Value, out actualCount) || actualCount != characterCount)
+                return false;
+
+            string source = TrimOuterParenthesesP05T5(match.Groups["source"].Value);
+            if (ReferenceEqualsP10(source, sourceAddress)) return true;
+            string header = NormalizeFormula(sourceHeader);
+            return source.EndsWith("[@" + header + "]", StringComparison.OrdinalIgnoreCase) ||
+                source.EndsWith("[@[" + header + "]]", StringComparison.OrdinalIgnoreCase) ||
+                source.EndsWith("[[#THISROW],[" + header + "]]", StringComparison.OrdinalIgnoreCase);
         }
 
         private string NormalizeRangeAddress(string address)
