@@ -19,6 +19,7 @@ namespace MosTrainer
         private readonly ExcelController _excel = new ExcelController();
         private readonly GradingService _grading;
         private readonly TestSession _testSession;
+        private readonly TestingWorkspaceService _testingWorkspace;
 
         // ===== State =====
         private List<ProjectPackage> _projects = new List<ProjectPackage>();
@@ -35,6 +36,7 @@ namespace MosTrainer
         private DateTime _projectStartTime;
         private bool _timerRunning = false;
         private bool _testingTimeoutHandled = false;
+        private bool _testingSwitchInProgress = false;
 
         public Form1()
             : this(null)
@@ -44,6 +46,9 @@ namespace MosTrainer
         internal Form1(TestSession testSession)
         {
             _testSession = testSession;
+            _testingWorkspace = testSession == null
+                ? null
+                : new TestingWorkspaceService(testSession);
             InitializeComponent();
 
             _grading = new GradingService(_excel);
@@ -54,6 +59,8 @@ namespace MosTrainer
             btnNext.Click += btnNext_Click;
             btnRestart.Click += btnRestart_Click;
             btnGrade.Click += btnGrade_Click;
+            btnPrevProject.Click += btnPrevProject_Click;
+            btnNextProject.Click += btnNextProject_Click;
 
             tabTasks.SelectedIndexChanged += tabTasks_SelectedIndexChanged;
             timerMain.Tick += timerMain_Tick;
@@ -96,31 +103,31 @@ namespace MosTrainer
             btnGrade.Visible = false;
             btnRestart.Visible = false;
 
-            LockTestingInteractions();
+            btnPrevProject.Visible = true;
+            btnNextProject.Visible = true;
 
-            string projectId = _testSession.CurrentProject.Meta.ProjectId;
+            LockTestingInteractions();
             bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
 
-            lblProject.Text = vietnamese
-                ? "Dự án: " + projectId
-                : "Project: " + projectId;
-            lblProjectInfo.Text = vietnamese
-                ? "Dự án " + _testSession.ProjectNumber + "/" + _testSession.TotalProjects
-                : "Project " + _testSession.ProjectNumber + "/" + _testSession.TotalProjects;
-            lblProjectInfo.Visible = true;
+            btnPrevProject.Text = vietnamese ? "Dự án trước" : "Previous Project";
+            btnNextProject.Text = vietnamese ? "Dự án tiếp" : "Next Project";
+            UpdateTestingProjectDisplay();
 
             lblStatus.ForeColor = Color.Black;
             lblStatus.Text = vietnamese
-                ? "Chế độ thi - workbook sẽ được khởi tạo ở giai đoạn tiếp theo."
-                : "Testing Mode - workbook setup will be added in the next phase.";
+                ? "Đang mở workbook của bài thi..."
+                : "Opening the Testing workbook...";
 
             lblTimer.Visible = true;
             timerMain.Interval = 1000;
             _timerRunning = true;
             UpdateTestingCountdown();
 
-            if (!_testingTimeoutHandled)
-                timerMain.Start();
+            if (_testingTimeoutHandled)
+                return;
+
+            timerMain.Start();
+            OpenInitialTestingProject();
         }
 
         private void UpdateTestingCountdown()
@@ -153,9 +160,26 @@ namespace MosTrainer
 
             bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
             lblStatus.ForeColor = Color.Crimson;
+
+            if (_excel.IsOpened)
+            {
+                try
+                {
+                    _excel.SaveWorkbook();
+                    _excel.Close();
+                }
+                catch (Exception ex)
+                {
+                    lblStatus.Text = vietnamese
+                        ? "Đã hết giờ nhưng không thể lưu workbook; workbook được giữ mở để tránh mất bài: " + ex.Message
+                        : "Time expired, but the workbook could not be saved and remains open to avoid data loss: " + ex.Message;
+                    return;
+                }
+            }
+
             lblStatus.Text = vietnamese
-                ? "Đã hết thời gian làm bài. Hệ thống sẽ tự động nộp bài."
-                : "Time expired. Automatic submission will be handled by the testing submission pipeline.";
+                ? "Đã hết thời gian làm bài. Workbook đã được lưu và đóng."
+                : "Time expired. The workbook was saved and closed.";
         }
 
         private void LockTestingInteractions()
@@ -166,7 +190,174 @@ namespace MosTrainer
             btnNext.Enabled = false;
             btnRestart.Enabled = false;
             btnGrade.Enabled = false;
+            btnPrevProject.Enabled = false;
+            btnNextProject.Enabled = false;
             tabTasks.Enabled = false;
+        }
+
+        private void OpenInitialTestingProject()
+        {
+            try
+            {
+                TestProjectState state = _testingWorkspace.PrepareProject(_testSession.CurrentProjectIndex);
+                OpenTestingWorkbook(state);
+                CommitTestingProjectUi(state);
+            }
+            catch (Exception ex)
+            {
+                bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+                LockTestingInteractions();
+                lblStatus.ForeColor = Color.Crimson;
+                lblStatus.Text = vietnamese
+                    ? "Không thể mở workbook bài thi: " + ex.Message
+                    : "Unable to open the Testing workbook: " + ex.Message;
+            }
+            finally
+            {
+                UpdateTestingCountdown();
+            }
+        }
+
+        private void OpenTestingWorkbook(TestProjectState state)
+        {
+            _currentAssetsDir = AssetsDeployer.DeployProjectAssets(
+                state.ProjectId,
+                state.Project.ProjectFolderPath);
+            _excel.OpenWorkbook(state.WorkingWorkbookPath);
+        }
+
+        private void CommitTestingProjectUi(TestProjectState state)
+        {
+            _currentProject = state.Project;
+            _workingXlsxPath = state.WorkingWorkbookPath;
+
+            BuildTaskTabs(_currentProject);
+            tabTasks.Visible = true;
+            tabTasks.Enabled = true;
+            btnPrev.Enabled = true;
+            btnNext.Enabled = true;
+
+            UpdateTestingProjectDisplay();
+            UpdateTestingProjectNavigationButtons();
+        }
+
+        private void UpdateTestingProjectDisplay()
+        {
+            string projectId = _testSession.CurrentProject.Meta.ProjectId;
+            bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+
+            lblProject.Text = vietnamese
+                ? "Dự án: " + projectId
+                : "Project: " + projectId;
+            lblProjectInfo.Text = vietnamese
+                ? "Dự án " + _testSession.ProjectNumber + "/" + _testSession.TotalProjects
+                : "Project " + _testSession.ProjectNumber + "/" + _testSession.TotalProjects;
+            lblProjectInfo.Visible = true;
+        }
+
+        private void UpdateTestingProjectNavigationButtons()
+        {
+            bool canNavigate = !_testingTimeoutHandled &&
+                !_testingSwitchInProgress &&
+                _excel.IsOpened;
+
+            btnPrevProject.Enabled = canNavigate && _testSession.CurrentProjectIndex > 0;
+            btnNextProject.Enabled = canNavigate &&
+                _testSession.CurrentProjectIndex < _testSession.TotalProjects - 1;
+        }
+
+        private void btnPrevProject_Click(object sender, EventArgs e)
+        {
+            SwitchTestingProject(_testSession.CurrentProjectIndex - 1);
+        }
+
+        private void btnNextProject_Click(object sender, EventArgs e)
+        {
+            SwitchTestingProject(_testSession.CurrentProjectIndex + 1);
+        }
+
+        private void SwitchTestingProject(int targetIndex)
+        {
+            if (_testSession == null || _testingSwitchInProgress || _testingTimeoutHandled)
+                return;
+
+            DateTime currentUtc = DateTime.UtcNow;
+            if (_testSession.IsExpiredAt(currentUtc))
+            {
+                lblTimer.Text = "00:00";
+                HandleTestingTimeExpired();
+                return;
+            }
+
+            if (targetIndex < 0 || targetIndex >= _testSession.TotalProjects)
+                return;
+
+            int currentIndex = _testSession.CurrentProjectIndex;
+            TestProjectState currentState = _testingWorkspace.GetProjectState(currentIndex);
+            bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+
+            _testingSwitchInProgress = true;
+            UpdateTestingProjectNavigationButtons();
+
+            try
+            {
+                TestProjectState targetState = _testingWorkspace.PrepareProject(targetIndex);
+
+                _excel.SaveWorkbook();
+                _excel.Close();
+
+                try
+                {
+                    OpenTestingWorkbook(targetState);
+                }
+                catch (Exception targetException)
+                {
+                    string recoveryMessage;
+                    try
+                    {
+                        _excel.OpenWorkbook(currentState.WorkingWorkbookPath);
+                        _workingXlsxPath = currentState.WorkingWorkbookPath;
+                        recoveryMessage = vietnamese
+                            ? " Workbook hiện tại đã được mở lại."
+                            : " The current workbook was reopened.";
+                    }
+                    catch (Exception recoveryException)
+                    {
+                        recoveryMessage = vietnamese
+                            ? " Không thể mở lại workbook hiện tại: " + recoveryException.Message
+                            : " The current workbook could not be reopened: " + recoveryException.Message;
+                    }
+
+                    throw new InvalidOperationException(
+                        (vietnamese
+                            ? "Không thể mở workbook đích."
+                            : "The target workbook could not be opened.") +
+                        recoveryMessage,
+                        targetException);
+                }
+
+                _testSession.MoveToProject(targetIndex);
+                CommitTestingProjectUi(targetState);
+                lblStatus.ForeColor = Color.DarkGreen;
+                lblStatus.Text = vietnamese
+                    ? "Đã chuyển sang " + targetState.ProjectId + "."
+                    : "Switched to " + targetState.ProjectId + ".";
+            }
+            catch (Exception ex)
+            {
+                lblStatus.ForeColor = Color.Crimson;
+                lblStatus.Text = vietnamese
+                    ? "Không thể chuyển dự án: " + ex.Message
+                    : "Unable to switch project: " + ex.Message;
+            }
+            finally
+            {
+                _testingSwitchInProgress = false;
+                UpdateTestingCountdown();
+
+                if (!_testingTimeoutHandled)
+                    UpdateTestingProjectNavigationButtons();
+            }
         }
 
         // =========================
@@ -357,7 +548,11 @@ namespace MosTrainer
             }
 
             lblStatus.ForeColor = Color.Black;
-            lblStatus.Text = "Task " + (tabTasks.SelectedIndex + 1) + "/" + _currentProject.Tasks.Count;
+            bool vietnameseTesting = _testSession != null &&
+                string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+            lblStatus.Text = vietnameseTesting
+                ? "Nhiệm vụ " + (tabTasks.SelectedIndex + 1) + "/" + _currentProject.Tasks.Count
+                : "Task " + (tabTasks.SelectedIndex + 1) + "/" + _currentProject.Tasks.Count;
         }
 
         // =========================
@@ -441,6 +636,29 @@ namespace MosTrainer
         // =========================
         // Close excel when exit
         // =========================
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (_testSession != null && _excel.IsOpened)
+            {
+                try
+                {
+                    _excel.SaveWorkbook();
+                }
+                catch (Exception ex)
+                {
+                    e.Cancel = true;
+                    bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+                    lblStatus.ForeColor = Color.Crimson;
+                    lblStatus.Text = vietnamese
+                        ? "Không thể đóng bài thi vì workbook chưa lưu được: " + ex.Message
+                        : "The test cannot be closed because the workbook could not be saved: " + ex.Message;
+                    return;
+                }
+            }
+
+            base.OnFormClosing(e);
+        }
+
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             try

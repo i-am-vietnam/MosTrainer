@@ -42,6 +42,8 @@
             this.btnNext = new System.Windows.Forms.Button();
             this.btnRestart = new System.Windows.Forms.Button();
             this.btnGrade = new System.Windows.Forms.Button();
+            this.btnPrevProject = new System.Windows.Forms.Button();
+            this.btnNextProject = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
             this.lblTimer = new System.Windows.Forms.Label();
             this.timerMain = new System.Windows.Forms.Timer(this.components);
@@ -167,7 +169,9 @@
             // 
             // tblFooterButtons
             // 
-            this.tblFooterButtons.ColumnCount = 5;
+            this.tblFooterButtons.ColumnCount = 7;
+            this.tblFooterButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
+            this.tblFooterButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tblFooterButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tblFooterButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tblFooterButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
@@ -177,7 +181,9 @@
             this.tblFooterButtons.Controls.Add(this.btnNext, 1, 0);
             this.tblFooterButtons.Controls.Add(this.btnRestart, 2, 0);
             this.tblFooterButtons.Controls.Add(this.btnGrade, 3, 0);
-            this.tblFooterButtons.Controls.Add(this.lblStatus, 4, 0);
+            this.tblFooterButtons.Controls.Add(this.btnPrevProject, 4, 0);
+            this.tblFooterButtons.Controls.Add(this.btnNextProject, 5, 0);
+            this.tblFooterButtons.Controls.Add(this.lblStatus, 6, 0);
             this.tblFooterButtons.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tblFooterButtons.Location = new System.Drawing.Point(8, 8);
             this.tblFooterButtons.Name = "tblFooterButtons";
@@ -221,15 +227,35 @@
             this.btnGrade.TabIndex = 3;
             this.btnGrade.Text = "Grade Project";
             this.btnGrade.UseVisualStyleBackColor = true;
+            //
+            // btnPrevProject
+            //
+            this.btnPrevProject.Location = new System.Drawing.Point(387, 3);
+            this.btnPrevProject.Name = "btnPrevProject";
+            this.btnPrevProject.Size = new System.Drawing.Size(135, 28);
+            this.btnPrevProject.TabIndex = 4;
+            this.btnPrevProject.Text = "Previous Project";
+            this.btnPrevProject.UseVisualStyleBackColor = true;
+            this.btnPrevProject.Visible = false;
+            //
+            // btnNextProject
+            //
+            this.btnNextProject.Location = new System.Drawing.Point(528, 3);
+            this.btnNextProject.Name = "btnNextProject";
+            this.btnNextProject.Size = new System.Drawing.Size(135, 28);
+            this.btnNextProject.TabIndex = 5;
+            this.btnNextProject.Text = "Next Project";
+            this.btnNextProject.UseVisualStyleBackColor = true;
+            this.btnNextProject.Visible = false;
             // 
             // lblStatus
             // 
             this.lblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblStatus.ForeColor = System.Drawing.Color.DarkGreen;
-            this.lblStatus.Location = new System.Drawing.Point(387, 0);
+            this.lblStatus.Location = new System.Drawing.Point(669, 0);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(1500, 34);
-            this.lblStatus.TabIndex = 4;
+            this.lblStatus.Size = new System.Drawing.Size(1218, 34);
+            this.lblStatus.TabIndex = 6;
             this.lblStatus.Text = "Ready";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -291,6 +317,8 @@
         private System.Windows.Forms.Button btnNext;
         private System.Windows.Forms.Button btnRestart;
         private System.Windows.Forms.Button btnGrade;
+        private System.Windows.Forms.Button btnPrevProject;
+        private System.Windows.Forms.Button btnNextProject;
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.Label lblTimer;
         private System.Windows.Forms.Timer timerMain;

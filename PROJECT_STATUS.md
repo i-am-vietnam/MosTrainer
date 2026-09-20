@@ -22,6 +22,7 @@ Commit: `e20cda6397efabcd43e69d1b76e08c5a1c8a2a08` (`Da hoan thien full 21 proje
 - Testing Mode Phase 1 is complete: Login offers mutually exclusive Training/Testing choices and stores the selection in `AppSession.Mode`.
 - Testing Mode Phase 2 is complete: pure in-memory `TestSession`, fixed random selection of seven unique eligible projects, and a UTC-based 50-minute exam deadline.
 - Testing Mode Phase 3 is complete: Testing Login creates one session, passes it to a Testing UI shell, and displays fixed project progress plus a deadline-based countdown without opening Excel.
+- Testing Mode Phase 4 is complete: each session owns isolated, copy-once project workbooks; Testing opens real Excel/task instructions and safely saves, closes, and reopens them through Previous/Next Project navigation.
 
 ## Verified This Inspection
 
@@ -31,7 +32,8 @@ Commit: `e20cda6397efabcd43e69d1b76e08c5a1c8a2a08` (`Da hoan thien full 21 proje
 - Testing Mode Phase 1 build and mode-selection logic: verified; Training remains the default and `Form1` is unchanged.
 - Testing Mode Phase 2 selection, deduplication, insufficient-pool handling, fixed-order/index, deadline, remaining-time, expiration, and one-shot submission-state logic passed a disposable deterministic validation harness.
 - Testing Mode Phase 3 Login-to-Form integration, EN/VI UI, project progress, countdown, timeout lock, Training constructor path, and absence of Excel startup passed a disposable WinForms integration harness.
-- No project JSON, starter workbook, assertion, or grading code was changed by Testing Mode Phase 1, Phase 2, or Phase 3.
+- Testing Mode Phase 4 passed a disposable real-Excel integration harness covering Login/session transfer, initial workbook/task tabs, `1 -> 2 -> 3 -> 2 -> 1`, persisted workbook content, boundary button states, session-path isolation, unchanged session timer identity, timeout save/close/lock, untouched source starter, and no new orphan Excel process.
+- No project JSON, starter workbook, assertion, or grading code was changed by Testing Mode Phase 1 through Phase 4.
 
 ## In Progress
 
@@ -40,7 +42,6 @@ Commit: `e20cda6397efabcd43e69d1b76e08c5a1c8a2a08` (`Da hoan thien full 21 proje
 ## Planned
 
 - Preserve Training behavior unchanged.
-- Add non-destructive, session-scoped workbook persistence and project navigation.
 - Disable per-task grading feedback in Testing.
 - Add final submission, reuse of current grading, 1000-point calculation, result display, cleanup, and return to login.
 
@@ -63,10 +64,18 @@ Phase 3: **COMPLETED / VERIFIED**
 - At timeout the UI shows `00:00`, stops the timer, locks interactions, and displays a bilingual expiration status exactly once without marking the session as submitting.
 - Testing opens no workbook and creates no working copy in this phase.
 
-Phase 4+: **NOT IMPLEMENTED**
+Phase 4: **COMPLETED / VERIFIED**
 
-No Testing workbook initialization/navigation/persistence, submission, grading, or score calculation has been implemented.
+- Testing workbooks use `Documents/MosTrainer/Testing/<SessionId>/<ProjectId>/work.xlsx`.
+- Each starter is copied only on the project's first visit; revisits open the existing working file without overwriting it.
+- Testing opens real Excel, deploys existing project assets, and displays localized task tabs with existing Previous/Next Task navigation.
+- Separate Previous/Next Project controls perform explicit Save -> Close -> Open; the session index and UI commit only after the target workbook opens successfully.
+- Timeout locks Testing, attempts to save, and closes Excel only after a successful save. It does not start submission or grading.
+
+Phase 5+: **NOT IMPLEMENTED**
+
+No Testing submission, grading, score calculation, result dialog, or completed-session cleanup has been implemented.
 
 ## Next Recommended Task
 
-After user review of Phase 3, implement Phase 4 only: session-scoped Testing working directories, first workbook initialization, save/close before project switches, Next/Previous Project, and reopen existing session workbooks without resetting them.
+After user review of Phase 4, implement Phase 5 only: one idempotent manual/timeout submission pipeline, untouched initialization for unvisited projects, grading all seven saved workbooks through `GradingService.CheckTask`, decimal scoring out of 1000, and result data.

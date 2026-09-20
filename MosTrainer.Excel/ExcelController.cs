@@ -125,6 +125,25 @@ namespace MosTrainer.Excel
             CloseWorkbook();
         }
 
+        public void SaveWorkbook()
+        {
+            if (!IsOpened)
+                throw new InvalidOperationException("Workbook not opened.");
+
+            try
+            {
+                ((Xl.Workbook)_session.Workbook).Save();
+            }
+            catch (Exception ex)
+            {
+                AppLogger.Error(
+                    "ExcelController.SaveWorkbook",
+                    "Workbook could not be saved: " + _session.WorkbookPath,
+                    ex);
+                throw;
+            }
+        }
+
         public void CloseWorkbook()
         {
             if (_session == null)

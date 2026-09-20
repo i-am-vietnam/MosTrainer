@@ -4,7 +4,7 @@ Last reviewed: 2026-09-20.
 
 ## Confirmed Issues / Current Limitations
 
-### Working workbook is reset when a project is opened
+### Training working workbook is reset when a project is opened
 
 `Form1.OpenProjectExcel` always copies the starter over:
 
@@ -12,15 +12,19 @@ Last reviewed: 2026-09-20.
 Documents/MosTrainer/Working/<ProjectId>/work.xlsx
 ```
 
-This is the existing Training behavior, but it cannot preserve answers when navigating among projects in a test.
+This remains the existing Training behavior. Testing no longer uses this path: Phase 4 uses a session-scoped, copy-once working file and reopens it without overwriting learner work.
 
-### Application-driven workbook close does not save
+### Base Excel close operation does not save
 
-`ExcelController.CloseWorkbook` calls `Workbook.Close(false)`. Unsaved workbook changes are discarded when Form1 closes Excel, including before the current project-open flow. Testing Mode needs an explicit save operation and error handling before navigation/submission.
+`ExcelController.CloseWorkbook` still calls `Workbook.Close(false)` to preserve Training behavior. Testing Phase 4 explicitly calls `SaveWorkbook` before every navigation/form close and before timeout close; this ordering must remain mandatory in submission code.
+
+### Timeout save failure has no automatic recovery pipeline
+
+If the Phase 4 timeout save fails, MosTrainer locks Testing interactions and leaves Excel open rather than calling `Close(false)` and risking data loss. Automatic retry/recovery and real timeout submission are not implemented yet; Phase 5 must route successful timeout handling into the shared submission pipeline and define recovery for infrastructure failures.
 
 ### Completed Testing flow cannot yet return to login
 
-Phase 3 returns to the existing LoginForm when the user closes the Testing shell manually. The later result-acknowledgement lifecycle is not implemented, so a completed submitted test still has no final cleanup-and-return flow.
+Phase 4 returns to the existing LoginForm when the user safely closes the Testing form manually. The later result-acknowledgement lifecycle is not implemented, so a completed submitted test still has no final cleanup-and-return flow.
 
 ### Authentication is an MVP stub
 
@@ -59,11 +63,10 @@ Task text is localized through project language JSON, and Login labels switch la
 
 ## Questions / Needs Verification Before Testing Implementation
 
-- Decide whether the user may navigate backward among the seven projects; the proposed model supports it, but the requirement explicitly mentions only Next Project.
 - Decide whether closing MosTrainer mid-test abandons the attempt after confirmation or requires resume support.
 - Decide whether Testing working directories are deleted immediately after result acknowledgement or retained temporarily for diagnostics/review.
 - Decide how to present individual failed tasks after submission; the current requirement mandates total score, not detailed review.
-- Verify save behavior and final grading with real Excel for a complete seven-project session after implementation.
+- Verify final seven-project grading/submission with real Excel after that pipeline is implemented. Phase 4 save/reopen persistence and navigation have been verified with real Excel.
 - Verify behavior when the learner manually closes the owned Excel workbook/application, then attempts Next or Submit.
 
 ## Edge Cases Required in the Testing Plan
