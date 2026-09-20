@@ -38,7 +38,7 @@ The application owns a visible Excel process and may force-terminate its recorde
 
 ### Testing session state is not persistent
 
-The proposed minimal `TestSession` is in memory. If the learner closes MosTrainer or the process crashes mid-test, recovery is not currently defined. Decide whether first release explicitly abandons the test or later adds a session manifest/resume feature.
+The Phase 2 `TestSession` is in memory only. If the learner closes MosTrainer or the process crashes mid-test, the session is lost; resume is not implemented. Decide whether the first release explicitly abandons the test or a later phase adds a session manifest/resume feature.
 
 ### Project validity may change after session creation
 
@@ -60,7 +60,6 @@ Task text is localized through project language JSON, and Login labels switch la
 ## Questions / Needs Verification Before Testing Implementation
 
 - Decide whether the user may navigate backward among the seven projects; the proposed model supports it, but the requirement explicitly mentions only Next Project.
-- Decide the exact timer policy: one overall test timer, per-project timing, time limit, or display-only elapsed time.
 - Decide whether closing MosTrainer mid-test abandons the attempt after confirmation or requires resume support.
 - Decide whether Testing working directories are deleted immediately after result acknowledgement or retained temporarily for diagnostics/review.
 - Decide how to present individual failed tasks after submission; the current requirement mandates total score, not detailed review.
@@ -80,4 +79,3 @@ Task text is localized through project language JSON, and Login labels switch la
 - Score rounding and the all-pass exactly-1000 invariant.
 - Reusing an ended session or starting a second test after return to Login.
 - `Training -> Testing -> Training` in one application lifetime.
-

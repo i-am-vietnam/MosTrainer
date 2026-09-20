@@ -33,6 +33,8 @@ Primary dependencies are Microsoft Office/Excel Interop, Newtonsoft.Json 13.0.4,
 | `MosTrainer/LoginForm.Designer.cs` | Login and language controls. | Medium: Designer edits can be fragile. |
 | `MosTrainer/AppMode.cs` | Process-wide application mode enum: `Training` or `Testing`. | Low. |
 | `MosTrainer/AppSession.cs` | Process-wide selected language and app mode; mode defaults to `Training`. | Low. |
+| `MosTrainer/Testing/TestSession.cs` | Pure in-memory Testing session: fixed project order/index, identity, 50-minute UTC deadline, remaining/expired calculations, and one-shot submission state. | Medium: authoritative exam state. |
+| `MosTrainer/Testing/TestSessionFactory.cs` | Filters/deduplicates loader output, performs an injectable Fisher-Yates shuffle once, selects seven projects, and creates a session. | Medium. |
 | `MosTrainer/Form1.cs` | Training orchestration: projects, tabs, assets, working workbook, timer, navigation, restart, grade. | High: preserve Training behavior. |
 | `MosTrainer/Form1.Designer.cs` | Main UI controls. | Medium: planned Testing navigation/submit controls. |
 | `MosTrainer.Projects/ProjectLoader.cs` | Loads only structurally valid project folders, selects requested language with fallback, sorts by ProjectId. | Medium. |
@@ -171,7 +173,7 @@ Logging is best-effort and never interrupts application flow.
 
 ## 10. Testing Mode
 
-Phase 1 status: **COMPLETED / VERIFIED**. Phase 2+: **NOT IMPLEMENTED**.
+Phase 1 status: **COMPLETED / VERIFIED**. Phase 2 status: **COMPLETED / VERIFIED**. Phase 3+: **NOT IMPLEMENTED**.
 
 Implemented in Phase 1:
 
@@ -180,9 +182,19 @@ Implemented in Phase 1:
 - Login mode selection through mutually exclusive RadioButtons.
 - Temporary Testing behavior: store `Testing`, show a next-phase notice, and do not enter `Form1`.
 
+Implemented in Phase 2:
+
+- `TestSessionFactory` accepts the project list produced by `ProjectLoader` plus the selected language.
+- Eligibility requires a non-null package/meta, non-empty ProjectId, and at least one task. ProjectIds are deduplicated case-insensitively.
+- Fisher-Yates shuffles an eligible copy once; the first seven become the session's read-only fixed order. Fewer than seven fails with `Testing Mode requires at least 7 valid projects.`
+- `TestSession` owns a new `Guid` SessionId, language, exactly seven selected projects, current project index, and project progress data.
+- The full exam duration is one fixed 50-minute interval. `StartedAtUtc` is captured once at session creation and `DeadlineUtc = StartedAtUtc + 50 minutes`; project/task navigation never changes either value.
+- Remaining time is always recalculated as `DeadlineUtc - currentUtc` and clamped to zero. Expiration begins at `currentUtc >= DeadlineUtc`; no tick counter, pause, or per-project reset exists.
+- `TryBeginSubmission`, `IsSubmitting`, and `IsCompleted` provide a one-shot guard for the future shared manual/timeout submission pipeline.
+- Sessions are in memory only. Login intentionally does not create one yet.
+
 Remaining proposed model:
 
-- `TestSession`: immutable randomized seven-project order, current index, session ID, per-project working paths, submission state, and results.
 - `TestProjectState`: `ProjectPackage`, working path, visit/save state, and final task results.
 - `TestTaskResult`: project/task identity and PASS/FAIL/message for final reporting.
 - `TestScoreCalculator`: pure decimal calculation.
@@ -208,6 +220,15 @@ Testing UI rules:
 - Require confirmation and make submission idempotent.
 - Do not change Training control behavior.
 
+Testing timer and timeout invariants:
+
+- The future UI displays the full-session countdown as `MM:SS` from `50:00` through `00:00`. A WinForms timer may tick every 1000 ms, but every display update must query the session deadline; tick count is never authoritative.
+- UI lag, focus changes, workbook loading, project/task navigation, and other open dialogs do not pause or extend the deadline.
+- At `00:00`, regardless of the current project or whether all seven were visited, the UI must lock Testing navigation and start automatic submission as soon as possible.
+- Timeout submission has no confirmation. Manual submission may confirm, but both must invoke one shared submission pipeline, distinguished by a reason only when that phase needs it.
+- The `TryBeginSubmission` guard must be acquired before invoking that pipeline so repeated timer ticks cannot submit more than once.
+- Actual auto-submit, save, grading, scoring, and result display are not implemented in Phase 2.
+
 Only projects with at least one task are eligible for the random pool. Deduplicate by `ProjectId`, use a one-time shuffle, take seven, and fail startup with a localized message if fewer than seven eligible projects remain.
 
 Score using per-project fractions, not rounded per-task weights. Multiply before dividing:
@@ -223,8 +244,8 @@ After result acknowledgement: mark the session ended, close Excel, clear session
 Suggested implementation phases:
 
 1. Add `AppMode`, `AppSession.Mode`, and mutually exclusive Login mode selection; verify Training unchanged.
-2. Add pure session/project/result/score models and seven-project selection tests.
-3. Add Testing-only UI state and fixed project order.
+2. Add pure TestSession, fixed seven-project selection, and 50-minute deadline logic.
+3. Add Testing-only UI state, create the session from Login, and display fixed project/countdown progress.
 4. Add explicit workbook save plus session-scoped first-open/revisit navigation.
 5. Add idempotent submit orchestration that reuses `GradingService.CheckTask`.
 6. Add decimal scoring, bilingual confirmation/result UI, cleanup, and return to Login.
