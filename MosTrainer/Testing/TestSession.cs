@@ -93,6 +93,14 @@ namespace MosTrainer.Testing
             IsCompleted = true;
         }
 
+        public void AbortSubmission()
+        {
+            if (IsCompleted)
+                throw new InvalidOperationException("A completed submission cannot be aborted.");
+
+            IsSubmitting = false;
+        }
+
         private static void EnsureUtc(DateTime value, string parameterName)
         {
             if (value.Kind != DateTimeKind.Utc)

@@ -102,8 +102,14 @@
     </Compile>
     <Compile Include="Testing\TestingWorkspaceService.cs" />
     <Compile Include="Testing\TestProjectState.cs" />
+    <Compile Include="Testing\TestProjectResult.cs" />
+    <Compile Include="Testing\TestScoreCalculator.cs" />
     <Compile Include="Testing\TestSession.cs" />
     <Compile Include="Testing\TestSessionFactory.cs" />
+    <Compile Include="Testing\TestSubmissionReason.cs" />
+    <Compile Include="Testing\TestSubmissionResult.cs" />
+    <Compile Include="Testing\TestSubmissionService.cs" />
+    <Compile Include="Testing\TestTaskResult.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
     </EmbeddedResource>

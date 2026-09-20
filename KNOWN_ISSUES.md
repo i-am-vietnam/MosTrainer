@@ -20,11 +20,15 @@ This remains the existing Training behavior. Testing no longer uses this path: P
 
 ### Timeout save failure has no automatic recovery pipeline
 
-If the Phase 4 timeout save fails, MosTrainer locks Testing interactions and leaves Excel open rather than calling `Close(false)` and risking data loss. Automatic retry/recovery and real timeout submission are not implemented yet; Phase 5 must route successful timeout handling into the shared submission pipeline and define recovery for infrastructure failures.
+If the timeout save fails, MosTrainer locks Testing interactions and leaves Excel open rather than calling `Close(false)` and risking data loss. Automatic retry/recovery and real timeout submission are not implemented yet; Phase 6 must route timeout into the Phase 5 shared submission pipeline and define recovery for infrastructure failures.
 
-### Completed Testing flow cannot yet return to login
+### Timeout does not yet submit or grade
 
-Phase 4 returns to the existing LoginForm when the user safely closes the Testing form manually. The later result-acknowledgement lifecycle is not implemented, so a completed submitted test still has no final cleanup-and-return flow.
+Phase 5 implements manual submission, result acknowledgement, and return to the existing LoginForm. Reaching `00:00` still only locks the UI and saves/closes the active workbook; it does not call the shared grading/scoring pipeline until Phase 6.
+
+### Completed Testing workspaces are retained
+
+After a successful manual submission, `Documents/MosTrainer/Testing/<SessionId>` is not automatically deleted. This is an intentional deferred cleanup/retention decision, not a grading failure.
 
 ### Authentication is an MVP stub
 
@@ -34,7 +38,7 @@ Phase 4 returns to the existing LoginForm when the user safely closes the Testin
 
 ### Grading is tied to one active Excel session
 
-`ExcelController` owns one `ExcelSession`, and `GradingService` grades that live workbook. Final grading of seven projects must open/grade/close saved workbooks sequentially and must handle a failure without corrupting the remaining session results.
+`ExcelController` owns one `ExcelSession`, and `GradingService` grades that live workbook. Phase 5 opens/grades/closes the seven saved workbooks sequentially; future timeout integration must keep using this same pipeline and failure rollback.
 
 ### Excel Interop lifecycle is failure-sensitive
 
@@ -65,8 +69,8 @@ Task text is localized through project language JSON, and Login labels switch la
 
 - Decide whether closing MosTrainer mid-test abandons the attempt after confirmation or requires resume support.
 - Decide whether Testing working directories are deleted immediately after result acknowledgement or retained temporarily for diagnostics/review.
-- Decide how to present individual failed tasks after submission; the current requirement mandates total score, not detailed review.
-- Verify final seven-project grading/submission with real Excel after that pipeline is implemented. Phase 4 save/reopen persistence and navigation have been verified with real Excel.
+- Decide whether a future review screen should expose individual failed tasks; Phase 5 intentionally displays only total score.
+- Phase 5 seven-project grading/submission has been verified with real Excel; timeout invocation of that pipeline remains to be verified in Phase 6.
 - Verify behavior when the learner manually closes the owned Excel workbook/application, then attempts Next or Submit.
 
 ## Edge Cases Required in the Testing Plan

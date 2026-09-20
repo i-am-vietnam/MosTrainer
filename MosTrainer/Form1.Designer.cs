@@ -44,6 +44,7 @@
             this.btnGrade = new System.Windows.Forms.Button();
             this.btnPrevProject = new System.Windows.Forms.Button();
             this.btnNextProject = new System.Windows.Forms.Button();
+            this.btnSubmitTest = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
             this.lblTimer = new System.Windows.Forms.Label();
             this.timerMain = new System.Windows.Forms.Timer(this.components);
@@ -169,7 +170,8 @@
             // 
             // tblFooterButtons
             // 
-            this.tblFooterButtons.ColumnCount = 7;
+            this.tblFooterButtons.ColumnCount = 8;
+            this.tblFooterButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tblFooterButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tblFooterButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
             this.tblFooterButtons.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle());
@@ -183,7 +185,8 @@
             this.tblFooterButtons.Controls.Add(this.btnGrade, 3, 0);
             this.tblFooterButtons.Controls.Add(this.btnPrevProject, 4, 0);
             this.tblFooterButtons.Controls.Add(this.btnNextProject, 5, 0);
-            this.tblFooterButtons.Controls.Add(this.lblStatus, 6, 0);
+            this.tblFooterButtons.Controls.Add(this.btnSubmitTest, 6, 0);
+            this.tblFooterButtons.Controls.Add(this.lblStatus, 7, 0);
             this.tblFooterButtons.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tblFooterButtons.Location = new System.Drawing.Point(8, 8);
             this.tblFooterButtons.Name = "tblFooterButtons";
@@ -247,15 +250,25 @@
             this.btnNextProject.Text = "Next Project";
             this.btnNextProject.UseVisualStyleBackColor = true;
             this.btnNextProject.Visible = false;
+            //
+            // btnSubmitTest
+            //
+            this.btnSubmitTest.Location = new System.Drawing.Point(669, 3);
+            this.btnSubmitTest.Name = "btnSubmitTest";
+            this.btnSubmitTest.Size = new System.Drawing.Size(120, 28);
+            this.btnSubmitTest.TabIndex = 6;
+            this.btnSubmitTest.Text = "Submit Test";
+            this.btnSubmitTest.UseVisualStyleBackColor = true;
+            this.btnSubmitTest.Visible = false;
             // 
             // lblStatus
             // 
             this.lblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblStatus.ForeColor = System.Drawing.Color.DarkGreen;
-            this.lblStatus.Location = new System.Drawing.Point(669, 0);
+            this.lblStatus.Location = new System.Drawing.Point(795, 0);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(1218, 34);
-            this.lblStatus.TabIndex = 6;
+            this.lblStatus.Size = new System.Drawing.Size(1092, 34);
+            this.lblStatus.TabIndex = 7;
             this.lblStatus.Text = "Ready";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
@@ -319,6 +332,7 @@
         private System.Windows.Forms.Button btnGrade;
         private System.Windows.Forms.Button btnPrevProject;
         private System.Windows.Forms.Button btnNextProject;
+        private System.Windows.Forms.Button btnSubmitTest;
         private System.Windows.Forms.Label lblStatus;
         private System.Windows.Forms.Label lblTimer;
         private System.Windows.Forms.Timer timerMain;

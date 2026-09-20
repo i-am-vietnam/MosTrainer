@@ -20,6 +20,8 @@ namespace MosTrainer
         private readonly GradingService _grading;
         private readonly TestSession _testSession;
         private readonly TestingWorkspaceService _testingWorkspace;
+        private readonly TestSubmissionService _testSubmissionService;
+        private TestSubmissionResult _testSubmissionResult;
 
         // ===== State =====
         private List<ProjectPackage> _projects = new List<ProjectPackage>();
@@ -52,6 +54,9 @@ namespace MosTrainer
             InitializeComponent();
 
             _grading = new GradingService(_excel);
+            _testSubmissionService = testSession == null
+                ? null
+                : new TestSubmissionService(testSession, _testingWorkspace, _excel, _grading);
 
             // Gắn event click ở constructor để khỏi quên
             btnGo.Click += btnGo_Click;
@@ -61,6 +66,7 @@ namespace MosTrainer
             btnGrade.Click += btnGrade_Click;
             btnPrevProject.Click += btnPrevProject_Click;
             btnNextProject.Click += btnNextProject_Click;
+            btnSubmitTest.Click += btnSubmitTest_Click;
 
             tabTasks.SelectedIndexChanged += tabTasks_SelectedIndexChanged;
             timerMain.Tick += timerMain_Tick;
@@ -105,12 +111,14 @@ namespace MosTrainer
 
             btnPrevProject.Visible = true;
             btnNextProject.Visible = true;
+            btnSubmitTest.Visible = true;
 
             LockTestingInteractions();
             bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
 
             btnPrevProject.Text = vietnamese ? "Dự án trước" : "Previous Project";
             btnNextProject.Text = vietnamese ? "Dự án tiếp" : "Next Project";
+            btnSubmitTest.Text = vietnamese ? "Nộp bài" : "Submit Test";
             UpdateTestingProjectDisplay();
 
             lblStatus.ForeColor = Color.Black;
@@ -192,6 +200,7 @@ namespace MosTrainer
             btnGrade.Enabled = false;
             btnPrevProject.Enabled = false;
             btnNextProject.Enabled = false;
+            btnSubmitTest.Enabled = false;
             tabTasks.Enabled = false;
         }
 
@@ -259,11 +268,159 @@ namespace MosTrainer
         {
             bool canNavigate = !_testingTimeoutHandled &&
                 !_testingSwitchInProgress &&
+                !_testSession.IsSubmitting &&
+                !_testSession.IsCompleted &&
                 _excel.IsOpened;
 
             btnPrevProject.Enabled = canNavigate && _testSession.CurrentProjectIndex > 0;
             btnNextProject.Enabled = canNavigate &&
                 _testSession.CurrentProjectIndex < _testSession.TotalProjects - 1;
+            btnSubmitTest.Enabled = canNavigate &&
+                _testSession.CurrentProjectIndex == _testSession.TotalProjects - 1;
+        }
+
+        private void btnSubmitTest_Click(object sender, EventArgs e)
+        {
+            if (_testSession == null ||
+                _testSession.CurrentProjectIndex != _testSession.TotalProjects - 1 ||
+                _testSession.IsSubmitting ||
+                _testSession.IsCompleted)
+            {
+                return;
+            }
+
+            if (_testSession.IsExpiredAt(DateTime.UtcNow))
+            {
+                lblTimer.Text = "00:00";
+                HandleTestingTimeExpired();
+                return;
+            }
+
+            bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+            string message = vietnamese
+                ? "Bạn có chắc chắn muốn nộp bài?\r\nSau khi nộp, bạn sẽ không thể tiếp tục chỉnh sửa bài làm."
+                : "Are you sure you want to submit the test?\r\nAfter submission, you cannot continue editing your work.";
+            string title = vietnamese ? "Nộp bài" : "Submit Test";
+
+            DialogResult confirmation = MessageBox.Show(
+                this,
+                message,
+                title,
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question,
+                MessageBoxDefaultButton.Button2);
+
+            if (confirmation != DialogResult.Yes)
+                return;
+
+            if (_testSession.IsExpiredAt(DateTime.UtcNow))
+            {
+                lblTimer.Text = "00:00";
+                HandleTestingTimeExpired();
+                return;
+            }
+
+            BeginTestingSubmission(TestSubmissionReason.Manual);
+        }
+
+        private void BeginTestingSubmission(TestSubmissionReason reason)
+        {
+            if (_testSession == null || !_testSession.TryBeginSubmission())
+                return;
+
+            bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+            _timerRunning = false;
+            timerMain.Stop();
+            LockTestingInteractions();
+            lblStatus.ForeColor = Color.Black;
+            lblStatus.Text = vietnamese ? "Đang nộp bài..." : "Submitting test...";
+
+            TestSubmissionResult result;
+            try
+            {
+                if (_excel.IsOpened)
+                {
+                    _excel.SaveWorkbook();
+                    _excel.Close();
+                }
+
+                result = _testSubmissionService.Submit(reason);
+                _testSubmissionResult = result;
+                _testSession.MarkCompleted();
+            }
+            catch (Exception ex)
+            {
+                _testSession.AbortSubmission();
+                RecoverFromTestingSubmissionFailure(ex);
+                return;
+            }
+
+            string resultMessage = vietnamese
+                ? "Đã hoàn thành bài kiểm tra.\r\n\r\nĐiểm: " + result.DisplayScore + " / 1000"
+                : "Test completed.\r\n\r\nScore: " + result.DisplayScore + " / 1000";
+            string resultTitle = vietnamese
+                ? "Kết quả bài kiểm tra"
+                : "Test Result";
+
+            MessageBox.Show(
+                this,
+                resultMessage,
+                resultTitle,
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Information);
+
+            Close();
+        }
+
+        private void RecoverFromTestingSubmissionFailure(Exception error)
+        {
+            MosTrainer.Core.Diagnostics.AppLogger.Error(
+                "Form1.BeginTestingSubmission",
+                "Testing submission failed before completion.",
+                error);
+
+            bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+            string failureMessage = vietnamese
+                ? "Không thể nộp bài do lỗi hệ thống. Bài kiểm tra chưa được đánh dấu hoàn thành."
+                : "The test could not be submitted because of a system error. Your test has not been marked as completed.";
+
+            DateTime currentUtc = DateTime.UtcNow;
+            if (_testSession.IsExpiredAt(currentUtc))
+            {
+                _testingTimeoutHandled = true;
+                _timerRunning = false;
+                timerMain.Stop();
+                lblTimer.Text = "00:00";
+                LockTestingInteractions();
+                lblStatus.ForeColor = Color.Crimson;
+                lblStatus.Text = failureMessage;
+                return;
+            }
+
+            try
+            {
+                TestProjectState currentState = _testingWorkspace.GetProjectState(
+                    _testSession.CurrentProjectIndex);
+                if (!_excel.IsOpened)
+                    OpenTestingWorkbook(currentState);
+
+                CommitTestingProjectUi(currentState);
+                _timerRunning = true;
+                UpdateTestingCountdown();
+                if (!_testingTimeoutHandled)
+                    timerMain.Start();
+            }
+            catch
+            {
+                LockTestingInteractions();
+                _timerRunning = true;
+                UpdateTestingCountdown();
+                if (!_testingTimeoutHandled)
+                    timerMain.Start();
+            }
+
+            lblStatus.ForeColor = Color.Crimson;
+            lblStatus.Text = failureMessage;
         }
 
         private void btnPrevProject_Click(object sender, EventArgs e)
@@ -278,7 +435,11 @@ namespace MosTrainer
 
         private void SwitchTestingProject(int targetIndex)
         {
-            if (_testSession == null || _testingSwitchInProgress || _testingTimeoutHandled)
+            if (_testSession == null ||
+                _testingSwitchInProgress ||
+                _testingTimeoutHandled ||
+                _testSession.IsSubmitting ||
+                _testSession.IsCompleted)
                 return;
 
             DateTime currentUtc = DateTime.UtcNow;
@@ -638,7 +799,7 @@ namespace MosTrainer
         // =========================
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
-            if (_testSession != null && _excel.IsOpened)
+            if (_testSession != null && !_testSession.IsCompleted && _excel.IsOpened)
             {
                 try
                 {
