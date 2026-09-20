@@ -29,13 +29,13 @@ Primary dependencies are Microsoft Office/Excel Interop, Newtonsoft.Json 13.0.4,
 | File | Responsibility | Risk |
 | --- | --- | --- |
 | `MosTrainer/Program.cs` | Application entry point; cleanup hooks; runs `LoginForm`. | Medium: owns application lifetime. |
-| `MosTrainer/LoginForm.cs` | Hard-coded MVP authentication, language selection, mutually exclusive Training/Testing selection, and Training launch. Testing currently shows a Phase 1 notice. | Medium: Testing-mode entry point and return-to-login lifecycle. |
+| `MosTrainer/LoginForm.cs` | Hard-coded MVP authentication and language/mode selection. Training opens the existing Form1 path; Testing loads packages, creates one TestSession, and passes it to Form1. | Medium: Testing-mode entry point and return-to-login lifecycle. |
 | `MosTrainer/LoginForm.Designer.cs` | Login and language controls. | Medium: Designer edits can be fragile. |
 | `MosTrainer/AppMode.cs` | Process-wide application mode enum: `Training` or `Testing`. | Low. |
 | `MosTrainer/AppSession.cs` | Process-wide selected language and app mode; mode defaults to `Training`. | Low. |
 | `MosTrainer/Testing/TestSession.cs` | Pure in-memory Testing session: fixed project order/index, identity, 50-minute UTC deadline, remaining/expired calculations, and one-shot submission state. | Medium: authoritative exam state. |
 | `MosTrainer/Testing/TestSessionFactory.cs` | Filters/deduplicates loader output, performs an injectable Fisher-Yates shuffle once, selects seven projects, and creates a session. | Medium. |
-| `MosTrainer/Form1.cs` | Training orchestration: projects, tabs, assets, working workbook, timer, navigation, restart, grade. | High: preserve Training behavior. |
+| `MosTrainer/Form1.cs` | Preserves Training orchestration and also hosts the Phase 3 Testing shell/project progress/deadline countdown without opening Excel. | High: keep mode branches isolated. |
 | `MosTrainer/Form1.Designer.cs` | Main UI controls. | Medium: planned Testing navigation/submit controls. |
 | `MosTrainer.Projects/ProjectLoader.cs` | Loads only structurally valid project folders, selects requested language with fallback, sorts by ProjectId. | Medium. |
 | `MosTrainer.Projects/ProjectValidator.cs` | Validates package files, JSON, task IDs, supported assertions, and language keys. | High: coupled to grading assertion support. |
@@ -63,10 +63,10 @@ LoginForm
   -> validate hard-coded admin / 123456 credentials
   -> AppSession.Language = "en" or "vi"
   -> AppSession.Mode = Training or Testing
-  -> if Testing, show the next-phase notice and remain on LoginForm
-  -> hide LoginForm
-  -> create and Show Form1
-  -> close LoginForm when Form1 closes
+  -> if Training, create parameterless Form1 and preserve the existing close-to-exit behavior
+  -> if Testing, ProjectLoader.LoadAll -> TestSessionFactory.Create -> new Form1(testSession)
+  -> hide LoginForm and show Form1
+  -> closing the Phase 3 Testing shell returns to the existing LoginForm
 
 Form1.MainForm_Load
   -> load <application base>/Projects through ProjectLoader
@@ -155,9 +155,9 @@ Consequences:
 
 ## 8. UI and Language Flow
 
-Login uses two EN/VI CheckBoxes with mutual exclusion and a separate pair of Training/Testing RadioButtons. Training is selected by default. A successful login stores both `AppSession.Language` and `AppSession.Mode`. Training launches the unchanged `Form1` flow; Testing currently displays a clear Phase 1 notice and remains on Login. `AppSession.Language` is read when `Form1` is constructed. Project task titles/instructions come from the selected package language. Most application chrome/status text is currently hard-coded English; login labels switch between Vietnamese and English.
+Login uses two EN/VI CheckBoxes with mutual exclusion and a separate pair of Training/Testing RadioButtons. Training is selected by default. A successful login stores both `AppSession.Language` and `AppSession.Mode`. Training launches the existing parameterless `Form1` flow. Testing loads packages in the selected language, creates one session, and passes the same instance through the Testing constructor. A clear localized error keeps Login active when a session cannot be created. `AppSession.Language` is read when Training Form1 is constructed. Project task titles/instructions come from the selected package language. Most Training chrome/status text remains hard-coded English; the new Testing shell/status text supports EN/VI without changing project language JSON.
 
-The main form contains project ComboBox/Go, project info, task tabs, task Previous/Next, Restart Project, Grade Project, status, and timer. Closing `Form1` closes Excel; its `FormClosed` handler then closes the hidden `LoginForm`, ending the application. There is no return-to-login route today.
+The main form contains project ComboBox/Go, project info, task tabs, task Previous/Next, Restart Project, Grade Project, status, and timer. Training retains the existing lifecycle: closing Form1 closes Excel and then closes the hidden LoginForm, ending the application. Closing the Phase 3 Testing shell returns to that same LoginForm; the later completed-test result/cleanup return flow is still not implemented.
 
 ## 9. Diagnostics and Persistence
 
@@ -173,7 +173,7 @@ Logging is best-effort and never interrupts application flow.
 
 ## 10. Testing Mode
 
-Phase 1 status: **COMPLETED / VERIFIED**. Phase 2 status: **COMPLETED / VERIFIED**. Phase 3+: **NOT IMPLEMENTED**.
+Phase 1 status: **COMPLETED / VERIFIED**. Phase 2 status: **COMPLETED / VERIFIED**. Phase 3 status: **COMPLETED / VERIFIED**. Phase 4+: **NOT IMPLEMENTED**.
 
 Implemented in Phase 1:
 
@@ -191,7 +191,17 @@ Implemented in Phase 2:
 - The full exam duration is one fixed 50-minute interval. `StartedAtUtc` is captured once at session creation and `DeadlineUtc = StartedAtUtc + 50 minutes`; project/task navigation never changes either value.
 - Remaining time is always recalculated as `DeadlineUtc - currentUtc` and clamped to zero. Expiration begins at `currentUtc >= DeadlineUtc`; no tick counter, pause, or per-project reset exists.
 - `TryBeginSubmission`, `IsSubmitting`, and `IsCompleted` provide a one-shot guard for the future shared manual/timeout submission pipeline.
-- Sessions are in memory only. Login intentionally does not create one yet.
+- Sessions are in memory only; Login now creates a fresh session for each successful Testing login.
+
+Implemented in Phase 3:
+
+- Testing Login calls `ProjectLoader.LoadAll`, then `TestSessionFactory.Create`, and constructs `Form1(testSession)`. Form1 never creates or randomizes a second session.
+- The parameterless Form1 constructor remains the Training path. `MainForm_Load` branches only when an explicit TestSession is present, so Testing returns before `LoadProjectsToCombo`.
+- The Testing shell hides project selection, Go, Grade, and Restart; disables task tabs and task Previous/Next; and shows the current session ProjectId plus localized Project 1/7 progress.
+- The existing WinForms timer is reused at 1000 ms. Each Testing tick obtains one `DateTime.UtcNow`, recalculates remaining time through `TestSession.GetRemainingTime`, and checks `IsExpiredAt`; it never decrements a counter.
+- Countdown display is `MM:SS`, rounded up to the next whole second before expiry so `00:00` is reserved for the reached deadline. It is updated immediately during form load rather than waiting for the first timer tick.
+- Deadline handling displays `00:00`, stops the timer, locks Testing interactions, and sets a private one-shot UI flag. It does not call `TryBeginSubmission`, grading, scoring, or any fake submission.
+- No Testing starter is copied, no working path is assigned, and no Excel workbook is opened. Closing the Phase 3 Testing shell returns to Login; session resume remains unsupported.
 
 Remaining proposed model:
 
@@ -227,7 +237,7 @@ Testing timer and timeout invariants:
 - At `00:00`, regardless of the current project or whether all seven were visited, the UI must lock Testing navigation and start automatic submission as soon as possible.
 - Timeout submission has no confirmation. Manual submission may confirm, but both must invoke one shared submission pipeline, distinguished by a reason only when that phase needs it.
 - The `TryBeginSubmission` guard must be acquired before invoking that pipeline so repeated timer ticks cannot submit more than once.
-- Actual auto-submit, save, grading, scoring, and result display are not implemented in Phase 2.
+- Phase 3 wires the deadline UI and one-shot timeout lock only. Actual auto-submit, save, grading, scoring, and result display remain not implemented; timeout must later enter the same submission pipeline as manual submit without confirmation.
 
 Only projects with at least one task are eligible for the random pool. Deduplicate by `ProjectId`, use a one-time shuffle, take seven, and fail startup with a localized message if fewer than seven eligible projects remain.
 
@@ -245,7 +255,7 @@ Suggested implementation phases:
 
 1. Add `AppMode`, `AppSession.Mode`, and mutually exclusive Login mode selection; verify Training unchanged.
 2. Add pure TestSession, fixed seven-project selection, and 50-minute deadline logic.
-3. Add Testing-only UI state, create the session from Login, and display fixed project/countdown progress.
+3. Connect Testing Login to one TestSession and add the Testing UI shell with fixed project/deadline progress.
 4. Add explicit workbook save plus session-scoped first-open/revisit navigation.
 5. Add idempotent submit orchestration that reuses `GradingService.CheckTask`.
 6. Add decimal scoring, bilingual confirmation/result UI, cleanup, and return to Login.

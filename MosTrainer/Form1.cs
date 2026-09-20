@@ -2,6 +2,7 @@
 using MosTrainer.Core.Services;
 using MosTrainer.Excel;
 using MosTrainer.Projects;
+using MosTrainer.Testing;
 using System;
 using System.Collections.Generic;
 using System.Drawing;
@@ -17,6 +18,7 @@ namespace MosTrainer
         private readonly ProjectLoader _loader = new ProjectLoader();
         private readonly ExcelController _excel = new ExcelController();
         private readonly GradingService _grading;
+        private readonly TestSession _testSession;
 
         // ===== State =====
         private List<ProjectPackage> _projects = new List<ProjectPackage>();
@@ -32,9 +34,16 @@ namespace MosTrainer
         private string _workingXlsxPath = "";
         private DateTime _projectStartTime;
         private bool _timerRunning = false;
+        private bool _testingTimeoutHandled = false;
 
         public Form1()
+            : this(null)
         {
+        }
+
+        internal Form1(TestSession testSession)
+        {
+            _testSession = testSession;
             InitializeComponent();
 
             _grading = new GradingService(_excel);
@@ -55,6 +64,12 @@ namespace MosTrainer
         // =========================
         private void MainForm_Load(object sender, EventArgs e)
         {
+            if (_testSession != null)
+            {
+                InitializeTestingUi();
+                return;
+            }
+
             // (1) Trạng thái ban đầu: chưa chọn project => ẨN tabTasks (đúng yêu cầu của bạn)
             tabTasks.Visible = false;
 
@@ -69,6 +84,89 @@ namespace MosTrainer
 
             // (4) Load danh sách projects vào ComboBox
             LoadProjectsToCombo();
+        }
+
+        private void InitializeTestingUi()
+        {
+            tabTasks.Visible = false;
+            tabTasks.Enabled = false;
+
+            cbProjects.Visible = false;
+            btnGo.Visible = false;
+            btnGrade.Visible = false;
+            btnRestart.Visible = false;
+
+            LockTestingInteractions();
+
+            string projectId = _testSession.CurrentProject.Meta.ProjectId;
+            bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+
+            lblProject.Text = vietnamese
+                ? "Dự án: " + projectId
+                : "Project: " + projectId;
+            lblProjectInfo.Text = vietnamese
+                ? "Dự án " + _testSession.ProjectNumber + "/" + _testSession.TotalProjects
+                : "Project " + _testSession.ProjectNumber + "/" + _testSession.TotalProjects;
+            lblProjectInfo.Visible = true;
+
+            lblStatus.ForeColor = Color.Black;
+            lblStatus.Text = vietnamese
+                ? "Chế độ thi - workbook sẽ được khởi tạo ở giai đoạn tiếp theo."
+                : "Testing Mode - workbook setup will be added in the next phase.";
+
+            lblTimer.Visible = true;
+            timerMain.Interval = 1000;
+            _timerRunning = true;
+            UpdateTestingCountdown();
+
+            if (!_testingTimeoutHandled)
+                timerMain.Start();
+        }
+
+        private void UpdateTestingCountdown()
+        {
+            DateTime currentUtc = DateTime.UtcNow;
+            TimeSpan remaining = _testSession.GetRemainingTime(currentUtc);
+
+            if (_testSession.IsExpiredAt(currentUtc))
+            {
+                lblTimer.Text = "00:00";
+                HandleTestingTimeExpired();
+                return;
+            }
+
+            int totalSeconds = (int)Math.Ceiling(remaining.TotalSeconds);
+            lblTimer.Text = string.Format("{0:00}:{1:00}",
+                totalSeconds / 60,
+                totalSeconds % 60);
+        }
+
+        private void HandleTestingTimeExpired()
+        {
+            if (_testingTimeoutHandled)
+                return;
+
+            _testingTimeoutHandled = true;
+            _timerRunning = false;
+            timerMain.Stop();
+            LockTestingInteractions();
+
+            bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+            lblStatus.ForeColor = Color.Crimson;
+            lblStatus.Text = vietnamese
+                ? "Đã hết thời gian làm bài. Hệ thống sẽ tự động nộp bài."
+                : "Time expired. Automatic submission will be handled by the testing submission pipeline.";
+        }
+
+        private void LockTestingInteractions()
+        {
+            cbProjects.Enabled = false;
+            btnGo.Enabled = false;
+            btnPrev.Enabled = false;
+            btnNext.Enabled = false;
+            btnRestart.Enabled = false;
+            btnGrade.Enabled = false;
+            tabTasks.Enabled = false;
         }
 
         // =========================
@@ -317,6 +415,12 @@ namespace MosTrainer
         private void timerMain_Tick(object sender, EventArgs e)
         {
             if (!_timerRunning) return;
+
+            if (_testSession != null)
+            {
+                UpdateTestingCountdown();
+                return;
+            }
 
             TimeSpan elapsed = DateTime.Now - _projectStartTime;
             lblTimer.Text = string.Format("{0:00}:{1:00}:{2:00}",

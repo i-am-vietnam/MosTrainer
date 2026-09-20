@@ -18,9 +18,9 @@ This is the existing Training behavior, but it cannot preserve answers when navi
 
 `ExcelController.CloseWorkbook` calls `Workbook.Close(false)`. Unsaved workbook changes are discarded when Form1 closes Excel, including before the current project-open flow. Testing Mode needs an explicit save operation and error handling before navigation/submission.
 
-### Main form cannot currently return to login
+### Completed Testing flow cannot yet return to login
 
-`LoginForm` hides itself, shows `Form1`, and closes itself when `Form1` closes. That ends the application. A completed test cannot currently return to a reusable Login screen.
+Phase 3 returns to the existing LoginForm when the user closes the Testing shell manually. The later result-acknowledgement lifecycle is not implemented, so a completed submitted test still has no final cleanup-and-return flow.
 
 ### Authentication is an MVP stub
 
@@ -53,7 +53,7 @@ Task text is localized through project language JSON, and Login labels switch la
 - `MosTrainer.Data` contains SQLite initialization/result persistence, but the current UI does not initialize or use it.
 - `Form1` contains UI and workflow orchestration in one class; Testing should add small session/submission helpers rather than duplicate Form1 or perform a broad refactor.
 - `ExcelController.cs` is very large and COM-sensitive. Do not split/refactor it as part of Testing Mode.
-- `AppSession` stores only a static language string; lifecycle/reset semantics must be defined before adding mode/session state.
+- `AppSession` stores static language/mode state, while TestSession is passed directly to Form1. Final lifecycle/reset semantics still need to be defined for completed or abandoned tests.
 - `Form1._currentAssetsDir` records the deployed path but is not otherwise consumed by Form1.
 - C# language version is not explicitly pinned in project files, although source comments target C# 7.3-compatible syntax.
 

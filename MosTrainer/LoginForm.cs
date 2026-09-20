@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Windows.Forms;
+using MosTrainer.Projects;
+using MosTrainer.Testing;
+using System.IO;
 
 namespace MosTrainer
 {
@@ -81,22 +84,46 @@ namespace MosTrainer
             AppSession.Language = chkVI.Checked ? "vi" : "en";
             AppSession.Mode = radTesting.Checked ? AppMode.Testing : AppMode.Training;
 
+            Form1 main;
             if (AppSession.Mode == AppMode.Testing)
             {
-                MessageBox.Show(
-                    chkVI.Checked
-                        ? "Chế độ Testing sẽ được triển khai trong giai đoạn tiếp theo."
-                        : "Testing Mode will be implemented in the next phase.",
-                    "MosTrainer",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-                return;
+                try
+                {
+                    string projectsRoot = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "Projects");
+                    var projects = new ProjectLoader().LoadAll(projectsRoot, AppSession.Language);
+                    TestSession testSession = new TestSessionFactory().Create(projects, AppSession.Language);
+                    main = new Form1(testSession);
+                }
+                catch (InvalidOperationException ex)
+                {
+                    lblStatus.Text = chkVI.Checked
+                        ? "Chế độ Testing cần ít nhất 7 project hợp lệ."
+                        : ex.Message;
+                    return;
+                }
+                catch (Exception ex)
+                {
+                    lblStatus.Text = chkVI.Checked
+                        ? "Không thể bắt đầu chế độ Testing: " + ex.Message
+                        : "Unable to start Testing Mode: " + ex.Message;
+                    return;
+                }
+            }
+            else
+            {
+                main = new Form1();
             }
 
             // Login OK -> mở Form1
             this.Hide();
-            var main = new Form1();
-            main.FormClosed += (s2, e2) => this.Close();
+            bool isTesting = AppSession.Mode == AppMode.Testing;
+            main.FormClosed += (s2, e2) =>
+            {
+                if (isTesting)
+                    this.Show();
+                else
+                    this.Close();
+            };
             main.Show();
         }
     }

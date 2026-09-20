@@ -21,6 +21,7 @@ Commit: `e20cda6397efabcd43e69d1b76e08c5a1c8a2a08` (`Da hoan thien full 21 proje
 - Architecture handoff documentation exists at the repository root.
 - Testing Mode Phase 1 is complete: Login offers mutually exclusive Training/Testing choices and stores the selection in `AppSession.Mode`.
 - Testing Mode Phase 2 is complete: pure in-memory `TestSession`, fixed random selection of seven unique eligible projects, and a UTC-based 50-minute exam deadline.
+- Testing Mode Phase 3 is complete: Testing Login creates one session, passes it to a Testing UI shell, and displays fixed project progress plus a deadline-based countdown without opening Excel.
 
 ## Verified This Inspection
 
@@ -29,7 +30,8 @@ Commit: `e20cda6397efabcd43e69d1b76e08c5a1c8a2a08` (`Da hoan thien full 21 proje
 - Current workbook lifecycle and Training flow were inspected from source.
 - Testing Mode Phase 1 build and mode-selection logic: verified; Training remains the default and `Form1` is unchanged.
 - Testing Mode Phase 2 selection, deduplication, insufficient-pool handling, fixed-order/index, deadline, remaining-time, expiration, and one-shot submission-state logic passed a disposable deterministic validation harness.
-- No project JSON, starter workbook, assertion, or grading code was changed by Testing Mode Phase 1 or Phase 2.
+- Testing Mode Phase 3 Login-to-Form integration, EN/VI UI, project progress, countdown, timeout lock, Training constructor path, and absence of Excel startup passed a disposable WinForms integration harness.
+- No project JSON, starter workbook, assertion, or grading code was changed by Testing Mode Phase 1, Phase 2, or Phase 3.
 
 ## In Progress
 
@@ -38,7 +40,6 @@ Commit: `e20cda6397efabcd43e69d1b76e08c5a1c8a2a08` (`Da hoan thien full 21 proje
 ## Planned
 
 - Preserve Training behavior unchanged.
-- Add Testing-only UI state, start the session after Testing login, and display project/countdown progress.
 - Add non-destructive, session-scoped workbook persistence and project navigation.
 - Disable per-task grading feedback in Testing.
 - Add final submission, reuse of current grading, 1000-point calculation, result display, cleanup, and return to login.
@@ -54,10 +55,18 @@ Phase 2: **COMPLETED / VERIFIED**
 - One 50-minute real-time deadline for the full exam, derived from `StartedAtUtc` and exposed through clamped remaining-time/expiration logic.
 - `IsSubmitting`/`IsCompleted` state and `TryBeginSubmission` guard prepare timeout/manual submission for one shared, one-shot pipeline.
 
-Phase 3+: **NOT IMPLEMENTED**
+Phase 3: **COMPLETED / VERIFIED**
 
-Testing login remains intentionally unwired and still shows the Phase 1 notice. No Testing UI, workbook navigation/persistence, submission, grading, or score calculation has been implemented.
+- Testing Login loads current project packages, creates one `TestSession`, and passes that same instance explicitly to `Form1`.
+- Testing UI shows current project identity, Project 1/7, and an `MM:SS` countdown recalculated from `DeadlineUtc` every tick.
+- Training selection/Go/Grade/Restart controls are hidden and task navigation is disabled in the Testing shell.
+- At timeout the UI shows `00:00`, stops the timer, locks interactions, and displays a bilingual expiration status exactly once without marking the session as submitting.
+- Testing opens no workbook and creates no working copy in this phase.
+
+Phase 4+: **NOT IMPLEMENTED**
+
+No Testing workbook initialization/navigation/persistence, submission, grading, or score calculation has been implemented.
 
 ## Next Recommended Task
 
-After user review of Phase 2, implement Phase 3 only: Testing UI state, create the session from Login, display Project n/7, and show an MM:SS countdown derived from the session deadline. Do not add workbook persistence or real submission in that phase.
+After user review of Phase 3, implement Phase 4 only: session-scoped Testing working directories, first workbook initialization, save/close before project switches, Next/Previous Project, and reopen existing session workbooks without resetting them.
