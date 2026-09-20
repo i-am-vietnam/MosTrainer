@@ -40,6 +40,9 @@
             this.flpLang = new System.Windows.Forms.FlowLayoutPanel();
             this.chkEN = new System.Windows.Forms.CheckBox();
             this.chkVI = new System.Windows.Forms.CheckBox();
+            this.flpMode = new System.Windows.Forms.FlowLayoutPanel();
+            this.radTraining = new System.Windows.Forms.RadioButton();
+            this.radTesting = new System.Windows.Forms.RadioButton();
             this.tlpButtons = new System.Windows.Forms.TableLayoutPanel();
             this.btnLogin = new System.Windows.Forms.Button();
             this.btnExit = new System.Windows.Forms.Button();
@@ -49,6 +52,7 @@
             this.tlpUser.SuspendLayout();
             this.tlpPass.SuspendLayout();
             this.flpLang.SuspendLayout();
+            this.flpMode.SuspendLayout();
             this.tlpButtons.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -63,9 +67,9 @@
             this.tlpRoot.Location = new System.Drawing.Point(0, 0);
             this.tlpRoot.Name = "tlpRoot";
             this.tlpRoot.RowCount = 3;
-            this.tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 15.55556F));
-            this.tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 66.94444F));
-            this.tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 17.77778F));
+            this.tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 10F));
+            this.tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 80F));
+            this.tlpRoot.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 10F));
             this.tlpRoot.Size = new System.Drawing.Size(480, 360);
             this.tlpRoot.TabIndex = 0;
             // 
@@ -77,20 +81,22 @@
             this.tlpCard.Controls.Add(this.tlpUser, 0, 1);
             this.tlpCard.Controls.Add(this.tlpPass, 0, 2);
             this.tlpCard.Controls.Add(this.flpLang, 0, 3);
-            this.tlpCard.Controls.Add(this.tlpButtons, 0, 4);
-            this.tlpCard.Controls.Add(this.lblStatus, 0, 5);
+            this.tlpCard.Controls.Add(this.flpMode, 0, 4);
+            this.tlpCard.Controls.Add(this.tlpButtons, 0, 5);
+            this.tlpCard.Controls.Add(this.lblStatus, 0, 6);
             this.tlpCard.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpCard.Location = new System.Drawing.Point(77, 58);
+            this.tlpCard.Location = new System.Drawing.Point(77, 39);
             this.tlpCard.Name = "tlpCard";
             this.tlpCard.Padding = new System.Windows.Forms.Padding(12);
-            this.tlpCard.RowCount = 6;
+            this.tlpCard.RowCount = 7;
             this.tlpCard.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpCard.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpCard.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpCard.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpCard.RowStyles.Add(new System.Windows.Forms.RowStyle());
             this.tlpCard.RowStyles.Add(new System.Windows.Forms.RowStyle());
-            this.tlpCard.Size = new System.Drawing.Size(313, 234);
+            this.tlpCard.RowStyles.Add(new System.Windows.Forms.RowStyle());
+            this.tlpCard.Size = new System.Drawing.Size(313, 282);
             this.tlpCard.TabIndex = 1;
             // 
             // lblTitle
@@ -204,6 +210,40 @@
             this.chkVI.TabIndex = 1;
             this.chkVI.Text = "Tiếng Việt";
             this.chkVI.UseVisualStyleBackColor = true;
+            //
+            // flpMode
+            //
+            this.flpMode.Controls.Add(this.radTraining);
+            this.flpMode.Controls.Add(this.radTesting);
+            this.flpMode.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.flpMode.Location = new System.Drawing.Point(15, 168);
+            this.flpMode.Name = "flpMode";
+            this.flpMode.Size = new System.Drawing.Size(283, 30);
+            this.flpMode.TabIndex = 4;
+            //
+            // radTraining
+            //
+            this.radTraining.AutoSize = true;
+            this.radTraining.Checked = true;
+            this.radTraining.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.radTraining.Location = new System.Drawing.Point(3, 3);
+            this.radTraining.Name = "radTraining";
+            this.radTraining.Size = new System.Drawing.Size(84, 24);
+            this.radTraining.TabIndex = 0;
+            this.radTraining.TabStop = true;
+            this.radTraining.Text = "Training";
+            this.radTraining.UseVisualStyleBackColor = true;
+            //
+            // radTesting
+            //
+            this.radTesting.AutoSize = true;
+            this.radTesting.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.radTesting.Location = new System.Drawing.Point(93, 3);
+            this.radTesting.Name = "radTesting";
+            this.radTesting.Size = new System.Drawing.Size(76, 24);
+            this.radTesting.TabIndex = 1;
+            this.radTesting.Text = "Testing";
+            this.radTesting.UseVisualStyleBackColor = true;
             // 
             // tlpButtons
             // 
@@ -213,12 +253,12 @@
             this.tlpButtons.Controls.Add(this.btnLogin, 0, 0);
             this.tlpButtons.Controls.Add(this.btnExit, 1, 0);
             this.tlpButtons.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.tlpButtons.Location = new System.Drawing.Point(15, 168);
+            this.tlpButtons.Location = new System.Drawing.Point(15, 204);
             this.tlpButtons.Name = "tlpButtons";
             this.tlpButtons.RowCount = 1;
             this.tlpButtons.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tlpButtons.Size = new System.Drawing.Size(283, 40);
-            this.tlpButtons.TabIndex = 4;
+            this.tlpButtons.TabIndex = 5;
             // 
             // btnLogin
             // 
@@ -247,10 +287,10 @@
             // 
             this.lblStatus.Dock = System.Windows.Forms.DockStyle.Fill;
             this.lblStatus.ForeColor = System.Drawing.Color.DarkRed;
-            this.lblStatus.Location = new System.Drawing.Point(15, 211);
+            this.lblStatus.Location = new System.Drawing.Point(15, 247);
             this.lblStatus.Name = "lblStatus";
             this.lblStatus.Size = new System.Drawing.Size(283, 30);
-            this.lblStatus.TabIndex = 5;
+            this.lblStatus.TabIndex = 6;
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // LoginForm
@@ -276,6 +316,8 @@
             this.tlpPass.PerformLayout();
             this.flpLang.ResumeLayout(false);
             this.flpLang.PerformLayout();
+            this.flpMode.ResumeLayout(false);
+            this.flpMode.PerformLayout();
             this.tlpButtons.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -295,6 +337,9 @@
         private System.Windows.Forms.FlowLayoutPanel flpLang;
         private System.Windows.Forms.CheckBox chkEN;
         private System.Windows.Forms.CheckBox chkVI;
+        private System.Windows.Forms.FlowLayoutPanel flpMode;
+        private System.Windows.Forms.RadioButton radTraining;
+        private System.Windows.Forms.RadioButton radTesting;
         private System.Windows.Forms.TableLayoutPanel tlpButtons;
         private System.Windows.Forms.Button btnLogin;
         private System.Windows.Forms.Button btnExit;

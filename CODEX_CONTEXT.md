@@ -29,9 +29,10 @@ Primary dependencies are Microsoft Office/Excel Interop, Newtonsoft.Json 13.0.4,
 | File | Responsibility | Risk |
 | --- | --- | --- |
 | `MosTrainer/Program.cs` | Application entry point; cleanup hooks; runs `LoginForm`. | Medium: owns application lifetime. |
-| `MosTrainer/LoginForm.cs` | Hard-coded MVP authentication, mutually exclusive language selection, launches `Form1`. | Medium: Testing-mode entry point and return-to-login lifecycle. |
+| `MosTrainer/LoginForm.cs` | Hard-coded MVP authentication, language selection, mutually exclusive Training/Testing selection, and Training launch. Testing currently shows a Phase 1 notice. | Medium: Testing-mode entry point and return-to-login lifecycle. |
 | `MosTrainer/LoginForm.Designer.cs` | Login and language controls. | Medium: Designer edits can be fragile. |
-| `MosTrainer/AppSession.cs` | Process-wide selected language only. | Low now; planned location for app mode. |
+| `MosTrainer/AppMode.cs` | Process-wide application mode enum: `Training` or `Testing`. | Low. |
+| `MosTrainer/AppSession.cs` | Process-wide selected language and app mode; mode defaults to `Training`. | Low. |
 | `MosTrainer/Form1.cs` | Training orchestration: projects, tabs, assets, working workbook, timer, navigation, restart, grade. | High: preserve Training behavior. |
 | `MosTrainer/Form1.Designer.cs` | Main UI controls. | Medium: planned Testing navigation/submit controls. |
 | `MosTrainer.Projects/ProjectLoader.cs` | Loads only structurally valid project folders, selects requested language with fallback, sorts by ProjectId. | Medium. |
@@ -56,8 +57,11 @@ Program.Main
 
 LoginForm
   -> choose EN or VI (two CheckBoxes with mutual exclusion)
+  -> choose Training or Testing (two RadioButtons; Training is default)
   -> validate hard-coded admin / 123456 credentials
   -> AppSession.Language = "en" or "vi"
+  -> AppSession.Mode = Training or Testing
+  -> if Testing, show the next-phase notice and remain on LoginForm
   -> hide LoginForm
   -> create and Show Form1
   -> close LoginForm when Form1 closes
@@ -149,7 +153,7 @@ Consequences:
 
 ## 8. UI and Language Flow
 
-Login uses two EN/VI CheckBoxes with mutual exclusion. `AppSession.Language` is read when `Form1` is constructed. Project task titles/instructions come from the selected package language. Most application chrome/status text is currently hard-coded English; login labels switch between Vietnamese and English.
+Login uses two EN/VI CheckBoxes with mutual exclusion and a separate pair of Training/Testing RadioButtons. Training is selected by default. A successful login stores both `AppSession.Language` and `AppSession.Mode`. Training launches the unchanged `Form1` flow; Testing currently displays a clear Phase 1 notice and remains on Login. `AppSession.Language` is read when `Form1` is constructed. Project task titles/instructions come from the selected package language. Most application chrome/status text is currently hard-coded English; login labels switch between Vietnamese and English.
 
 The main form contains project ComboBox/Go, project info, task tabs, task Previous/Next, Restart Project, Grade Project, status, and timer. Closing `Form1` closes Excel; its `FormClosed` handler then closes the hidden `LoginForm`, ending the application. There is no return-to-login route today.
 
@@ -165,14 +169,19 @@ Logging is best-effort and never interrupts application flow.
 
 `MosTrainer.Data` contains a SQLite schema initializer and `ResultRepository.Save`, with connection string `MosDb` in `App.config`. Neither is invoked by the current Login/Form1 flow. Testing Mode should not assume database persistence exists unless it is deliberately added later.
 
-## 10. Testing Mode — Planned Architecture (Not Implemented)
+## 10. Testing Mode
 
-Status: **PLANNED / NOT IMPLEMENTED**.
+Phase 1 status: **COMPLETED / VERIFIED**. Phase 2+: **NOT IMPLEMENTED**.
 
-Minimal proposed model:
+Implemented in Phase 1:
 
 - `AppMode`: `Training` or `Testing`.
-- `AppSession.Mode`: selected at login alongside language.
+- `AppSession.Mode`: selected at login alongside language, defaulting to `Training`.
+- Login mode selection through mutually exclusive RadioButtons.
+- Temporary Testing behavior: store `Testing`, show a next-phase notice, and do not enter `Form1`.
+
+Remaining proposed model:
+
 - `TestSession`: immutable randomized seven-project order, current index, session ID, per-project working paths, submission state, and results.
 - `TestProjectState`: `ProjectPackage`, working path, visit/save state, and final task results.
 - `TestTaskResult`: project/task identity and PASS/FAIL/message for final reporting.

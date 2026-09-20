@@ -10,5 +10,7 @@ namespace MosTrainer
     {
         // "en" | "vi"
         public static string Language { get; set; } = "en";
+
+        public static AppMode Mode { get; set; } = AppMode.Training;
     }
 }

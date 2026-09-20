@@ -19,13 +19,15 @@ Commit: `e20cda6397efabcd43e69d1b76e08c5a1c8a2a08` (`Da hoan thien full 21 proje
 - English and Vietnamese language files are present for all 21 packages.
 - All project resources are included in the WinForms project for output deployment.
 - Architecture handoff documentation exists at the repository root.
+- Testing Mode Phase 1 is complete: Login offers mutually exclusive Training/Testing choices and stores the selection in `AppSession.Mode`.
 
 ## Verified This Inspection
 
 - `ProjectValidator`: 21 projects, 0 errors, 0 warnings.
 - Debug solution build: success, 0 reported errors.
 - Current workbook lifecycle and Training flow were inspected from source.
-- No application behavior, project JSON, starter workbook, assertion, or grading code was changed by the documentation task.
+- Testing Mode Phase 1 build and mode-selection logic: verified; Training remains the default and `Form1` is unchanged.
+- No project JSON, starter workbook, assertion, or grading code was changed by Testing Mode Phase 1.
 
 ## In Progress
 
@@ -33,7 +35,6 @@ Commit: `e20cda6397efabcd43e69d1b76e08c5a1c8a2a08` (`Da hoan thien full 21 proje
 
 ## Planned
 
-- Add explicit `Training` and `Testing` mode selection.
 - Preserve Training behavior unchanged.
 - Add an in-memory seven-project test session with fixed unique randomized projects.
 - Add non-destructive, session-scoped workbook persistence and project navigation.
@@ -42,10 +43,12 @@ Commit: `e20cda6397efabcd43e69d1b76e08c5a1c8a2a08` (`Da hoan thien full 21 proje
 
 ## Testing Mode
 
-Status: **PLANNED / NOT IMPLEMENTED**
+Phase 1: **COMPLETED / VERIFIED**
 
-No Testing Mode classes, controls, navigation, persistence, submission, or score calculation have been implemented.
+Phase 2+: **NOT IMPLEMENTED**
+
+Phase 1 adds `AppMode`, `AppSession.Mode`, and Login mode selection. Selecting Testing stores the mode, shows a clear next-phase notice, and does not enter the Training workflow. No Testing session, project randomization, navigation, persistence, submission, grading, or score calculation has been implemented.
 
 ## Next Recommended Task
 
-After user approval of the architecture plan, implement Phase 1 only: `AppMode`, `AppSession.Mode`, and Login mode selection while keeping Training as the default and verifying that the existing Training flow is behaviorally unchanged.
+After user review of Phase 1, implement Phase 2 only: pure Testing session/project/result models and fixed seven-project selection tests, without workbook persistence or submission.

@@ -12,6 +12,7 @@ namespace MosTrainer
             // default: English tick (tùy bạn)
             chkEN.Checked = true;
             chkVI.Checked = false;
+            radTraining.Checked = true;
 
             chkEN.CheckedChanged += Lang_CheckedChanged;
             chkVI.CheckedChanged += Lang_CheckedChanged;
@@ -78,6 +79,20 @@ namespace MosTrainer
                 return;
             }
             AppSession.Language = chkVI.Checked ? "vi" : "en";
+            AppSession.Mode = radTesting.Checked ? AppMode.Testing : AppMode.Training;
+
+            if (AppSession.Mode == AppMode.Testing)
+            {
+                MessageBox.Show(
+                    chkVI.Checked
+                        ? "Chế độ Testing sẽ được triển khai trong giai đoạn tiếp theo."
+                        : "Testing Mode will be implemented in the next phase.",
+                    "MosTrainer",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+                return;
+            }
+
             // Login OK -> mở Form1
             this.Hide();
             var main = new Form1();
