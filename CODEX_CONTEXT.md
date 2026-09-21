@@ -1,6 +1,6 @@
 # MosTrainer Technical Context
 
-Last architecture inspection: 2026-09-21 at baseline commit `a8b149c056a815ba95dd654ca3aef1183b666af0` on branch `master`; Phase 7 changes are local and uncommitted.
+Last architecture inspection: 2026-09-21 at baseline commit `fbde3b207143549679ffcaaf76690e2969dd24d8` on branch `master`; Phase 8 changes are local and uncommitted.
 
 ## 1. Project Overview
 
@@ -38,10 +38,10 @@ Primary dependencies are Microsoft Office/Excel Interop, Newtonsoft.Json 13.0.4,
 | `MosTrainer/Testing/TestProjectState.cs` | One selected project's package/path plus copy-once initialization state; never stores COM objects. | Medium. |
 | `MosTrainer/Testing/TestingWorkspaceService.cs` | Deterministic session/project paths and non-overwriting first-visit workbook initialization. | High: protects learner work. |
 | `MosTrainer/Testing/TestSubmissionService.cs` | Shared synchronous seven-workbook submission pipeline using the existing ExcelController and GradingService instances. | High. |
-| `MosTrainer/Testing/TestTaskResult.cs`, `TestProjectResult.cs`, `TestSubmissionResult.cs` | Pure internal Testing result hierarchy; no COM objects and no task-result UI leakage. | Medium. |
+| `MosTrainer/Testing/TestTaskResult.cs`, `TestProjectResult.cs`, `TestSubmissionResult.cs` | Pure internal Testing result hierarchy; final UI exposes failed identifiers only, never diagnostic messages. | Medium. |
 | `MosTrainer/Testing/TestScoreCalculator.cs` | Pure decimal equal-project-weight scoring and final display rounding. | Medium. |
 | `MosTrainer/Form1.cs` | Preserves Training orchestration and hosts Testing countdown, real workbook/task UI, project navigation, and timeout save/close behavior. | High: keep mode branches isolated. |
-| `MosTrainer/Form1.Designer.cs` | Main UI controls, including separate Testing Previous/Next Project buttons. | Medium. |
+| `MosTrainer/Form1.Designer.cs` | Main UI controls, including the centered Testing countdown row and separate Testing Next Project button. | Medium. |
 | `MosTrainer.Projects/ProjectLoader.cs` | Loads only structurally valid project folders, selects requested language with fallback, sorts by ProjectId. | Medium. |
 | `MosTrainer.Projects/ProjectValidator.cs` | Validates package files, JSON, task IDs, supported assertions, and language keys. | High: coupled to grading assertion support. |
 | `MosTrainer.Core/Models/ProjectPackage.cs` | Runtime aggregate of metadata, tasks, selected language, and folder path. | Low. |
@@ -167,7 +167,7 @@ Documents/MosTrainer/Testing/<SessionId N>/<ProjectId>/work.xlsx
 
 `TestingWorkspaceService` computes each path once. On first visit it copies the package starter with overwrite disabled. If the working file exists, revisits open it directly; if an initialized file later disappears, the service fails rather than silently resetting it from the starter. `TestProjectState` stores only `ProjectPackage`, ProjectId/task count, working path, and `IsInitialized`; COM ownership remains in `ExcelController`. `CleanupSessionDirectory` validates that the target is the current SessionId-named descendant of the Testing root, deletes only that directory, and is idempotent when it no longer exists.
 
-`ExcelController.SaveWorkbook` saves only the currently owned workbook and propagates failures. Testing project navigation prepares the target path, explicitly saves the current workbook, calls the existing `Close()` (`Workbook.Close(false)` remains unchanged), opens the target, and only then commits `TestSession.CurrentProjectIndex` plus task/project UI. A target-open failure keeps the old index and attempts to reopen the saved current workbook. Project switching never changes SessionId, StartedAtUtc, or DeadlineUtc.
+`ExcelController.SaveWorkbook` saves only the currently owned workbook and propagates failures. Testing project navigation accepts only the immediate next index, prepares that target path, explicitly saves the current workbook, calls the existing `Close()` (`Workbook.Close(false)` remains unchanged), opens the target, and only then commits `TestSession.CurrentProjectIndex` plus task/project UI. A target-open failure keeps the old index and attempts to reopen the saved current workbook. Project switching never changes SessionId, StartedAtUtc, or DeadlineUtc; learner navigation cannot reopen or skip projects.
 
 ## 8. UI and Language Flow
 
@@ -175,7 +175,7 @@ Login uses two EN/VI CheckBoxes with mutual exclusion and a separate pair of Tra
 
 The main form contains project ComboBox/Go, project info, task tabs, task Previous/Next, Restart Project, Grade Project, status, and timer. Training retains the existing lifecycle: closing Form1 closes Excel and then closes the hidden LoginForm, ending the application. An incomplete Testing form asks for bilingual confirmation before a user close: No resumes the same deadline/workbook, while Yes best-effort saves, closes owned Excel, returns to the same LoginForm, and retains the abandoned workspace. Completed manual/timeout submission returns after result acknowledgement without another close confirmation.
 
-In Testing, `Form1` constructs one `TestingWorkspaceService` from the supplied session, lazily prepares the current `TestProjectState`, deploys existing project assets, opens the session-scoped workbook, and builds the existing localized task tabs. The project ComboBox, Go, Grade, and Restart stay hidden. Task Previous/Next keep their original task meaning; separate Previous/Next Project controls navigate the fixed seven-project order.
+In Testing, `Form1` constructs one `TestingWorkspaceService` from the supplied session, lazily prepares the current `TestProjectState`, deploys existing project assets, opens the session-scoped workbook, and builds the existing localized task tabs. The project ComboBox, Go, Grade, Restart, and Previous Project stay hidden. Task Previous/Next keep their original task meaning; Next Project advances exactly one position through the fixed seven-project order.
 
 On Project 7/7, manual Submit shows a bilingual Yes/No confirmation. Yes rechecks the deadline, acquires `TestSession.TryBeginSubmission`, stops the UI timer, locks interactions, saves/closes the active workbook, and calls the shared `TestSubmissionService`. The service initializes unvisited workbooks through `TestingWorkspaceService`, opens each of the seven fixed projects sequentially using the same ExcelController instance used by GradingService, calls `GradingService.CheckTask` for every task, records results, and closes after each project without changing `CurrentProjectIndex`.
 
@@ -195,7 +195,7 @@ Logging is best-effort and never interrupts application flow.
 
 ## 10. Testing Mode
 
-Phase 1 status: **COMPLETED / VERIFIED**. Phase 2 status: **COMPLETED / VERIFIED**. Phase 3 status: **COMPLETED / VERIFIED**. Phase 4 status: **COMPLETED / VERIFIED**. Phase 5 status: **COMPLETED / VERIFIED**. Phase 6 status: **COMPLETED / VERIFIED**. Phase 7 status: **COMPLETED / VERIFIED**.
+Phase 1 status: **COMPLETED / VERIFIED**. Phase 2 status: **COMPLETED / VERIFIED**. Phase 3 status: **COMPLETED / VERIFIED**. Phase 4 status: **COMPLETED / VERIFIED**. Phase 5 status: **COMPLETED / VERIFIED**. Phase 6 status: **COMPLETED / VERIFIED**. Phase 7 status: **COMPLETED / VERIFIED**. Phase 8 status: **COMPLETED / VERIFIED**.
 
 Implemented in Phase 1:
 
@@ -227,9 +227,9 @@ Implemented in Phase 3:
 
 Implemented in Phase 4:
 
-- Testing has a session-scoped workspace and lazily initializes each selected project from its starter exactly once. Existing `work.xlsx` files are never overwritten on revisit.
+- Testing has a session-scoped workspace and lazily initializes each selected project from its starter exactly once. Existing `work.xlsx` files are never overwritten.
 - The first selected project opens automatically in real Excel, existing localized task tabs are built, and task Previous/Next are enabled without exposing Grade, Restart, project selection, or Go.
-- Separate Previous/Next Project controls follow the fixed session order and use Save -> Close -> Open. Buttons are disabled at project boundaries and during synchronous switching.
+- Project switching uses Save -> Close -> Open and commits only after the target opens. Phase 8 later restricts learner navigation to the immediate next project only.
 - After every switch, countdown is recomputed from the unchanged UTC deadline. If the deadline passed while Excel blocked the UI, timeout handling runs immediately rather than waiting for another timer tick.
 - Timeout is one-shot: display `00:00`, stop the timer, lock task/project interactions, save the active workbook, and close Excel after a successful save. A save failure leaves Excel open to avoid `Close(false)` data loss and reports an infrastructure error while MosTrainer stays locked.
 - Manual Testing form closure performs a mandatory save; a save failure cancels the close. Successful closure then uses the existing Excel cleanup and returns to Login.
@@ -244,7 +244,7 @@ Implemented in Phase 5:
 - `TestSubmissionService` prepares all seven fixed project states, including untouched copies for unvisited projects, deploys existing assets, opens each working workbook, calls the protected existing `GradingService.CheckTask` once for every task, captures results, and closes Excel in `finally` paths.
 - `TestTaskResult` stores ProjectId, TaskId, Pass, and diagnostic Message. `TestProjectResult` aggregates task counts. `TestSubmissionResult` aggregates seven projects, total counts, exact decimal score, display score, and submission reason.
 - `TestScoreCalculator` computes `1000m * Sum(passed / (decimal)total per project) / 7m`. It never rounds task/project fractions; display rounding occurs once. All-pass is exactly 1000, and non-perfect display is capped at 999.
-- Completion is marked only after all seven workbooks are graded and the score is constructed. The bilingual result dialog displays only total score; OK closes Testing Form1 and the existing LoginForm lifecycle shows Login again.
+- Completion is marked only after all seven workbooks are graded and the score is constructed. Phase 8 extends the bilingual result dialog with failed task identifiers; OK closes Testing Form1 and the existing LoginForm lifecycle shows Login again.
 - Infrastructure failure shows no score, calls `AbortSubmission`, and, while before deadline, reopens the current working workbook and resumes the timer from the unchanged deadline. A post-deadline failure stays locked.
 - Timeout retains Phase 4 behavior and does not yet invoke submission. Completed session directories are retained.
 
@@ -265,23 +265,29 @@ Implemented in Phase 7:
 - Testing task buttons read `← Task`/`Task →` or `← Nhiệm vụ`/`Nhiệm vụ →`; project buttons include directional arrows and localized labels; Submit uses a restrained accent. Training keeps `<<`/`>>` and all prior control behavior.
 - The final Testing flow is: Login -> TestSessionFactory -> fixed seven projects/50-minute deadline -> TestingWorkspaceService -> Excel workbooks/task and project navigation -> Manual or TimeExpired -> shared TestSubmissionService -> existing GradingService -> score /1000 -> result acknowledgement -> completed workspace cleanup -> Login.
 
-The implemented workbook strategy is copy-once and lazy: before Previous/Next/Submit, save and close the current workbook; revisiting opens the same session file. Submission reuses these paths and initializes any unvisited project as an untouched working copy.
+Implemented in Phase 8:
 
-Recommended final grading strategy is submit-time sequential grading (Option B): save/close the current workbook, then for each of the seven fixed project states open its saved workbook, call `GradingService.CheckTask` for every task, record results, and close before the next workbook. This avoids stale hidden results when a learner revisits a project. It is slower than grading on every transition but is simpler, authoritative at submission, and keeps grading logic unchanged.
+- A dedicated `lblTestingCountdown` is centered in its own row immediately above `tabTasks`, uses 16-point bold Segoe UI, and displays `MM:SS` from the existing deadline calculation. Testing hides the footer `lblTimer`; Training collapses the new row and retains its existing footer elapsed timer.
+- Previous Project is hidden and disabled. `SwitchTestingProject` rejects every target except `CurrentProjectIndex + 1`, so the learner cannot return to an earlier project or skip forward. Save -> Close -> Open and failure recovery semantics are unchanged for the permitted next transition.
+- Leaving a project does not delete its session workbook. All seven saved paths remain available to the unchanged submit-time grading loop.
+- The shared manual/timeout result formatter walks `TestSubmissionResult.ProjectResults` and each `TaskResults` collection in existing order, selects only `Pass == false`, and displays normalized identifiers such as `P01-Task2`. It never calls grading again or exposes `TestTaskResult.Message`.
+- Failed identifiers wrap at six per line. Perfect results show `Incorrect tasks: None` or `Các câu sai: Không có`. Result acknowledgement remains the cleanup boundary.
 
-Option A (grade silently on every project transition) gives earlier results and shorter submit time, but results become stale if a learner revisits a workbook. It also invokes COM grading more often and requires careful invalidation/regrading. Option B is therefore the recommended first implementation.
+The implemented workbook strategy is copy-once and lazy: before Next Project or Submit, save and close the current workbook. The learner cannot reopen an earlier project, but its saved working file remains intact for submission. Submission reuses these paths and initializes any unvisited project as an untouched working copy.
+
+The grading strategy is submit-time sequential grading: save/close the current workbook, then for each of the seven fixed project states open its saved workbook, call `GradingService.CheckTask` for every task, record results, and close before the next workbook. It is authoritative at submission and keeps grading logic unchanged.
 
 Testing UI rules:
 
 - Hide or disable project selection, Go, per-task Grade, and PASS/FAIL feedback.
 - Preserve task tabs and task navigation.
-- Add separate project navigation/progress and Submit Test controls.
+- Show forward-only Next Project navigation/progress and Submit Test controls; never expose Previous Project.
 - Require confirmation and make submission idempotent.
 - Do not change Training control behavior.
 
 Testing timer and timeout invariants:
 
-- The future UI displays the full-session countdown as `MM:SS` from `50:00` through `00:00`. A WinForms timer may tick every 1000 ms, but every display update must query the session deadline; tick count is never authoritative.
+- The centered Testing UI displays the full-session countdown as `MM:SS` from `50:00` through `00:00`. The WinForms timer ticks every 1000 ms, but every display update queries the session deadline; tick count is never authoritative.
 - UI lag, focus changes, workbook loading, project/task navigation, and other open dialogs do not pause or extend the deadline.
 - At `00:00`, regardless of the current project or whether all seven were visited, the UI must lock Testing navigation and start automatic submission as soon as possible.
 - Timeout submission has no confirmation. Manual submission may confirm, but both must invoke one shared submission pipeline, distinguished by a reason only when that phase needs it.
@@ -305,7 +311,8 @@ Suggested implementation phases:
 1. Add `AppMode`, `AppSession.Mode`, and mutually exclusive Login mode selection; verify Training unchanged.
 2. Add pure TestSession, fixed seven-project selection, and 50-minute deadline logic.
 3. Connect Testing Login to one TestSession and add the Testing UI shell with fixed project/deadline progress.
-4. Add explicit workbook save plus session-scoped first-open/revisit navigation.
+4. Add explicit workbook save plus session-scoped project navigation.
 5. Add idempotent manual submit orchestration, decimal scoring, bilingual result UI, failure rollback, and return to Login while reusing `GradingService.CheckTask`.
 6. Route timeout into the same submission pipeline without confirmation.
 7. Add completed-workspace cleanup after result acknowledgement, safe incomplete-test close confirmation, final Testing UI polish, and broad Training/Testing acceptance tests. Completed and verified.
+8. Center the Testing countdown above task instructions, enforce forward-only project navigation, and show failed task identifiers in the shared final result. Completed and verified.

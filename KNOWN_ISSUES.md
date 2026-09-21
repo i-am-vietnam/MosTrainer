@@ -65,7 +65,7 @@ Task text is localized through project language JSON, and Login labels switch la
 
 ## Questions / Future Product Decisions
 
-- Decide whether a future review screen should expose individual failed tasks; Testing currently displays only total score.
+- The final result exposes only failed task identifiers, not expected answers, assertion messages, or detailed review guidance. Decide whether a future instructor-only review screen is needed.
 - Decide whether retained failed/abandoned workspaces need an administrative cleanup tool or a resume/session-manifest feature.
 
 ## Edge Cases Required in the Testing Plan

@@ -110,7 +110,8 @@ namespace MosTrainer
             btnGrade.Visible = false;
             btnRestart.Visible = false;
 
-            btnPrevProject.Visible = true;
+            btnPrevProject.Visible = false;
+            btnPrevProject.Enabled = false;
             btnNextProject.Visible = true;
             btnSubmitTest.Visible = true;
 
@@ -122,9 +123,7 @@ namespace MosTrainer
             btnPrev.Width = 110;
             btnNext.Width = 110;
 
-            btnPrevProject.Text = vietnamese ? "← Dự án trước" : "← Previous Project";
             btnNextProject.Text = vietnamese ? "Dự án tiếp →" : "Next Project →";
-            btnPrevProject.Width = 165;
             btnNextProject.Width = 165;
             btnSubmitTest.Text = vietnamese ? "Nộp bài" : "Submit Test";
             btnSubmitTest.Width = 120;
@@ -138,7 +137,9 @@ namespace MosTrainer
                 ? "Đang mở workbook của bài thi..."
                 : "Opening the Testing workbook...";
 
-            lblTimer.Visible = true;
+            tlpBottom.RowStyles[1].Height = 46F;
+            lblTestingCountdown.Visible = true;
+            lblTimer.Visible = false;
             timerMain.Interval = 1000;
             _timerRunning = true;
             UpdateTestingCountdown();
@@ -157,13 +158,13 @@ namespace MosTrainer
 
             if (_testSession.IsExpiredAt(currentUtc))
             {
-                lblTimer.Text = "00:00";
+                lblTestingCountdown.Text = "00:00";
                 HandleTestingTimeExpired();
                 return;
             }
 
             int totalSeconds = (int)Math.Ceiling(remaining.TotalSeconds);
-            lblTimer.Text = string.Format("{0:00}:{1:00}",
+            lblTestingCountdown.Text = string.Format("{0:00}:{1:00}",
                 totalSeconds / 60,
                 totalSeconds % 60);
         }
@@ -176,7 +177,7 @@ namespace MosTrainer
             _testingTimeoutHandled = true;
             _timerRunning = false;
             timerMain.Stop();
-            lblTimer.Text = "00:00";
+            lblTestingCountdown.Text = "00:00";
             LockTestingInteractions();
             BeginTestingSubmission(TestSubmissionReason.TimeExpired);
         }
@@ -263,7 +264,7 @@ namespace MosTrainer
                 !_testSession.IsCompleted &&
                 _excel.IsOpened;
 
-            btnPrevProject.Enabled = canNavigate && _testSession.CurrentProjectIndex > 0;
+            btnPrevProject.Enabled = false;
             btnNextProject.Enabled = canNavigate &&
                 _testSession.CurrentProjectIndex < _testSession.TotalProjects - 1;
             btnSubmitTest.Enabled = canNavigate &&
@@ -282,7 +283,7 @@ namespace MosTrainer
 
             if (_testSession.IsExpiredAt(DateTime.UtcNow))
             {
-                lblTimer.Text = "00:00";
+                lblTestingCountdown.Text = "00:00";
                 HandleTestingTimeExpired();
                 return;
             }
@@ -306,7 +307,7 @@ namespace MosTrainer
 
             if (_testSession.IsExpiredAt(DateTime.UtcNow))
             {
-                lblTimer.Text = "00:00";
+                lblTestingCountdown.Text = "00:00";
                 HandleTestingTimeExpired();
                 return;
             }
@@ -346,9 +347,7 @@ namespace MosTrainer
                 return;
             }
 
-            string resultMessage = vietnamese
-                ? "Đã hoàn thành bài kiểm tra.\r\n\r\nĐiểm: " + result.DisplayScore + " / 1000"
-                : "Test completed.\r\n\r\nScore: " + result.DisplayScore + " / 1000";
+            string resultMessage = BuildTestingResultMessage(result, vietnamese);
             string resultTitle = vietnamese
                 ? "Kết quả bài kiểm tra"
                 : "Test Result";
@@ -362,6 +361,77 @@ namespace MosTrainer
 
             CleanupCompletedTestingWorkspace();
             Close();
+        }
+
+        private static string BuildTestingResultMessage(
+            TestSubmissionResult result,
+            bool vietnamese)
+        {
+            var incorrectTaskIds = new List<string>();
+            foreach (TestProjectResult projectResult in result.ProjectResults)
+            {
+                foreach (TestTaskResult taskResult in projectResult.TaskResults)
+                {
+                    if (!taskResult.Pass)
+                    {
+                        incorrectTaskIds.Add(FormatIncorrectTaskId(
+                            projectResult.ProjectId,
+                            taskResult.TaskId));
+                    }
+                }
+            }
+
+            string incorrectTasks = FormatIncorrectTaskList(
+                incorrectTaskIds,
+                vietnamese ? "Không có" : "None");
+
+            return vietnamese
+                ? "Đã hoàn thành bài kiểm tra.\r\n\r\n" +
+                    "Điểm: " + result.DisplayScore + " / 1000\r\n\r\n" +
+                    "Các câu sai:\r\n" + incorrectTasks
+                : "Test completed.\r\n\r\n" +
+                    "Score: " + result.DisplayScore + " / 1000\r\n\r\n" +
+                    "Incorrect tasks:\r\n" + incorrectTasks;
+        }
+
+        private static string FormatIncorrectTaskId(string projectId, string taskId)
+        {
+            const string projectPrefix = "Excel2019_";
+            string projectDisplay = projectId ?? "";
+            if (projectDisplay.StartsWith(projectPrefix, StringComparison.OrdinalIgnoreCase) &&
+                projectDisplay.Length > projectPrefix.Length)
+            {
+                projectDisplay = projectDisplay.Substring(projectPrefix.Length);
+            }
+
+            string taskDisplay = taskId ?? "";
+            int taskNumber;
+            if (taskDisplay.Length > 1 &&
+                (taskDisplay[0] == 'T' || taskDisplay[0] == 't') &&
+                int.TryParse(taskDisplay.Substring(1), out taskNumber))
+            {
+                taskDisplay = "Task" + taskNumber;
+            }
+
+            return projectDisplay + "-" + taskDisplay;
+        }
+
+        private static string FormatIncorrectTaskList(
+            IList<string> taskIds,
+            string noneText)
+        {
+            if (taskIds == null || taskIds.Count == 0)
+                return noneText;
+
+            const int itemsPerLine = 6;
+            var lines = new List<string>();
+            for (int index = 0; index < taskIds.Count; index += itemsPerLine)
+            {
+                int count = Math.Min(itemsPerLine, taskIds.Count - index);
+                lines.Add(string.Join(", ", taskIds.Skip(index).Take(count)));
+            }
+
+            return string.Join("\r\n", lines);
         }
 
         private void CleanupCompletedTestingWorkspace()
@@ -400,7 +470,7 @@ namespace MosTrainer
                 _testingTimeoutHandled = true;
                 _timerRunning = false;
                 timerMain.Stop();
-                lblTimer.Text = "00:00";
+                lblTestingCountdown.Text = "00:00";
                 LockTestingInteractions();
                 lblStatus.ForeColor = Color.Crimson;
                 lblStatus.Text = failureMessage;
@@ -452,10 +522,14 @@ namespace MosTrainer
                 _testSession.IsCompleted)
                 return;
 
+            int currentIndex = _testSession.CurrentProjectIndex;
+            if (targetIndex != currentIndex + 1)
+                return;
+
             DateTime currentUtc = DateTime.UtcNow;
             if (_testSession.IsExpiredAt(currentUtc))
             {
-                lblTimer.Text = "00:00";
+                lblTestingCountdown.Text = "00:00";
                 HandleTestingTimeExpired();
                 return;
             }
@@ -463,7 +537,6 @@ namespace MosTrainer
             if (targetIndex < 0 || targetIndex >= _testSession.TotalProjects)
                 return;
 
-            int currentIndex = _testSession.CurrentProjectIndex;
             TestProjectState currentState = _testingWorkspace.GetProjectState(currentIndex);
             bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
 

@@ -35,6 +35,7 @@
             this.cbProjects = new System.Windows.Forms.ComboBox();
             this.btnGo = new System.Windows.Forms.Button();
             this.lblProjectInfo = new System.Windows.Forms.Label();
+            this.lblTestingCountdown = new System.Windows.Forms.Label();
             this.tabTasks = new System.Windows.Forms.TabControl();
             this.pnlFooter = new System.Windows.Forms.Panel();
             this.tblFooterButtons = new System.Windows.Forms.TableLayoutPanel();
@@ -79,13 +80,15 @@
             this.tlpBottom.ColumnCount = 1;
             this.tlpBottom.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tlpBottom.Controls.Add(this.pnlTopBar, 0, 0);
-            this.tlpBottom.Controls.Add(this.tabTasks, 0, 1);
-            this.tlpBottom.Controls.Add(this.pnlFooter, 0, 2);
+            this.tlpBottom.Controls.Add(this.lblTestingCountdown, 0, 1);
+            this.tlpBottom.Controls.Add(this.tabTasks, 0, 2);
+            this.tlpBottom.Controls.Add(this.pnlFooter, 0, 3);
             this.tlpBottom.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlpBottom.Location = new System.Drawing.Point(0, 0);
             this.tlpBottom.Name = "tlpBottom";
-            this.tlpBottom.RowCount = 3;
+            this.tlpBottom.RowCount = 4;
             this.tlpBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 58F));
+            this.tlpBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 0F));
             this.tlpBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.tlpBottom.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 56F));
             this.tlpBottom.Size = new System.Drawing.Size(1912, 275);
@@ -145,7 +148,20 @@
             this.lblProjectInfo.TabIndex = 3;
             this.lblProjectInfo.Text = "Project 0 of 0";
             this.lblProjectInfo.Visible = false;
-            // 
+            //
+            // lblTestingCountdown
+            //
+            this.lblTestingCountdown.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblTestingCountdown.Font = new System.Drawing.Font("Segoe UI", 16F, System.Drawing.FontStyle.Bold);
+            this.lblTestingCountdown.ForeColor = System.Drawing.Color.Crimson;
+            this.lblTestingCountdown.Location = new System.Drawing.Point(3, 58);
+            this.lblTestingCountdown.Name = "lblTestingCountdown";
+            this.lblTestingCountdown.Size = new System.Drawing.Size(1906, 1);
+            this.lblTestingCountdown.TabIndex = 4;
+            this.lblTestingCountdown.Text = "50:00";
+            this.lblTestingCountdown.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.lblTestingCountdown.Visible = false;
+            //
             // tabTasks
             // 
             this.tabTasks.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -323,6 +339,7 @@
         private System.Windows.Forms.ComboBox cbProjects;
         private System.Windows.Forms.Button btnGo;
         private System.Windows.Forms.Label lblProjectInfo;
+        private System.Windows.Forms.Label lblTestingCountdown;
         private System.Windows.Forms.TabControl tabTasks;
         private System.Windows.Forms.Panel pnlFooter;
         private System.Windows.Forms.TableLayoutPanel tblFooterButtons;

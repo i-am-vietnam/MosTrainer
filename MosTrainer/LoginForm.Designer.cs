@@ -210,9 +210,9 @@
             this.chkVI.TabIndex = 1;
             this.chkVI.Text = "Tiếng Việt";
             this.chkVI.UseVisualStyleBackColor = true;
-            //
+            // 
             // flpMode
-            //
+            // 
             this.flpMode.Controls.Add(this.radTraining);
             this.flpMode.Controls.Add(this.radTesting);
             this.flpMode.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -220,27 +220,27 @@
             this.flpMode.Name = "flpMode";
             this.flpMode.Size = new System.Drawing.Size(283, 30);
             this.flpMode.TabIndex = 4;
-            //
+            // 
             // radTraining
-            //
+            // 
             this.radTraining.AutoSize = true;
             this.radTraining.Checked = true;
             this.radTraining.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.radTraining.Location = new System.Drawing.Point(3, 3);
             this.radTraining.Name = "radTraining";
-            this.radTraining.Size = new System.Drawing.Size(84, 24);
+            this.radTraining.Size = new System.Drawing.Size(83, 24);
             this.radTraining.TabIndex = 0;
             this.radTraining.TabStop = true;
             this.radTraining.Text = "Training";
             this.radTraining.UseVisualStyleBackColor = true;
-            //
+            // 
             // radTesting
-            //
+            // 
             this.radTesting.AutoSize = true;
             this.radTesting.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.radTesting.Location = new System.Drawing.Point(93, 3);
+            this.radTesting.Location = new System.Drawing.Point(92, 3);
             this.radTesting.Name = "radTesting";
-            this.radTesting.Size = new System.Drawing.Size(76, 24);
+            this.radTesting.Size = new System.Drawing.Size(77, 24);
             this.radTesting.TabIndex = 1;
             this.radTesting.Text = "Testing";
             this.radTesting.UseVisualStyleBackColor = true;
