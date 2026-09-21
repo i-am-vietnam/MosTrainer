@@ -1,6 +1,6 @@
 # MosTrainer Technical Context
 
-Last architecture inspection: 2026-09-21 at baseline commit `7ba7af0fe45568baed62ac2ff327e1c82add85eb` on branch `master`; Pre-RC adjustments are local and uncommitted.
+Last architecture inspection: 2026-09-21 at baseline commit `e8755f1af9a43b52a955afda8969cdc1094bb10d` on branch `master`; Pre-RC adjustment is in HEAD and verification documentation changes are local and uncommitted.
 
 ## 1. Project Overview
 
@@ -280,6 +280,8 @@ Pre-RC adjustment:
 - Training `btnGrade_Click` still calls `GradingService.CheckTask` once and retains its existing footer status; after the result it shows only a localized Correct/Incorrect (`Đúng`/`Sai`) message with `Result`/`Kết quả` title. Testing Grade remains hidden and guarded, with no per-task feedback.
 - Testing reuses `btnRestart` with localized text and destructive Yes/No confirmation (No default). No leaves the live workbook and deadline untouched. Yes closes without saving, explicitly resets the current session working copy from the source starter, reopens Excel and Task 1, and restores buttons according to current project; on Project 7, Submit remains available. No other project, selected order, session ID, index, or UTC time changes.
 - `MosTrainer.WinForms.csproj` correctly defines nonoptimized full-symbol Debug and optimized `pdbonly` Release. Visual Studio Just My Code warns when F5 debugs Release; use Debug + F5 for development or Release + Ctrl+F5 for a final run. No production configuration was changed to suppress the warning.
+
+Pre-RC verification closure (2026-09-21): disposable real-Excel checks observed Training Grade EN/VI PASS and FAIL popup text/title alongside the existing footer, without using a Training working file. Testing Restart No/Yes, P1/P2 isolation, forward-only rejection, Project 7 controls, and unchanged UTC session identity/deadline passed. Actual Manual Submit after Project 7 Restart and `TimeExpired` after Project 3 Restart both traversed the same seven-project `TestSubmissionService`, showed score/incorrect-task IDs, retained workspace until result acknowledgement, then cleaned and returned to Login. A missing disposable starter during Restart produced a clear error, reopened the previously saved work.xlsx, and did not produce a score. The source-level Training Grade handler has one `CheckTask` invocation; no grading implementation was changed.
 
 The implemented workbook strategy is copy-once and lazy: before Next Project or Submit, save and close the current workbook. The learner cannot reopen an earlier project, but its saved working file remains intact for submission. Submission reuses these paths and initializes any unvisited project as an untouched working copy.
 
