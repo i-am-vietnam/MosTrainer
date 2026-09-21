@@ -2,7 +2,7 @@
 
 Last verified: 2026-09-21
 Branch: `master`
-Commit/baseline: `e8755f1af9a43b52a955afda8969cdc1094bb10d` (Pre-RC adjustment is in HEAD; verification documentation changes are local and uncommitted)
+Commit/baseline: `754d2a0b8236d9c1f99604cf45b40313c86acf44` (starting RC1 HEAD; this RC1 report is an uncommitted documentation update)
 
 ## Stable
 
@@ -50,7 +50,8 @@ Commit/baseline: `e8755f1af9a43b52a955afda8969cdc1094bb10d` (Pre-RC adjustment i
 
 ## In Progress
 
-- None.
+- RC1 full acceptance: **PARTIALLY VERIFIED**. On the starting HEAD, Debug and Release rebuilt with zero errors and five pre-existing CS0105 warnings each. ProjectValidator checked all 21 packages in both languages: 144 tasks, zero errors/warnings. A disposable real-Excel service harness verified seven unique selections, 50-minute sessions, workbook reset on the working copy, seven-project Manual and TimeExpired grading, unvisited initialization, one-shot submission state, completed workspace cleanup/idempotence, unchanged starter hashes, and missing-disposable-starter failure retention. Pure score/result checks covered all-pass 1000, all-fail 0, partial 464, bilingual None, ordered/wrapped incorrect IDs, and hidden diagnostics.
+- Direct Form1 UI checks (without automating Login) observed EN/VI Testing labels, localized instructions, real Excel startup, centered countdown, task navigation, a Project 1-to-2 transition, incomplete-exit confirmation, and a clear COM error after manually closing Excel before Next Project. EN/VI Training shells were checked without Go to protect existing Training working files. These checks do **not** constitute full Login-to-result acceptance or a rerun of every Training Grade, Restart, timeout, and lifecycle case listed in the RC1 matrix. No new functional defect was established; classroom pilot readiness remains unconfirmed pending those end-to-end cases.
 
 ## Planned
 

@@ -2,6 +2,8 @@
 
 Last reviewed: 2026-09-21.
 
+RC1 acceptance coverage: the current pass revalidated package structure, Debug/Release builds, direct EN/VI Testing UI shells, and disposable real-Excel workspace/submission services. It did not rerun every full Login-to-result and Training Grade scenario in the requested RC1 matrix. This is a verification gap, not a newly reproduced production defect; retain the prior Pre-RC evidence separately from this RC1 pass.
+
 ## Confirmed Issues / Current Limitations
 
 ### Training working workbook is reset when a project is opened

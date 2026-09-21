@@ -1,6 +1,6 @@
 # MosTrainer Technical Context
 
-Last architecture inspection: 2026-09-21 at baseline commit `e8755f1af9a43b52a955afda8969cdc1094bb10d` on branch `master`; Pre-RC adjustment is in HEAD and verification documentation changes are local and uncommitted.
+Last architecture/RC1 inspection: 2026-09-21 at starting HEAD `754d2a0b8236d9c1f99604cf45b40313c86acf44` on branch `master`; the Pre-RC adjustment and earlier verification are committed in that HEAD. Current RC1 documentation changes are local and uncommitted.
 
 ## 1. Project Overview
 
