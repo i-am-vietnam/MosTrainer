@@ -1,8 +1,8 @@
 # Current Status
 
-Last verified: 2026-09-20
+Last verified: 2026-09-21
 Branch: `master`
-Commit: `ad9386a306ab819ca03ade9cccbf0746a8bf5d4a` (Phase 4 baseline)
+Commit: `8a4d1df4c57d7f9dfee7bd341e31067deeae89af` (Phase 5 baseline)
 
 ## Stable
 
@@ -24,6 +24,7 @@ Commit: `ad9386a306ab819ca03ade9cccbf0746a8bf5d4a` (Phase 4 baseline)
 - Testing Mode Phase 3 is complete: Testing Login creates one session, passes it to a Testing UI shell, and displays fixed project progress plus a deadline-based countdown without opening Excel.
 - Testing Mode Phase 4 is complete: each session owns isolated, copy-once project workbooks; Testing opens real Excel/task instructions and safely saves, closes, and reopens them through Previous/Next Project navigation.
 - Testing Mode Phase 5 is complete: manual Submit uses one shared seven-workbook grading pipeline, collects task/project results, calculates the equal-project-weight score out of 1000, shows a bilingual result, and returns to the existing LoginForm.
+- Testing Mode Phase 6 is complete: the 50-minute deadline automatically invokes the same submission pipeline with `TimeExpired`, without confirmation.
 
 ## Verified This Inspection
 
@@ -35,7 +36,8 @@ Commit: `ad9386a306ab819ca03ade9cccbf0746a8bf5d4a` (Phase 4 baseline)
 - Testing Mode Phase 3 Login-to-Form integration, EN/VI UI, project progress, countdown, timeout lock, Training constructor path, and absence of Excel startup passed a disposable WinForms integration harness.
 - Testing Mode Phase 4 passed a disposable real-Excel integration harness covering Login/session transfer, initial workbook/task tabs, `1 -> 2 -> 3 -> 2 -> 1`, persisted workbook content, boundary button states, session-path isolation, unchanged session timer identity, timeout save/close/lock, untouched source starter, and no new orphan Excel process.
 - Testing Mode Phase 5 passed pure score/state checks plus disposable real-Excel submission checks: confirmation No, seven projects/52 tasks graded exactly once, five unvisited projects initialized, saved current working content, result OK returning to Login, failure rollback/retry, unchanged starters, and no orphan Excel process.
-- No project JSON, starter workbook, assertion, or grading code was changed by Testing Mode Phase 1 through Phase 5.
+- Testing Mode Phase 6 passed disposable real-Excel timeout checks at Projects 1, 4, and 7; each graded seven projects and the exact selected task total, initialized unvisited workbooks, returned a `TimeExpired` result, returned to Login, and left no orphan Excel process. Timeout failure, repeated timeout, manual No/Yes, and new-session-after-Login checks also passed.
+- No project JSON, starter workbook, assertion, or grading code was changed by Testing Mode Phase 1 through Phase 6.
 
 ## In Progress
 
@@ -44,8 +46,8 @@ Commit: `ad9386a306ab819ca03ade9cccbf0746a8bf5d4a` (Phase 4 baseline)
 ## Planned
 
 - Preserve Training behavior unchanged.
-- Connect timeout to the shared submission pipeline without confirmation.
 - Add completed-session workspace cleanup when its retention policy is defined.
+- Perform final UI polish and full end-to-end Training/Testing regression.
 
 ## Testing Mode
 
@@ -82,10 +84,17 @@ Phase 5: **COMPLETED / VERIFIED**
 - Score uses equal project weights and decimal arithmetic; perfect is exactly 1000, while a non-perfect displayed score is capped below 1000.
 - Successful result acknowledgement closes Testing Form1 and shows the existing LoginForm. Infrastructure failure aborts submission and restores the workbook/timer for retry when time remains.
 
-Phase 6+: **NOT IMPLEMENTED**
+Phase 6: **COMPLETED / VERIFIED**
 
-Timeout still performs the Phase 4 save/close/lock behavior and does not invoke final submission, grading, or scoring. Completed Testing workspace cleanup is also not implemented.
+- At `00:00`, Testing sets one-shot timeout state, stops the timer, locks interactions, and calls `BeginTestingSubmission(TestSubmissionReason.TimeExpired)` directly.
+- Timeout shows no confirmation and reuses the exact manual Save/Close, seven-workbook grading, score, result, and Login-return pipeline.
+- Timeout works from any current project; unvisited projects are initialized as untouched session workbooks and graded normally.
+- Infrastructure failure after deadline aborts submission without a fake score, keeps `00:00`, and leaves all Testing interactions locked.
+
+Phase 7+: **NOT IMPLEMENTED**
+
+Completed Testing workspace cleanup/retention policy, final UI polish, and final broad acceptance regression remain deferred.
 
 ## Next Recommended Task
 
-After user review of Phase 5, implement Phase 6 only: route `00:00` into the same `BeginTestingSubmission(TimeExpired)` pipeline without confirmation, retaining the same grading, score, result, and return-to-login flow.
+After user review of Phase 6, define the completed-workspace retention/cleanup policy, then perform final UI polish and broad Training/Testing acceptance regression without changing grading semantics.

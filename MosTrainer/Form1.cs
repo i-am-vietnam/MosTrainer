@@ -164,30 +164,9 @@ namespace MosTrainer
             _testingTimeoutHandled = true;
             _timerRunning = false;
             timerMain.Stop();
+            lblTimer.Text = "00:00";
             LockTestingInteractions();
-
-            bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
-            lblStatus.ForeColor = Color.Crimson;
-
-            if (_excel.IsOpened)
-            {
-                try
-                {
-                    _excel.SaveWorkbook();
-                    _excel.Close();
-                }
-                catch (Exception ex)
-                {
-                    lblStatus.Text = vietnamese
-                        ? "Đã hết giờ nhưng không thể lưu workbook; workbook được giữ mở để tránh mất bài: " + ex.Message
-                        : "Time expired, but the workbook could not be saved and remains open to avoid data loss: " + ex.Message;
-                    return;
-                }
-            }
-
-            lblStatus.Text = vietnamese
-                ? "Đã hết thời gian làm bài. Workbook đã được lưu và đóng."
-                : "Time expired. The workbook was saved and closed.";
+            BeginTestingSubmission(TestSubmissionReason.TimeExpired);
         }
 
         private void LockTestingInteractions()

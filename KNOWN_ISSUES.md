@@ -1,6 +1,6 @@
 # Known Issues and Risks
 
-Last reviewed: 2026-09-20.
+Last reviewed: 2026-09-21.
 
 ## Confirmed Issues / Current Limitations
 
@@ -18,13 +18,9 @@ This remains the existing Training behavior. Testing no longer uses this path: P
 
 `ExcelController.CloseWorkbook` still calls `Workbook.Close(false)` to preserve Training behavior. Testing Phase 4 explicitly calls `SaveWorkbook` before every navigation/form close and before timeout close; this ordering must remain mandatory in submission code.
 
-### Timeout save failure has no automatic recovery pipeline
+### Timeout submission failure has no retry UI
 
-If the timeout save fails, MosTrainer locks Testing interactions and leaves Excel open rather than calling `Close(false)` and risking data loss. Automatic retry/recovery and real timeout submission are not implemented yet; Phase 6 must route timeout into the Phase 5 shared submission pipeline and define recovery for infrastructure failures.
-
-### Timeout does not yet submit or grade
-
-Phase 5 implements manual submission, result acknowledgement, and return to the existing LoginForm. Reaching `00:00` still only locks the UI and saves/closes the active workbook; it does not call the shared grading/scoring pipeline until Phase 6.
+Timeout now invokes the shared submission pipeline automatically. If saving, preparing, opening, or grading infrastructure fails after the deadline, the attempt is aborted without a score and the exam remains locked at `00:00`. There is intentionally no automatic retry loop or retry button yet.
 
 ### Completed Testing workspaces are retained
 
@@ -38,7 +34,7 @@ After a successful manual submission, `Documents/MosTrainer/Testing/<SessionId>`
 
 ### Grading is tied to one active Excel session
 
-`ExcelController` owns one `ExcelSession`, and `GradingService` grades that live workbook. Phase 5 opens/grades/closes the seven saved workbooks sequentially; future timeout integration must keep using this same pipeline and failure rollback.
+`ExcelController` owns one `ExcelSession`, and `GradingService` grades that live workbook. Manual and timeout submission both open/grade/close the seven saved workbooks sequentially through the same pipeline; any future retry/recovery UI must preserve that ownership model.
 
 ### Excel Interop lifecycle is failure-sensitive
 
@@ -70,7 +66,7 @@ Task text is localized through project language JSON, and Login labels switch la
 - Decide whether closing MosTrainer mid-test abandons the attempt after confirmation or requires resume support.
 - Decide whether Testing working directories are deleted immediately after result acknowledgement or retained temporarily for diagnostics/review.
 - Decide whether a future review screen should expose individual failed tasks; Phase 5 intentionally displays only total score.
-- Phase 5 seven-project grading/submission has been verified with real Excel; timeout invocation of that pipeline remains to be verified in Phase 6.
+- Manual and timeout seven-project grading/submission have been verified with real Excel. Final broad end-to-end acceptance across all lifecycle combinations remains planned.
 - Verify behavior when the learner manually closes the owned Excel workbook/application, then attempts Next or Submit.
 
 ## Edge Cases Required in the Testing Plan

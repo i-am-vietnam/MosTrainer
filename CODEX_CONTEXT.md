@@ -1,6 +1,6 @@
 # MosTrainer Technical Context
 
-Last architecture inspection: 2026-09-20 at commit `ad9386a306ab819ca03ade9cccbf0746a8bf5d4a` on branch `master`.
+Last architecture inspection: 2026-09-21 at commit `8a4d1df4c57d7f9dfee7bd341e31067deeae89af` on branch `master`.
 
 ## 1. Project Overview
 
@@ -72,6 +72,7 @@ LoginForm
   -> if Testing, ProjectLoader.LoadAll -> TestSessionFactory.Create -> new Form1(testSession)
   -> hide LoginForm and show Form1
   -> manual Submit on Project 7/7 runs the shared grading/score pipeline
+  -> or DeadlineUtc expiry runs that same pipeline immediately without confirmation
   -> result OK closes Testing Form1 and shows the existing LoginForm
 
 Form1.MainForm_Load
@@ -178,6 +179,8 @@ In Testing, `Form1` constructs one `TestingWorkspaceService` from the supplied s
 
 On Project 7/7, manual Submit shows a bilingual Yes/No confirmation. Yes rechecks the deadline, acquires `TestSession.TryBeginSubmission`, stops the UI timer, locks interactions, saves/closes the active workbook, and calls the shared `TestSubmissionService`. The service initializes unvisited workbooks through `TestingWorkspaceService`, opens each of the seven fixed projects sequentially using the same ExcelController instance used by GradingService, calls `GradingService.CheckTask` for every task, records results, and closes after each project without changing `CurrentProjectIndex`.
 
+At deadline, `UpdateTestingCountdown` displays `00:00` and calls `HandleTestingTimeExpired`. The handler sets its private one-shot flag before stopping/locking and calls `BeginTestingSubmission(TestSubmissionReason.TimeExpired)` directly. It performs no separate Save/Close. Manual and timeout therefore share `TryBeginSubmission`, current workbook Save/Close, `TestSubmissionService`, score/result construction, completion, result dialog, and return-to-Login lifecycle; only manual submission shows confirmation.
+
 ## 9. Diagnostics and Persistence
 
 `AppLogger` writes daily logs to:
@@ -192,7 +195,7 @@ Logging is best-effort and never interrupts application flow.
 
 ## 10. Testing Mode
 
-Phase 1 status: **COMPLETED / VERIFIED**. Phase 2 status: **COMPLETED / VERIFIED**. Phase 3 status: **COMPLETED / VERIFIED**. Phase 4 status: **COMPLETED / VERIFIED**. Phase 5 status: **COMPLETED / VERIFIED**. Phase 6+: **NOT IMPLEMENTED**.
+Phase 1 status: **COMPLETED / VERIFIED**. Phase 2 status: **COMPLETED / VERIFIED**. Phase 3 status: **COMPLETED / VERIFIED**. Phase 4 status: **COMPLETED / VERIFIED**. Phase 5 status: **COMPLETED / VERIFIED**. Phase 6 status: **COMPLETED / VERIFIED**. Phase 7+: **NOT IMPLEMENTED**.
 
 Implemented in Phase 1:
 
@@ -245,6 +248,15 @@ Implemented in Phase 5:
 - Infrastructure failure shows no score, calls `AbortSubmission`, and, while before deadline, reopens the current working workbook and resumes the timer from the unchanged deadline. A post-deadline failure stays locked.
 - Timeout retains Phase 4 behavior and does not yet invoke submission. Completed session directories are retained.
 
+Implemented in Phase 6:
+
+- Deadline expiry from any project sets `00:00`, sets `_testingTimeoutHandled` before submission, stops the timer, locks Testing interactions, and calls `BeginTestingSubmission(TimeExpired)` without a confirmation dialog.
+- `HandleTestingTimeExpired` no longer saves or closes Excel. Save/Close occurs exactly once in the shared submission entry point before the unchanged seven-project `TestSubmissionService` pipeline.
+- Timeout results carry `TestSubmissionReason.TimeExpired`; manual results remain `Manual`. Both use the same grading, decimal score, bilingual result dialog, and existing LoginForm return lifecycle.
+- Unvisited projects are initialized through the existing copy-once workspace service and graded as untouched workbooks. Backend grading never changes the user's current project index.
+- Timeout infrastructure failure calls `AbortSubmission`, produces no result/score, leaves the timer stopped at `00:00`, and keeps task/project/Submit controls locked. Repeated timeout calls return through the UI one-shot guard.
+- A completed timeout session returns to Login; a later Testing login creates a new SessionId and fresh 50-minute deadline.
+
 The implemented workbook strategy is copy-once and lazy: before Previous/Next/Submit, save and close the current workbook; revisiting opens the same session file. Submission reuses these paths and initializes any unvisited project as an untouched working copy.
 
 Recommended final grading strategy is submit-time sequential grading (Option B): save/close the current workbook, then for each of the seven fixed project states open its saved workbook, call `GradingService.CheckTask` for every task, record results, and close before the next workbook. This avoids stale hidden results when a learner revisits a project. It is slower than grading on every transition but is simpler, authoritative at submission, and keeps grading logic unchanged.
@@ -266,7 +278,7 @@ Testing timer and timeout invariants:
 - At `00:00`, regardless of the current project or whether all seven were visited, the UI must lock Testing navigation and start automatic submission as soon as possible.
 - Timeout submission has no confirmation. Manual submission may confirm, but both must invoke one shared submission pipeline, distinguished by a reason only when that phase needs it.
 - The `TryBeginSubmission` guard must be acquired before invoking that pipeline so repeated timer ticks cannot submit more than once.
-- Phase 5 provides the shared pipeline and `TimeExpired` reason contract, but timeout remains on the Phase 4 save/close path. Phase 6 must call the same `BeginTestingSubmission(TimeExpired)` without confirmation; it must not duplicate grading or scoring.
+- Phase 6 routes timeout through the same `BeginTestingSubmission(TimeExpired)` entry point without confirmation. There is one grading/scoring pipeline for both reasons.
 
 Only projects with at least one task are eligible for the random pool. Deduplicate by `ProjectId`, use a one-time shuffle, take seven, and fail startup with a localized message if fewer than seven eligible projects remain.
 
@@ -288,4 +300,4 @@ Suggested implementation phases:
 4. Add explicit workbook save plus session-scoped first-open/revisit navigation.
 5. Add idempotent manual submit orchestration, decimal scoring, bilingual result UI, failure rollback, and return to Login while reusing `GradingService.CheckTask`.
 6. Route timeout into the same submission pipeline without confirmation.
-7. Add the chosen completed-workspace retention/cleanup policy and run final Training/Testing acceptance tests.
+7. Add the chosen completed-workspace retention/cleanup policy, final UI polish, and broad Training/Testing acceptance tests.
