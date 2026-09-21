@@ -22,9 +22,9 @@ This remains the existing Training behavior. Testing no longer uses this path: P
 
 Timeout now invokes the shared submission pipeline automatically. If saving, preparing, opening, or grading infrastructure fails after the deadline, the attempt is aborted without a score and the exam remains locked at `00:00`. There is intentionally no automatic retry loop or retry button yet.
 
-### Completed Testing workspaces are retained
+### Failed, abandoned, or crash-interrupted Testing workspaces may remain
 
-After a successful manual submission, `Documents/MosTrainer/Testing/<SessionId>` is not automatically deleted. This is an intentional deferred cleanup/retention decision, not a grading failure.
+Successful manual and timeout submissions delete only their current session directory after the learner acknowledges the result. Failed submissions, confirmed mid-test exits, and crash-interrupted sessions are intentionally retained for diagnostics. There is no automatic stale-workspace sweep or resume support.
 
 ### Authentication is an MVP stub
 
@@ -39,6 +39,8 @@ After a successful manual submission, `Documents/MosTrainer/Testing/<SessionId>`
 ### Excel Interop lifecycle is failure-sensitive
 
 The application owns a visible Excel process and may force-terminate its recorded PID after COM cleanup. Manual Excel closure, COM disconnection, save failure, file locks, or a grading exception need explicit Testing-mode recovery and user messaging.
+
+Controlled Phase 7 checks confirmed that manually closing the owned Excel window before Next Project keeps the old project index and shows a clear switch error. Doing so before Submit aborts submission, creates no score, and retains the workspace. The disconnected COM session is not automatically reattached; the learner must exit the test, so this remains a recoverability limitation rather than a crash or silent data-loss path.
 
 ### Testing session state is not persistent
 
@@ -57,17 +59,14 @@ Task text is localized through project language JSON, and Login labels switch la
 - `MosTrainer.Data` contains SQLite initialization/result persistence, but the current UI does not initialize or use it.
 - `Form1` contains UI and workflow orchestration in one class; Testing should add small session/submission helpers rather than duplicate Form1 or perform a broad refactor.
 - `ExcelController.cs` is very large and COM-sensitive. Do not split/refactor it as part of Testing Mode.
-- `AppSession` stores static language/mode state, while TestSession is passed directly to Form1. Final lifecycle/reset semantics still need to be defined for completed or abandoned tests.
+- `AppSession` stores static language/mode state, while each Testing login creates and passes a fresh TestSession directly to Form1.
 - `Form1._currentAssetsDir` records the deployed path but is not otherwise consumed by Form1.
 - C# language version is not explicitly pinned in project files, although source comments target C# 7.3-compatible syntax.
 
-## Questions / Needs Verification Before Testing Implementation
+## Questions / Future Product Decisions
 
-- Decide whether closing MosTrainer mid-test abandons the attempt after confirmation or requires resume support.
-- Decide whether Testing working directories are deleted immediately after result acknowledgement or retained temporarily for diagnostics/review.
-- Decide whether a future review screen should expose individual failed tasks; Phase 5 intentionally displays only total score.
-- Manual and timeout seven-project grading/submission have been verified with real Excel. Final broad end-to-end acceptance across all lifecycle combinations remains planned.
-- Verify behavior when the learner manually closes the owned Excel workbook/application, then attempts Next or Submit.
+- Decide whether a future review screen should expose individual failed tasks; Testing currently displays only total score.
+- Decide whether retained failed/abandoned workspaces need an administrative cleanup tool or a resume/session-manifest feature.
 
 ## Edge Cases Required in the Testing Plan
 

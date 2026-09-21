@@ -7,6 +7,7 @@ namespace MosTrainer.Testing
 {
     internal sealed class TestingWorkspaceService
     {
+        private readonly TestSession _session;
         private readonly ReadOnlyCollection<TestProjectState> _projectStates;
 
         public TestingWorkspaceService(TestSession session)
@@ -26,10 +27,11 @@ namespace MosTrainer.Testing
             if (string.IsNullOrWhiteSpace(testingRootDirectory))
                 throw new ArgumentException("Testing root directory is required.", "testingRootDirectory");
 
+            _session = session;
             TestingRootDirectory = testingRootDirectory;
             SessionDirectory = Path.Combine(
                 TestingRootDirectory,
-                session.SessionId.ToString("N"));
+                _session.SessionId.ToString("N"));
 
             var states = new List<TestProjectState>();
             foreach (var project in session.SelectedProjects)
@@ -89,6 +91,33 @@ namespace MosTrainer.Testing
             state.MarkInitialized();
 
             return state;
+        }
+
+        public void CleanupSessionDirectory()
+        {
+            if (!_session.IsCompleted)
+                throw new InvalidOperationException(
+                    "An incomplete Testing session workspace must not be deleted.");
+
+            string rootPath = Path.GetFullPath(TestingRootDirectory)
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string sessionPath = Path.GetFullPath(SessionDirectory)
+                .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+            string expectedDirectoryName = _session.SessionId.ToString("N");
+            string descendantPrefix = rootPath + Path.DirectorySeparatorChar;
+
+            if (!sessionPath.StartsWith(descendantPrefix, StringComparison.OrdinalIgnoreCase) ||
+                !string.Equals(
+                    Path.GetFileName(sessionPath),
+                    expectedDirectoryName,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                throw new InvalidOperationException(
+                    "The Testing session directory is outside the expected Testing root.");
+            }
+
+            if (Directory.Exists(sessionPath))
+                Directory.Delete(sessionPath, true);
         }
 
         private static void EnsureSafeProjectId(string projectId)

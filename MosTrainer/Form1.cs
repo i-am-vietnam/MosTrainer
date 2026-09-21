@@ -39,6 +39,7 @@ namespace MosTrainer
         private bool _timerRunning = false;
         private bool _testingTimeoutHandled = false;
         private bool _testingSwitchInProgress = false;
+        private bool _testingCloseConfirmed = false;
 
         public Form1()
             : this(null)
@@ -116,9 +117,20 @@ namespace MosTrainer
             LockTestingInteractions();
             bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
 
-            btnPrevProject.Text = vietnamese ? "Dự án trước" : "Previous Project";
-            btnNextProject.Text = vietnamese ? "Dự án tiếp" : "Next Project";
+            btnPrev.Text = vietnamese ? "← Nhiệm vụ" : "← Task";
+            btnNext.Text = vietnamese ? "Nhiệm vụ →" : "Task →";
+            btnPrev.Width = 110;
+            btnNext.Width = 110;
+
+            btnPrevProject.Text = vietnamese ? "← Dự án trước" : "← Previous Project";
+            btnNextProject.Text = vietnamese ? "Dự án tiếp →" : "Next Project →";
+            btnPrevProject.Width = 165;
+            btnNextProject.Width = 165;
             btnSubmitTest.Text = vietnamese ? "Nộp bài" : "Submit Test";
+            btnSubmitTest.Width = 120;
+            btnSubmitTest.BackColor = Color.SteelBlue;
+            btnSubmitTest.ForeColor = Color.White;
+            btnSubmitTest.FlatStyle = FlatStyle.Flat;
             UpdateTestingProjectDisplay();
 
             lblStatus.ForeColor = Color.Black;
@@ -348,7 +360,26 @@ namespace MosTrainer
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
 
+            CleanupCompletedTestingWorkspace();
             Close();
+        }
+
+        private void CleanupCompletedTestingWorkspace()
+        {
+            if (_testSession == null || !_testSession.IsCompleted || _testingWorkspace == null)
+                return;
+
+            try
+            {
+                _testingWorkspace.CleanupSessionDirectory();
+            }
+            catch (Exception ex)
+            {
+                MosTrainer.Core.Diagnostics.AppLogger.Warning(
+                    "Form1.CleanupCompletedTestingWorkspace",
+                    "Completed Testing workspace could not be removed: " +
+                    _testingWorkspace.SessionDirectory + ". " + ex.Message);
+            }
         }
 
         private void RecoverFromTestingSubmissionFailure(Exception error)
@@ -778,6 +809,41 @@ namespace MosTrainer
         // =========================
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
+            if (_testSession != null &&
+                !_testSession.IsCompleted &&
+                !_testSession.IsSubmitting &&
+                e.CloseReason == CloseReason.UserClosing &&
+                !_testingCloseConfirmed)
+            {
+                bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+                bool resumeTimer = _timerRunning && !_testingTimeoutHandled;
+                timerMain.Stop();
+
+                string message = vietnamese
+                    ? "Bài kiểm tra chưa được nộp.\r\nBạn có chắc chắn muốn thoát bài kiểm tra?\r\n\r\nNếu thoát, phiên làm bài hiện tại sẽ kết thúc."
+                    : "The test has not been submitted.\r\nAre you sure you want to exit the test?\r\n\r\nIf you exit, the current test session will end.";
+                string title = vietnamese ? "Thoát bài kiểm tra" : "Exit Test";
+
+                DialogResult confirmation = MessageBox.Show(
+                    this,
+                    message,
+                    title,
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Warning,
+                    MessageBoxDefaultButton.Button2);
+
+                if (confirmation != DialogResult.Yes)
+                {
+                    e.Cancel = true;
+                    UpdateTestingCountdown();
+                    if (resumeTimer && !_testingTimeoutHandled && !_testSession.IsSubmitting)
+                        timerMain.Start();
+                    return;
+                }
+
+                _testingCloseConfirmed = true;
+            }
+
             if (_testSession != null && !_testSession.IsCompleted && _excel.IsOpened)
             {
                 try
@@ -786,13 +852,24 @@ namespace MosTrainer
                 }
                 catch (Exception ex)
                 {
-                    e.Cancel = true;
+                    if (_testingCloseConfirmed)
+                    {
+                        MosTrainer.Core.Diagnostics.AppLogger.Warning(
+                            "Form1.OnFormClosing",
+                            "Best-effort save failed while abandoning a Testing session. " + ex.Message);
+                    }
+                    else
+                    {
+                        e.Cancel = true;
+                    }
+
                     bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
                     lblStatus.ForeColor = Color.Crimson;
                     lblStatus.Text = vietnamese
                         ? "Không thể đóng bài thi vì workbook chưa lưu được: " + ex.Message
                         : "The test cannot be closed because the workbook could not be saved: " + ex.Message;
-                    return;
+                    if (e.Cancel)
+                        return;
                 }
             }
 

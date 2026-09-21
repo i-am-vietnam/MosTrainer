@@ -1,6 +1,6 @@
 # MosTrainer Technical Context
 
-Last architecture inspection: 2026-09-21 at commit `8a4d1df4c57d7f9dfee7bd341e31067deeae89af` on branch `master`.
+Last architecture inspection: 2026-09-21 at baseline commit `a8b149c056a815ba95dd654ca3aef1183b666af0` on branch `master`; Phase 7 changes are local and uncommitted.
 
 ## 1. Project Overview
 
@@ -165,7 +165,7 @@ Testing uses a separate lifecycle:
 Documents/MosTrainer/Testing/<SessionId N>/<ProjectId>/work.xlsx
 ```
 
-`TestingWorkspaceService` computes each path once. On first visit it copies the package starter with overwrite disabled. If the working file exists, revisits open it directly; if an initialized file later disappears, the service fails rather than silently resetting it from the starter. `TestProjectState` stores only `ProjectPackage`, ProjectId/task count, working path, and `IsInitialized`; COM ownership remains in `ExcelController`.
+`TestingWorkspaceService` computes each path once. On first visit it copies the package starter with overwrite disabled. If the working file exists, revisits open it directly; if an initialized file later disappears, the service fails rather than silently resetting it from the starter. `TestProjectState` stores only `ProjectPackage`, ProjectId/task count, working path, and `IsInitialized`; COM ownership remains in `ExcelController`. `CleanupSessionDirectory` validates that the target is the current SessionId-named descendant of the Testing root, deletes only that directory, and is idempotent when it no longer exists.
 
 `ExcelController.SaveWorkbook` saves only the currently owned workbook and propagates failures. Testing project navigation prepares the target path, explicitly saves the current workbook, calls the existing `Close()` (`Workbook.Close(false)` remains unchanged), opens the target, and only then commits `TestSession.CurrentProjectIndex` plus task/project UI. A target-open failure keeps the old index and attempts to reopen the saved current workbook. Project switching never changes SessionId, StartedAtUtc, or DeadlineUtc.
 
@@ -173,7 +173,7 @@ Documents/MosTrainer/Testing/<SessionId N>/<ProjectId>/work.xlsx
 
 Login uses two EN/VI CheckBoxes with mutual exclusion and a separate pair of Training/Testing RadioButtons. Training is selected by default. A successful login stores both `AppSession.Language` and `AppSession.Mode`. Training launches the existing parameterless `Form1` flow. Testing loads packages in the selected language, creates one session, and passes the same instance through the Testing constructor. A clear localized error keeps Login active when a session cannot be created. `AppSession.Language` is read when Training Form1 is constructed. Project task titles/instructions come from the selected package language. Most Training chrome/status text remains hard-coded English; the new Testing shell/status text supports EN/VI without changing project language JSON.
 
-The main form contains project ComboBox/Go, project info, task tabs, task Previous/Next, Restart Project, Grade Project, status, and timer. Training retains the existing lifecycle: closing Form1 closes Excel and then closes the hidden LoginForm, ending the application. Closing the Testing form safely saves the current workbook and returns to that same LoginForm. Successful manual submission also returns there after result acknowledgement; automatic completed-workspace cleanup remains deferred.
+The main form contains project ComboBox/Go, project info, task tabs, task Previous/Next, Restart Project, Grade Project, status, and timer. Training retains the existing lifecycle: closing Form1 closes Excel and then closes the hidden LoginForm, ending the application. An incomplete Testing form asks for bilingual confirmation before a user close: No resumes the same deadline/workbook, while Yes best-effort saves, closes owned Excel, returns to the same LoginForm, and retains the abandoned workspace. Completed manual/timeout submission returns after result acknowledgement without another close confirmation.
 
 In Testing, `Form1` constructs one `TestingWorkspaceService` from the supplied session, lazily prepares the current `TestProjectState`, deploys existing project assets, opens the session-scoped workbook, and builds the existing localized task tabs. The project ComboBox, Go, Grade, and Restart stay hidden. Task Previous/Next keep their original task meaning; separate Previous/Next Project controls navigate the fixed seven-project order.
 
@@ -195,7 +195,7 @@ Logging is best-effort and never interrupts application flow.
 
 ## 10. Testing Mode
 
-Phase 1 status: **COMPLETED / VERIFIED**. Phase 2 status: **COMPLETED / VERIFIED**. Phase 3 status: **COMPLETED / VERIFIED**. Phase 4 status: **COMPLETED / VERIFIED**. Phase 5 status: **COMPLETED / VERIFIED**. Phase 6 status: **COMPLETED / VERIFIED**. Phase 7+: **NOT IMPLEMENTED**.
+Phase 1 status: **COMPLETED / VERIFIED**. Phase 2 status: **COMPLETED / VERIFIED**. Phase 3 status: **COMPLETED / VERIFIED**. Phase 4 status: **COMPLETED / VERIFIED**. Phase 5 status: **COMPLETED / VERIFIED**. Phase 6 status: **COMPLETED / VERIFIED**. Phase 7 status: **COMPLETED / VERIFIED**.
 
 Implemented in Phase 1:
 
@@ -257,6 +257,14 @@ Implemented in Phase 6:
 - Timeout infrastructure failure calls `AbortSubmission`, produces no result/score, leaves the timer stopped at `00:00`, and keeps task/project/Submit controls locked. Repeated timeout calls return through the UI one-shot guard.
 - A completed timeout session returns to Login; a later Testing login creates a new SessionId and fresh 50-minute deadline.
 
+Implemented in Phase 7:
+
+- Both successful manual and timeout flows keep the session workspace through grading and the modal result. After the learner presses OK, Form1 calls `TestingWorkspaceService.CleanupSessionDirectory`, then closes and returns to Login.
+- Cleanup failure is logged as a warning and never changes the completed score or blocks return to Login. Failed submissions never reach cleanup, and failed/abandoned/crash-interrupted workspaces are retained. There is no global stale-directory sweep.
+- Mid-test user close is guarded by bilingual Yes/No confirmation. The timer UI is paused only while the modal is open; the unchanged UTC deadline remains authoritative. No recomputes countdown and resumes the timer, while Yes performs a best-effort save and closes Excel/Form without score or completion.
+- Testing task buttons read `← Task`/`Task →` or `← Nhiệm vụ`/`Nhiệm vụ →`; project buttons include directional arrows and localized labels; Submit uses a restrained accent. Training keeps `<<`/`>>` and all prior control behavior.
+- The final Testing flow is: Login -> TestSessionFactory -> fixed seven projects/50-minute deadline -> TestingWorkspaceService -> Excel workbooks/task and project navigation -> Manual or TimeExpired -> shared TestSubmissionService -> existing GradingService -> score /1000 -> result acknowledgement -> completed workspace cleanup -> Login.
+
 The implemented workbook strategy is copy-once and lazy: before Previous/Next/Submit, save and close the current workbook; revisiting opens the same session file. Submission reuses these paths and initializes any unvisited project as an untouched working copy.
 
 Recommended final grading strategy is submit-time sequential grading (Option B): save/close the current workbook, then for each of the seven fixed project states open its saved workbook, call `GradingService.CheckTask` for every task, record results, and close before the next workbook. This avoids stale hidden results when a learner revisits a project. It is slower than grading on every transition but is simpler, authoritative at submission, and keeps grading logic unchanged.
@@ -290,7 +298,7 @@ score = 1000m * Sum(passedTasksInProject / (decimal)taskCountInProject) / 7m
 
 Keep `decimal` through calculation and round only the displayed final total. When every task passes, the sum of project fractions is exactly 7, so `1000m * 7m / 7m` is exactly `1000m`.
 
-After result acknowledgement, Phase 5 closes Testing Form1 and the existing LoginForm close handler shows the same Login instance without starting a second application message loop. Session workspace cleanup and explicit mode reset remain deferred.
+After result acknowledgement, Form1 cleans only the completed current-session workspace, then closes; the existing LoginForm close handler shows the same Login instance without starting a second application message loop. A later Testing login always creates a new TestSession, SessionId, random seven-project order, and 50-minute deadline.
 
 Suggested implementation phases:
 
@@ -300,4 +308,4 @@ Suggested implementation phases:
 4. Add explicit workbook save plus session-scoped first-open/revisit navigation.
 5. Add idempotent manual submit orchestration, decimal scoring, bilingual result UI, failure rollback, and return to Login while reusing `GradingService.CheckTask`.
 6. Route timeout into the same submission pipeline without confirmation.
-7. Add the chosen completed-workspace retention/cleanup policy, final UI polish, and broad Training/Testing acceptance tests.
+7. Add completed-workspace cleanup after result acknowledgement, safe incomplete-test close confirmation, final Testing UI polish, and broad Training/Testing acceptance tests. Completed and verified.

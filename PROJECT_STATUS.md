@@ -2,7 +2,7 @@
 
 Last verified: 2026-09-21
 Branch: `master`
-Commit: `8a4d1df4c57d7f9dfee7bd341e31067deeae89af` (Phase 5 baseline)
+Commit/baseline: `a8b149c056a815ba95dd654ca3aef1183b666af0` (Phase 6 HEAD; Phase 7 changes are local and uncommitted)
 
 ## Stable
 
@@ -25,6 +25,7 @@ Commit: `8a4d1df4c57d7f9dfee7bd341e31067deeae89af` (Phase 5 baseline)
 - Testing Mode Phase 4 is complete: each session owns isolated, copy-once project workbooks; Testing opens real Excel/task instructions and safely saves, closes, and reopens them through Previous/Next Project navigation.
 - Testing Mode Phase 5 is complete: manual Submit uses one shared seven-workbook grading pipeline, collects task/project results, calculates the equal-project-weight score out of 1000, shows a bilingual result, and returns to the existing LoginForm.
 - Testing Mode Phase 6 is complete: the 50-minute deadline automatically invokes the same submission pipeline with `TimeExpired`, without confirmation.
+- Testing Mode Phase 7 is complete: successful completed-session workspaces are cleaned only after result acknowledgement; failed, abandoned, and crash-interrupted workspaces are retained; mid-test close is confirmed; and the Testing footer is bilingual and explicit.
 
 ## Verified This Inspection
 
@@ -37,7 +38,9 @@ Commit: `8a4d1df4c57d7f9dfee7bd341e31067deeae89af` (Phase 5 baseline)
 - Testing Mode Phase 4 passed a disposable real-Excel integration harness covering Login/session transfer, initial workbook/task tabs, `1 -> 2 -> 3 -> 2 -> 1`, persisted workbook content, boundary button states, session-path isolation, unchanged session timer identity, timeout save/close/lock, untouched source starter, and no new orphan Excel process.
 - Testing Mode Phase 5 passed pure score/state checks plus disposable real-Excel submission checks: confirmation No, seven projects/52 tasks graded exactly once, five unvisited projects initialized, saved current working content, result OK returning to Login, failure rollback/retry, unchanged starters, and no orphan Excel process.
 - Testing Mode Phase 6 passed disposable real-Excel timeout checks at Projects 1, 4, and 7; each graded seven projects and the exact selected task total, initialized unvisited workbooks, returned a `TimeExpired` result, returned to Login, and left no orphan Excel process. Timeout failure, repeated timeout, manual No/Yes, and new-session-after-Login checks also passed.
-- No project JSON, starter workbook, assertion, or grading code was changed by Testing Mode Phase 1 through Phase 6.
+- Testing Mode Phase 7 passed disposable real-Excel checks for manual and timeout completion/cleanup, cleanup isolation/idempotence, retained failure/abandon workspaces, EN/VI close confirmation and controls, A -> B -> A persistence, manual Excel-close error paths, score invariants, unchanged starter hashes, and no remaining owned Excel process.
+- Training EN/VI shell plus disposable Go/task navigation/Grade/Restart/elapsed-timer/close behavior passed without touching an existing Training working directory.
+- No project JSON, starter workbook, assertion, grading code, or score formula was changed by Testing Mode Phase 1 through Phase 7.
 
 ## In Progress
 
@@ -45,9 +48,7 @@ Commit: `8a4d1df4c57d7f9dfee7bd341e31067deeae89af` (Phase 5 baseline)
 
 ## Planned
 
-- Preserve Training behavior unchanged.
-- Add completed-session workspace cleanup when its retention policy is defined.
-- Perform final UI polish and full end-to-end Training/Testing regression.
+- Classroom acceptance testing on the target deployment image and representative learner machines.
 
 ## Testing Mode
 
@@ -91,10 +92,14 @@ Phase 6: **COMPLETED / VERIFIED**
 - Timeout works from any current project; unvisited projects are initialized as untouched session workbooks and graded normally.
 - Infrastructure failure after deadline aborts submission without a fake score, keeps `00:00`, and leaves all Testing interactions locked.
 
-Phase 7+: **NOT IMPLEMENTED**
+Phase 7: **COMPLETED / VERIFIED**
 
-Completed Testing workspace cleanup/retention policy, final UI polish, and final broad acceptance regression remain deferred.
+- Result acknowledgement is the cleanup boundary for successful manual and timeout sessions.
+- Cleanup is path-checked, idempotent, and deletes only the current SessionId directory; other Testing sessions and the Testing root remain intact.
+- Failed, abandoned, and crash-interrupted workspaces remain available for diagnostics. No global stale-directory sweep exists.
+- Closing an incomplete test asks for bilingual confirmation. No resumes the same deadline/workbook; Yes best-effort saves, closes owned Excel, returns to Login, and retains the abandoned workspace.
+- Testing task/project navigation labels are explicit in EN/VI and Submit has a distinct accent without changing Training control text/behavior.
 
 ## Next Recommended Task
 
-After user review of Phase 6, define the completed-workspace retention/cleanup policy, then perform final UI polish and broad Training/Testing acceptance regression without changing grading semantics.
+Run supervised classroom acceptance testing on the intended Windows/Office deployment image. Do not change grading semantics unless a separately approved grading defect is reproduced.
