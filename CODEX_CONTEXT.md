@@ -1,6 +1,6 @@
 # MosTrainer Technical Context
 
-Last architecture inspection: 2026-09-21 at baseline commit `fbde3b207143549679ffcaaf76690e2969dd24d8` on branch `master`; Phase 8 changes are local and uncommitted.
+Last architecture inspection: 2026-09-21 at baseline commit `7ba7af0fe45568baed62ac2ff327e1c82add85eb` on branch `master`; Pre-RC adjustments are local and uncommitted.
 
 ## 1. Project Overview
 
@@ -36,7 +36,7 @@ Primary dependencies are Microsoft Office/Excel Interop, Newtonsoft.Json 13.0.4,
 | `MosTrainer/Testing/TestSession.cs` | Pure in-memory Testing session: fixed project order/index, identity, 50-minute UTC deadline, remaining/expired calculations, and one-shot submission state. | Medium: authoritative exam state. |
 | `MosTrainer/Testing/TestSessionFactory.cs` | Filters/deduplicates loader output, performs an injectable Fisher-Yates shuffle once, selects seven projects, and creates a session. | Medium. |
 | `MosTrainer/Testing/TestProjectState.cs` | One selected project's package/path plus copy-once initialization state; never stores COM objects. | Medium. |
-| `MosTrainer/Testing/TestingWorkspaceService.cs` | Deterministic session/project paths and non-overwriting first-visit workbook initialization. | High: protects learner work. |
+| `MosTrainer/Testing/TestingWorkspaceService.cs` | Deterministic session/project paths, non-overwriting first-visit initialization, and explicit current-project reset from starter. | High: protects learner work. |
 | `MosTrainer/Testing/TestSubmissionService.cs` | Shared synchronous seven-workbook submission pipeline using the existing ExcelController and GradingService instances. | High. |
 | `MosTrainer/Testing/TestTaskResult.cs`, `TestProjectResult.cs`, `TestSubmissionResult.cs` | Pure internal Testing result hierarchy; final UI exposes failed identifiers only, never diagnostic messages. | Medium. |
 | `MosTrainer/Testing/TestScoreCalculator.cs` | Pure decimal equal-project-weight scoring and final display rounding. | Medium. |
@@ -92,10 +92,10 @@ Grade
   -> project route
   -> CheckByAssertion(task)
   -> IExcelController assertion
-  -> PASS/FAIL status label
+  -> PASS/FAIL status label and bilingual Correct/Incorrect popup
 ```
 
-`btnPrev` and `btnNext` navigate task tabs, not projects. `btnRestart` recreates a fresh working workbook. The project timer is per load/restart flow and is display-only.
+`btnPrev` and `btnNext` navigate task tabs, not projects. Training `btnRestart` recreates a fresh Training working workbook; Testing routes the same button through an explicitly confirmed current-project reset. The Training project timer is per load/restart flow and is display-only.
 
 ## 5. Project Package Format
 
@@ -169,13 +169,15 @@ Documents/MosTrainer/Testing/<SessionId N>/<ProjectId>/work.xlsx
 
 `ExcelController.SaveWorkbook` saves only the currently owned workbook and propagates failures. Testing project navigation accepts only the immediate next index, prepares that target path, explicitly saves the current workbook, calls the existing `Close()` (`Workbook.Close(false)` remains unchanged), opens the target, and only then commits `TestSession.CurrentProjectIndex` plus task/project UI. A target-open failure keeps the old index and attempts to reopen the saved current workbook. Project switching never changes SessionId, StartedAtUtc, or DeadlineUtc; learner navigation cannot reopen or skip projects.
 
+Testing Restart is distinct from `PrepareProject`: after a localized Yes/No confirmation defaulting to No and a second deadline check, Form1 locks interactions and calls the existing `_excel.Close()` without saving the confirmed discarded edits. `TestingWorkspaceService.ResetProject(currentIndex)` stages the starter copy and replaces only that current session `work.xlsx`, retaining the same `TestProjectState`. Form1 reopens it, rebuilds tabs at Task 1, and recomputes countdown from the unchanged UTC deadline. On reset/reopen failure it attempts to reopen the current working file if present, reports the infrastructure error, and leaves the project index unchanged; a failed reopen leaves the Testing UI locked. Earlier and future project workbooks are not reset.
+
 ## 8. UI and Language Flow
 
 Login uses two EN/VI CheckBoxes with mutual exclusion and a separate pair of Training/Testing RadioButtons. Training is selected by default. A successful login stores both `AppSession.Language` and `AppSession.Mode`. Training launches the existing parameterless `Form1` flow. Testing loads packages in the selected language, creates one session, and passes the same instance through the Testing constructor. A clear localized error keeps Login active when a session cannot be created. `AppSession.Language` is read when Training Form1 is constructed. Project task titles/instructions come from the selected package language. Most Training chrome/status text remains hard-coded English; the new Testing shell/status text supports EN/VI without changing project language JSON.
 
 The main form contains project ComboBox/Go, project info, task tabs, task Previous/Next, Restart Project, Grade Project, status, and timer. Training retains the existing lifecycle: closing Form1 closes Excel and then closes the hidden LoginForm, ending the application. An incomplete Testing form asks for bilingual confirmation before a user close: No resumes the same deadline/workbook, while Yes best-effort saves, closes owned Excel, returns to the same LoginForm, and retains the abandoned workspace. Completed manual/timeout submission returns after result acknowledgement without another close confirmation.
 
-In Testing, `Form1` constructs one `TestingWorkspaceService` from the supplied session, lazily prepares the current `TestProjectState`, deploys existing project assets, opens the session-scoped workbook, and builds the existing localized task tabs. The project ComboBox, Go, Grade, Restart, and Previous Project stay hidden. Task Previous/Next keep their original task meaning; Next Project advances exactly one position through the fixed seven-project order.
+In Testing, `Form1` constructs one `TestingWorkspaceService` from the supplied session, lazily prepares the current `TestProjectState`, deploys existing project assets, opens the session-scoped workbook, and builds the existing localized task tabs. The project ComboBox, Go, Grade, and Previous Project stay hidden. Restart is shown with bilingual text for only the current project. Task Previous/Next keep their original task meaning; Next Project advances exactly one position through the fixed seven-project order.
 
 On Project 7/7, manual Submit shows a bilingual Yes/No confirmation. Yes rechecks the deadline, acquires `TestSession.TryBeginSubmission`, stops the UI timer, locks interactions, saves/closes the active workbook, and calls the shared `TestSubmissionService`. The service initializes unvisited workbooks through `TestingWorkspaceService`, opens each of the seven fixed projects sequentially using the same ExcelController instance used by GradingService, calls `GradingService.CheckTask` for every task, records results, and closes after each project without changing `CurrentProjectIndex`.
 
@@ -273,13 +275,19 @@ Implemented in Phase 8:
 - The shared manual/timeout result formatter walks `TestSubmissionResult.ProjectResults` and each `TaskResults` collection in existing order, selects only `Pass == false`, and displays normalized identifiers such as `P01-Task2`. It never calls grading again or exposes `TestTaskResult.Message`.
 - Failed identifiers wrap at six per line. Perfect results show `Incorrect tasks: None` or `Các câu sai: Không có`. Result acknowledgement remains the cleanup boundary.
 
+Pre-RC adjustment:
+
+- Training `btnGrade_Click` still calls `GradingService.CheckTask` once and retains its existing footer status; after the result it shows only a localized Correct/Incorrect (`Đúng`/`Sai`) message with `Result`/`Kết quả` title. Testing Grade remains hidden and guarded, with no per-task feedback.
+- Testing reuses `btnRestart` with localized text and destructive Yes/No confirmation (No default). No leaves the live workbook and deadline untouched. Yes closes without saving, explicitly resets the current session working copy from the source starter, reopens Excel and Task 1, and restores buttons according to current project; on Project 7, Submit remains available. No other project, selected order, session ID, index, or UTC time changes.
+- `MosTrainer.WinForms.csproj` correctly defines nonoptimized full-symbol Debug and optimized `pdbonly` Release. Visual Studio Just My Code warns when F5 debugs Release; use Debug + F5 for development or Release + Ctrl+F5 for a final run. No production configuration was changed to suppress the warning.
+
 The implemented workbook strategy is copy-once and lazy: before Next Project or Submit, save and close the current workbook. The learner cannot reopen an earlier project, but its saved working file remains intact for submission. Submission reuses these paths and initializes any unvisited project as an untouched working copy.
 
 The grading strategy is submit-time sequential grading: save/close the current workbook, then for each of the seven fixed project states open its saved workbook, call `GradingService.CheckTask` for every task, record results, and close before the next workbook. It is authoritative at submission and keeps grading logic unchanged.
 
 Testing UI rules:
 
-- Hide or disable project selection, Go, per-task Grade, and PASS/FAIL feedback.
+- Hide or disable project selection, Go, per-task Grade, and PASS/FAIL feedback; allow confirmed current-project Restart.
 - Preserve task tabs and task navigation.
 - Show forward-only Next Project navigation/progress and Submit Test controls; never expose Previous Project.
 - Require confirmation and make submission idempotent.

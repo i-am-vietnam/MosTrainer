@@ -2,7 +2,7 @@
 
 Last verified: 2026-09-21
 Branch: `master`
-Commit/baseline: `fbde3b207143549679ffcaaf76690e2969dd24d8` (Phase 7 HEAD; Phase 8 changes are local and uncommitted)
+Commit/baseline: `7ba7af0fe45568baed62ac2ff327e1c82add85eb` (Phase 8 HEAD; Pre-RC adjustments are local and uncommitted)
 
 ## Stable
 
@@ -27,6 +27,7 @@ Commit/baseline: `fbde3b207143549679ffcaaf76690e2969dd24d8` (Phase 7 HEAD; Phase
 - Testing Mode Phase 6 is complete: the 50-minute deadline automatically invokes the same submission pipeline with `TimeExpired`, without confirmation.
 - Testing Mode Phase 7 is complete: successful completed-session workspaces are cleaned only after result acknowledgement; failed, abandoned, and crash-interrupted workspaces are retained; mid-test close is confirmed; and the Testing footer is bilingual and explicit.
 - Testing Mode Phase 8 is complete: the exam countdown is centered above task instructions, project navigation is strictly forward-only, and the final result lists failed task identifiers without exposing diagnostic details.
+- Pre-RC adjustment: Training Grade retains its existing footer result and adds a bilingual Correct/Incorrect popup; Testing can explicitly restart only the current project from its starter after confirmation without resetting the exam deadline.
 
 ## Verified This Inspection
 
@@ -41,6 +42,7 @@ Commit/baseline: `fbde3b207143549679ffcaaf76690e2969dd24d8` (Phase 7 HEAD; Phase
 - Testing Mode Phase 6 passed disposable real-Excel timeout checks at Projects 1, 4, and 7; each graded seven projects and the exact selected task total, initialized unvisited workbooks, returned a `TimeExpired` result, returned to Login, and left no orphan Excel process. Timeout failure, repeated timeout, manual No/Yes, and new-session-after-Login checks also passed.
 - Testing Mode Phase 7 passed disposable real-Excel checks for manual and timeout completion/cleanup, cleanup isolation/idempotence, retained failure/abandon workspaces, EN/VI close confirmation and controls, saved-workbook persistence, manual Excel-close error paths, score invariants, unchanged starter hashes, and no remaining owned Excel process.
 - Testing Mode Phase 8 passed disposable real-Excel checks for centralized EN/VI countdown display, forward-only `1 -> 2 -> ... -> 7`, backward/skip rejection, preserved earlier workbooks, Project 7 button state, manual/timeout result formatting, post-result cleanup, and no orphan Excel process. Synthetic checks covered perfect results, identifier fallback, stable order, and six-identifiers-per-line wrapping.
+- Pre-RC Testing Restart passed disposable real-Excel checks for confirmation No/Yes, restored starter cell and Task 1, unchanged work path/session identity/deadline, Project 2 reset without modifying saved Project 1, forward-only rejection, and Project 7 Submit/Restart availability. Source starter hash was unchanged; the harness removed its session and left no Excel process. Training popup EN/VI mapping and single grading call were reviewed in source, but the attempted real-Excel popup harness stalled in the grading call and did not verify popup behavior end-to-end.
 - Training EN/VI shell plus disposable Go/task navigation/Grade/Restart/elapsed-timer/close behavior passed without touching an existing Training working directory.
 - No project JSON, starter workbook, assertion, grading code, submission grading behavior, or score formula was changed by Testing Mode Phase 1 through Phase 8.
 
@@ -108,6 +110,12 @@ Phase 8: **COMPLETED / VERIFIED**
 - Testing project navigation is forward-only. The Previous Project control is hidden/disabled, and the backend accepts only `targetIndex == CurrentProjectIndex + 1`; backward and skipped targets are rejected without changing workbook or session index.
 - Earlier project working files remain in the session workspace for final grading after the learner advances.
 - Manual and timeout results display total score plus failed identifiers such as `P01-Task2`, preserving project/task order and wrapping six identifiers per line. Diagnostic assertion messages are never displayed.
+
+Pre-RC adjustment: **IMPLEMENTED / PARTIALLY VERIFIED**
+
+- Training Grade keeps the existing `CheckTask` call and PASS/FAIL footer, then displays a localized `Correct`/`Incorrect` or `Đúng`/`Sai` popup. The popup was source-reviewed; its real-Excel end-to-end behavior still needs a supervised check.
+- Testing offers `Restart Project`/`Làm lại dự án` for the current project only, with Yes/No confirmation defaulting to No. Yes discards unsaved edits via the existing `Close(false)`, explicitly replaces only the current session `work.xlsx` from its starter, reopens it, and selects Task 1. No leaves the workbook unchanged. The 50-minute session deadline and forward-only navigation are unchanged.
+- Debug is the intended Visual Studio F5 configuration. Release optimization with Just My Code under F5 causes a debugger warning, not an application runtime defect; no project configuration change was needed.
 
 ## Next Recommended Task
 

@@ -108,7 +108,7 @@ namespace MosTrainer
             cbProjects.Visible = false;
             btnGo.Visible = false;
             btnGrade.Visible = false;
-            btnRestart.Visible = false;
+            btnRestart.Visible = true;
 
             btnPrevProject.Visible = false;
             btnPrevProject.Enabled = false;
@@ -122,6 +122,8 @@ namespace MosTrainer
             btnNext.Text = vietnamese ? "Nhiệm vụ →" : "Task →";
             btnPrev.Width = 110;
             btnNext.Width = 110;
+            btnRestart.Text = vietnamese ? "Làm lại dự án" : "Restart Project";
+            btnRestart.Width = 125;
 
             btnNextProject.Text = vietnamese ? "Dự án tiếp →" : "Next Project →";
             btnNextProject.Width = 165;
@@ -265,6 +267,7 @@ namespace MosTrainer
                 _excel.IsOpened;
 
             btnPrevProject.Enabled = false;
+            btnRestart.Enabled = canNavigate;
             btnNextProject.Enabled = canNavigate &&
                 _testSession.CurrentProjectIndex < _testSession.TotalProjects - 1;
             btnSubmitTest.Enabled = canNavigate &&
@@ -804,6 +807,12 @@ namespace MosTrainer
         // =========================
         private void btnRestart_Click(object sender, EventArgs e)
         {
+            if (_testSession != null)
+            {
+                RestartTestingProject();
+                return;
+            }
+
             if (_currentProject == null) return;
 
             try
@@ -819,11 +828,97 @@ namespace MosTrainer
             }
         }
 
+        private void RestartTestingProject()
+        {
+            if (_testingSwitchInProgress || _testingTimeoutHandled ||
+                _testSession.IsSubmitting || _testSession.IsCompleted || !_excel.IsOpened)
+                return;
+
+            if (_testSession.IsExpiredAt(DateTime.UtcNow))
+            {
+                HandleTestingTimeExpired();
+                return;
+            }
+
+            bool vietnamese = string.Equals(_testSession.Language, "vi", StringComparison.OrdinalIgnoreCase);
+            string message = vietnamese
+                ? "Bạn có chắc chắn muốn làm lại dự án hiện tại?\r\n\r\nToàn bộ thay đổi trong dự án này sẽ bị xóa và workbook sẽ trở về trạng thái ban đầu.\r\n\r\nThời gian làm bài vẫn tiếp tục."
+                : "Are you sure you want to restart the current project?\r\n\r\nAll changes in this project will be discarded and the workbook will be restored to its original state.\r\n\r\nThe test timer will continue.";
+            DialogResult confirmation = MessageBox.Show(
+                this, message, vietnamese ? "Làm lại dự án" : "Restart Project",
+                MessageBoxButtons.YesNo, MessageBoxIcon.Warning,
+                MessageBoxDefaultButton.Button2);
+
+            if (confirmation != DialogResult.Yes)
+            {
+                UpdateTestingCountdown();
+                return;
+            }
+
+            if (_testSession.IsExpiredAt(DateTime.UtcNow))
+            {
+                HandleTestingTimeExpired();
+                return;
+            }
+
+            int projectIndex = _testSession.CurrentProjectIndex;
+            TestProjectState state = _testingWorkspace.GetProjectState(projectIndex);
+            _testingSwitchInProgress = true;
+            LockTestingInteractions();
+            try
+            {
+                // Close(false) intentionally discards unsaved edits after confirmation.
+                _excel.Close();
+                _testingWorkspace.ResetProject(projectIndex);
+                OpenTestingWorkbook(state);
+                CommitTestingProjectUi(state); // RebuildTaskTabs selects Task 1.
+                lblStatus.ForeColor = Color.DarkGreen;
+                lblStatus.Text = vietnamese
+                    ? "Đã làm lại dự án hiện tại."
+                    : "Current project restarted.";
+            }
+            catch (Exception ex)
+            {
+                string recovery = "";
+                if (!_excel.IsOpened && File.Exists(state.WorkingWorkbookPath))
+                {
+                    try
+                    {
+                        OpenTestingWorkbook(state);
+                    }
+                    catch (Exception reopenError)
+                    {
+                        recovery = vietnamese
+                            ? " Không thể mở lại workbook: " + reopenError.Message
+                            : " Unable to reopen the workbook: " + reopenError.Message;
+                    }
+                }
+
+                lblStatus.ForeColor = Color.Crimson;
+                lblStatus.Text = (vietnamese
+                    ? "Không thể làm lại dự án: "
+                    : "Unable to restart project: ") + ex.Message + recovery;
+            }
+            finally
+            {
+                _testingSwitchInProgress = false;
+                UpdateTestingCountdown();
+                if (!_testingTimeoutHandled && _excel.IsOpened)
+                {
+                    tabTasks.Enabled = true;
+                    btnPrev.Enabled = true;
+                    btnNext.Enabled = true;
+                    UpdateTestingProjectNavigationButtons();
+                }
+            }
+        }
+
         // =========================
         // Grade Project (MVP: chấm task đang chọn)
         // =========================
         private void btnGrade_Click(object sender, EventArgs e)
         {
+            if (_testSession != null) return;
             if (_currentProject == null) return;
             if (tabTasks.TabPages.Count == 0) return;
 
@@ -840,6 +935,14 @@ namespace MosTrainer
                 lblStatus.Text = pass
                     ? ("PASS - " + task.TaskId)
                     : ("FAIL - " + task.TaskId + " | " + message);
+
+                bool vietnamese = string.Equals(_language, "vi", StringComparison.OrdinalIgnoreCase);
+                MessageBox.Show(
+                    this,
+                    pass ? (vietnamese ? "Đúng" : "Correct") : (vietnamese ? "Sai" : "Incorrect"),
+                    vietnamese ? "Kết quả" : "Result",
+                    MessageBoxButtons.OK,
+                    pass ? MessageBoxIcon.Information : MessageBoxIcon.Warning);
             }
             catch (Exception ex)
             {

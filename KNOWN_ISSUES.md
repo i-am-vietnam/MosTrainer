@@ -50,6 +50,8 @@ The Phase 2 `TestSession` is in memory only. If the learner closes MosTrainer or
 
 `ProjectLoader` returns only valid packages at load time. A package/starter/language file could still become unavailable after random selection. Testing startup and every open/save/submit transition need guarded failure handling.
 
+Testing Restart also depends on the selected project's starter remaining available. A missing starter or failed replacement reports an error and attempts to reopen the existing working file; if Excel cannot reopen it, the Testing UI remains locked while the deadline continues. There is no dedicated reopen/retry UI.
+
 ### UI localization is partial
 
 Task text is localized through project language JSON, and Login labels switch language, but much of Form1 status/chrome is hard-coded English. New Testing UI must at least provide EN/VI text without changing project task JSON.
@@ -65,6 +67,7 @@ Task text is localized through project language JSON, and Login labels switch la
 
 ## Questions / Future Product Decisions
 
+- Supervised Training Grade popup verification remains open: the disposable real-Excel harness stalled inside a grading call before it could observe the EN/VI popup. Source review confirms one `CheckTask` call and the localized popup mapping, but it is not an end-to-end PASS yet.
 - The final result exposes only failed task identifiers, not expected answers, assertion messages, or detailed review guidance. Decide whether a future instructor-only review screen is needed.
 - Decide whether retained failed/abandoned workspaces need an administrative cleanup tool or a resume/session-manifest feature.
 

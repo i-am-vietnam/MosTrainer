@@ -93,6 +93,42 @@ namespace MosTrainer.Testing
             return state;
         }
 
+        // Explicitly destructive; the caller must close the owned workbook first.
+        public TestProjectState ResetProject(int projectIndex)
+        {
+            TestProjectState state = GetProjectState(projectIndex);
+            string starterPath = Path.Combine(
+                state.Project.ProjectFolderPath,
+                state.Project.Meta.Starter);
+            if (!File.Exists(starterPath))
+                throw new FileNotFoundException("Testing starter workbook was not found.", starterPath);
+
+            string workingPath = state.WorkingWorkbookPath;
+            Directory.CreateDirectory(Path.GetDirectoryName(workingPath));
+
+            // Stage a complete copy before replacing the existing working file.
+            string stagedPath = workingPath + ".reset-" + Guid.NewGuid().ToString("N");
+            try
+            {
+                File.Copy(starterPath, stagedPath, false);
+                if (File.Exists(workingPath))
+                    File.Replace(stagedPath, workingPath, null);
+                else
+                    File.Move(stagedPath, workingPath);
+                state.MarkInitialized();
+                return state;
+            }
+            finally
+            {
+                if (File.Exists(stagedPath))
+                {
+                    try { File.Delete(stagedPath); }
+                    catch (IOException) { }
+                    catch (UnauthorizedAccessException) { }
+                }
+            }
+        }
+
         public void CleanupSessionDirectory()
         {
             if (!_session.IsCompleted)
