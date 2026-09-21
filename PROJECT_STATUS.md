@@ -2,7 +2,7 @@
 
 Last verified: 2026-09-21
 Branch: `master`
-Commit/baseline: `754d2a0b8236d9c1f99604cf45b40313c86acf44` (starting RC1 HEAD; this RC1 report is an uncommitted documentation update)
+Commit/baseline: `7b2e59c4111c02bf0e3236d406a3537a0ecfc600` (release-packaging source HEAD; installer/configuration changes remain uncommitted)
 
 ## Stable
 
@@ -28,6 +28,7 @@ Commit/baseline: `754d2a0b8236d9c1f99604cf45b40313c86acf44` (starting RC1 HEAD; 
 - Testing Mode Phase 7 is complete: successful completed-session workspaces are cleaned only after result acknowledgement; failed, abandoned, and crash-interrupted workspaces are retained; mid-test close is confirmed; and the Testing footer is bilingual and explicit.
 - Testing Mode Phase 8 is complete: the exam countdown is centered above task instructions, project navigation is strictly forward-only, and the final result lists failed task identifiers without exposing diagnostic details.
 - Pre-RC adjustment: Training Grade retains its existing footer result and adds a bilingual Correct/Incorrect popup; Testing can explicitly restart only the current project from its starter after confirmation without resetting the exam deadline.
+- Release packaging: a branded, unsigned Inno Setup 6 single-file installer for version 1.0.0 was built from Release output and smoke-installed/launched/uninstalled in a disposable location. The existing MosTrainer installation and learner data were left intact.
 
 ## Verified This Inspection
 
@@ -47,6 +48,7 @@ Commit/baseline: `754d2a0b8236d9c1f99604cf45b40313c86acf44` (starting RC1 HEAD; 
 - Manual Submit after Project 7 Restart passed through real Login: confirmation No retained the active fresh workbook, Yes graded seven projects, showed score/incorrect IDs with workspace present before result OK, then cleaned the workspace and returned to Login. Timeout after Project 3 Restart passed with centered `00:00`, no confirmation, `TimeExpired`, seven project results, score/incorrect IDs, cleanup, and Login return. A disposable missing-starter failure reported an error, retained index/deadline and working copy, reopened the saved workbook, and produced no score. No harness-owned Excel process remained.
 - Training EN/VI shell plus disposable Go/task navigation/Grade/Restart/elapsed-timer/close behavior passed without touching an existing Training working directory.
 - No project JSON, starter workbook, assertion, grading code, submission grading behavior, or score formula was changed by Testing Mode Phase 1 through Phase 8.
+- Release packaging verification: Release | Any CPU rebuild had zero errors and five existing CS0105 warnings; the deployed output validated 21 projects/144 tasks in EN/VI with zero validator errors/warnings. The installer contained the runtime files and official icon; a disposable install reached Login and its uninstall removed only installed files/shortcuts/registration while retaining Documents and LocalAppData data. This is packaging smoke verification, not full classroom acceptance.
 
 ## In Progress
 

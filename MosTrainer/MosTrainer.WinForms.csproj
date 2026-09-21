@@ -8,6 +8,7 @@
     <OutputType>WinExe</OutputType>
     <RootNamespace>MosTrainer</RootNamespace>
     <AssemblyName>MosTrainer</AssemblyName>
+    <ApplicationIcon>Resources\MOS_Excel_2019.ico</ApplicationIcon>
     <TargetFrameworkVersion>v4.7.2</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
@@ -126,6 +127,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
     </Compile>
     <None Include="packages.config" />
+    <None Include="Resources\MOS_Excel_2019.ico" />
     <None Include="Projects\Excel2019_P10\lang\en.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
